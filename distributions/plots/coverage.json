@@ -1,0 +1,269 @@
+{
+ "generated_from": "/scratch/eddie96/eddie/navsim_v1/scores_manifest.json",
+ "n_bins": 20,
+ "v1_pdms_navtest_models": [
+  "variant1_patch_tokens_film",
+  "cmd_tokens_film",
+  "cls_tokens_film",
+  "sae_armAp_control",
+  "sae_armBp_static",
+  "transfuser",
+  "human",
+  "constant_velocity"
+ ],
+ "v2_epdms_navhard_models": [
+  "variant1_patch_tokens_film",
+  "cmd_tokens_film",
+  "cls_tokens_film",
+  "sae_armAp_control",
+  "sae_armBp_static",
+  "constant_velocity"
+ ],
+ "v1_scores_n": {
+  "variant1_patch_tokens_film": 12146,
+  "cmd_tokens_film": 12146,
+  "cls_tokens_film": 12146,
+  "sae_armAp_control": 12146,
+  "sae_armBp_static": 12146,
+  "transfuser": 12146,
+  "human": 12146,
+  "constant_velocity": 12146
+ },
+ "v1_reconciliation_note": "v1 PDMS is one-stage: verified official score == mean of per-scene 'score' column to float precision (<1e-14) for every model. No caveat needed.",
+ "v1_stats": {
+  "variant1_patch_tokens_film": {
+   "n": 12146,
+   "mean": 0.8302150604783896,
+   "median": 0.9329471904660903,
+   "std": 0.29316578907623236,
+   "frac_zero": 0.10011526428453812,
+   "frac_above_0_9": 0.6408694220319446
+  },
+  "cmd_tokens_film": {
+   "n": 12146,
+   "mean": 0.8400143611791913,
+   "median": 0.936418022563283,
+   "std": 0.282547247825817,
+   "frac_zero": 0.09089412152148856,
+   "frac_above_0_9": 0.6667215544212086
+  },
+  "cls_tokens_film": {
+   "n": 12146,
+   "mean": 0.7690335120564665,
+   "median": 0.9263554540920259,
+   "std": 0.3540260432117037,
+   "frac_zero": 0.16128766672155442,
+   "frac_above_0_9": 0.60604314177507
+  },
+  "sae_armAp_control": {
+   "n": 12146,
+   "mean": 0.8091643107374076,
+   "median": 0.9349249257987622,
+   "std": 0.31766660343016223,
+   "frac_zero": 0.12045117734233493,
+   "frac_above_0_9": 0.6426807179318295
+  },
+  "sae_armBp_static": {
+   "n": 12146,
+   "mean": 0.8140566809538212,
+   "median": 0.9358994406032473,
+   "std": 0.311738246202302,
+   "frac_zero": 0.11411164169273835,
+   "frac_above_0_9": 0.6522311872221307
+  },
+  "transfuser": {
+   "n": 12146,
+   "mean": 0.8338995360379594,
+   "median": 0.938581894310317,
+   "std": 0.2923950566212259,
+   "frac_zero": 0.09764531533014985,
+   "frac_above_0_9": 0.6602173555079862
+  },
+  "human": {
+   "n": 12146,
+   "mean": 0.9455140385323172,
+   "median": 0.9563889176811255,
+   "std": 0.055564608320357436,
+   "frac_zero": 0.0,
+   "frac_above_0_9": 0.7870904001317306
+  },
+  "constant_velocity": {
+   "n": 12146,
+   "mean": 0.20651651538926397,
+   "median": 0.0,
+   "std": 0.3029005715506727,
+   "frac_zero": 0.6693561666392228,
+   "frac_above_0_9": 0.0005763214226905978
+  }
+ },
+ "v2_scores_n": {
+  "variant1_patch_tokens_film": 5462,
+  "cmd_tokens_film": 5462,
+  "cls_tokens_film": 5462,
+  "sae_armAp_control": 5462,
+  "sae_armBp_static": 5462,
+  "constant_velocity": 5462
+ },
+ "v2_group_scores_n": {
+  "variant1_patch_tokens_film": 225,
+  "cmd_tokens_film": 225,
+  "cls_tokens_film": 225,
+  "sae_armAp_control": 225,
+  "sae_armBp_static": 225,
+  "constant_velocity": 225
+ },
+ "v2_stats": {
+  "variant1_patch_tokens_film": {
+   "n": 225,
+   "mean": 0.24689760645814343,
+   "median": 0.05758063196050148,
+   "std": 0.2949074868364716,
+   "frac_zero": 0.2,
+   "frac_above_0_9": 0.013333333333333334
+  },
+  "cmd_tokens_film": {
+   "n": 225,
+   "mean": 0.24109533336875555,
+   "median": 0.14467125530204544,
+   "std": 0.27191800235563846,
+   "frac_zero": 0.21333333333333335,
+   "frac_above_0_9": 0.017777777777777778
+  },
+  "cls_tokens_film": {
+   "n": 225,
+   "mean": 0.17824429976113498,
+   "median": 6.078585471148499e-05,
+   "std": 0.24863904762798406,
+   "frac_zero": 0.3111111111111111,
+   "frac_above_0_9": 0.013333333333333334
+  },
+  "sae_armAp_control": {
+   "n": 225,
+   "mean": 0.19925114783824494,
+   "median": 0.014906536103103416,
+   "std": 0.259423107983749,
+   "frac_zero": 0.29777777777777775,
+   "frac_above_0_9": 0.017777777777777778
+  },
+  "sae_armBp_static": {
+   "n": 225,
+   "mean": 0.21748484807947413,
+   "median": 0.0920187263411706,
+   "std": 0.26568643962671473,
+   "frac_zero": 0.26222222222222225,
+   "frac_above_0_9": 0.008888888888888889
+  },
+  "constant_velocity": {
+   "n": 225,
+   "mean": 0.11481608446907529,
+   "median": 0.0,
+   "std": 0.200149805733433,
+   "frac_zero": 0.5822222222222222,
+   "frac_above_0_9": 0.0
+  }
+ },
+ "stats_note": "n/mean/median/std/frac_zero/frac_above_0_9 computed directly from the SAME arrays each chart's histogram is built from (v1: per-scene score column from the manifest CSV; v2: per-group combined score from the reconciled run_pdm_score_with_groups.py export) -- see compute_stats() in this script. frac_zero is the share of scenes/groups with score == 0.0 exactly (a hard NC/DAC gate failure), not merely a low score.",
+ "v2_reconciliation_note": "Per-model: official (manifest) vs naive per-row means (both wrong, kept as record) vs group_mean (run_pdm_score_with_groups.py, docs/NAVSIM_EVAL.md Trap 8). A model is only plotted (v2_group_series / files.<key>.v2 non-null) if |group_mean - official| < 0.0005; see 'status' per model below for why any that don't have a chart don't.",
+ "v2_reconciliation": {
+  "variant1_patch_tokens_film": {
+   "official": 0.24689760645814343,
+   "naive_all_rows_mean": 0.4391907935366741,
+   "naive_stage2_rows_mean": 0.42071777587479675,
+   "group_mean": 0.24689760645814343,
+   "n_groups": 225,
+   "delta": 0.0,
+   "reconciles": true,
+   "groups_csv": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_variant1_patch_tokens_film_groups2/2026.08.28.21.11.28/2026.08.28.22.11.59_groups.csv",
+   "status": "reconciled"
+  },
+  "cmd_tokens_film": {
+   "official": 0.24109533336875555,
+   "naive_all_rows_mean": 0.4388858914882818,
+   "naive_stage2_rows_mean": 0.4231723731442643,
+   "group_mean": 0.24109533336875555,
+   "n_groups": 225,
+   "delta": 0.0,
+   "reconciles": true,
+   "groups_csv": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_cmd_tokens_film_groups2/2026.08.28.21.14.54/2026.08.28.22.15.49_groups.csv",
+   "status": "reconciled"
+  },
+  "cls_tokens_film": {
+   "official": 0.17824429976113498,
+   "naive_all_rows_mean": 0.36943587540589895,
+   "naive_stage2_rows_mean": 0.3549135322331834,
+   "group_mean": 0.17824429976113498,
+   "n_groups": 225,
+   "delta": 0.0,
+   "reconciles": true,
+   "groups_csv": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_cls_tokens_film_groups2/2026.08.28.21.14.54/2026.08.28.22.04.15_groups.csv",
+   "status": "reconciled"
+  },
+  "sae_armAp_control": {
+   "official": 0.19925114783824494,
+   "naive_all_rows_mean": 0.4141961280152493,
+   "naive_stage2_rows_mean": 0.40321225382054965,
+   "group_mean": 0.19925114783824494,
+   "n_groups": 225,
+   "delta": 0.0,
+   "reconciles": true,
+   "groups_csv": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_sae_armAp_groups2/2026.08.28.21.14.54/2026.08.28.22.23.14_groups.csv",
+   "status": "reconciled"
+  },
+  "sae_armBp_static": {
+   "official": 0.21748484807947413,
+   "naive_all_rows_mean": 0.4086853346361949,
+   "naive_stage2_rows_mean": 0.3927738389375195,
+   "group_mean": 0.21748484807947413,
+   "n_groups": 225,
+   "delta": 0.0,
+   "reconciles": true,
+   "groups_csv": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_sae_armBp_groups2/2026.08.28.21.19.10/2026.08.28.22.28.04_groups.csv",
+   "status": "reconciled"
+  },
+  "constant_velocity": {
+   "official": 0.11481608446907529,
+   "naive_all_rows_mean": 0.32632874652941257,
+   "naive_stage2_rows_mean": 0.32935573451550404,
+   "group_mean": 0.11481608446907529,
+   "n_groups": 225,
+   "delta": 0.0,
+   "reconciles": true,
+   "groups_csv": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_constvel_groups/2026.08.28.16.18.48/2026.08.28.16.37.34_groups.csv",
+   "status": "reconciled"
+  }
+ },
+ "files": {
+  "variant1_patch_tokens_film": {
+   "v1": "variant1_patch_tokens_film__v1_pdms_navtest.png",
+   "v2": "variant1_patch_tokens_film__v2_epdms_navhard.png"
+  },
+  "cmd_tokens_film": {
+   "v1": "cmd_tokens_film__v1_pdms_navtest.png",
+   "v2": "cmd_tokens_film__v2_epdms_navhard.png"
+  },
+  "cls_tokens_film": {
+   "v1": "cls_tokens_film__v1_pdms_navtest.png",
+   "v2": "cls_tokens_film__v2_epdms_navhard.png"
+  },
+  "sae_armAp_control": {
+   "v1": "sae_armAp_control__v1_pdms_navtest.png",
+   "v2": "sae_armAp_control__v2_epdms_navhard.png"
+  },
+  "sae_armBp_static": {
+   "v1": "sae_armBp_static__v1_pdms_navtest.png",
+   "v2": "sae_armBp_static__v2_epdms_navhard.png"
+  },
+  "transfuser": {
+   "v1": "transfuser__v1_pdms_navtest.png",
+   "v2": null
+  },
+  "human": {
+   "v1": "human__v1_pdms_navtest.png",
+   "v2": null
+  },
+  "constant_velocity": {
+   "v1": "constant_velocity__v1_pdms_navtest.png",
+   "v2": "constant_velocity__v2_epdms_navhard.png"
+  }
+ }
+}

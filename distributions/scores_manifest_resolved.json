@@ -1,0 +1,281 @@
+{
+ "_meta": {
+  "convention": "navtest -> NAVSIM v1 PDMS one-stage (v1.1 devkit at /scratch/eddie96/eddie/navsim_v1); navhard_two_stage -> NAVSIM v2 EPDMS two-stage (run_pdm_score.py, not one_stage)",
+  "navtest_expected_scenes": 12146,
+  "navhard_expected_scenes": 5912,
+  "status": "final_pathfix",
+  "last_updated": "2026-08-28T05:15:00-07:00",
+  "IMPORTANT_CAVEAT_navhard_missing_sensor_data": "navhard_two_stage's sensor_blobs on this machine (/scratch/eddie96/eddie/navsim_workspace/dataset/navhard_two_stage/sensor_blobs) is missing some stage-two CAM_F0 JPEGs. This was proven TWICE independently by different code paths hitting the SAME files: (1) dino_agent.py's DINOWaypointAgent._build_image_tensor catches the missing file as a None image and falls back to a constant-velocity trajectory per-scenario (its documented robustness contract), logged as 'falling back to constant-velocity trajectory'; (2) TransfuserAgent's image loading has no such per-scenario try/except, so the SAME missing CAM_F0/<hash>.jpg files surface as raw, uncaught FileNotFoundError tracebacks (job 57191980) which eventually crash the whole run in run_pdm_score.py's compute_final_scores (NaN-array TypeError), rather than degrading gracefully. This is a deterministic, reproducible property of this specific navhard_two_stage download (confirmed by re-running variant1_patch_tokens_film from scratch, standalone, as job 57192524, which reproduced the same fallback pattern), not contention, not a code bug introduced this session, and not fixable by re-running. CONSEQUENCES: (a) our navhard EPDMS numbers are valid for MODEL-VS-MODEL comparison on this machine, but are NOT directly comparable to published navhard_two_stage leaderboard figures, which were computed on complete sensor data; (b) every navhard score in this manifest is the FULL-set aggregate (all 5912 scenes, with CV-substituted trajectories on the affected subset for camera-based agents) -- the fallback count is recorded beside each score, scores are not silently cleaned; (c) a 'complete-subset, missing-scenes-excluded' recomputation was investigated and explicitly NOT attempted: naive per-row averaging of the exported CSV was empirically shown to be badly wrong (constant_velocity: 0.326 recomputed vs 0.115 true official combined score, a 3x error) because NAVSIM's real stage-one/stage-two pairing and per-pair 'weight' column are dropped before the CSV is written, and reconstructing them faithfully would need either a risky from-scratch reimplementation of run_pdm_score.py's calculate_individual_mapping_scores/create_scene_aggregators or ~6 more GPU-hours of full re-scoring with a scene filter -- neither was authorized, an honestly-caveated number now was prioritized over a marginally cleaner one later; (d) the EXACT set of affected scenes could NOT be recovered: a CSV row-matching proxy against the constant_velocity_agent run (valid in principle, since a CV-fallback trajectory is bit-identical to ConstantVelocityAgent's own -- same formula, same ego_velocity input) produced 894-1037 matches per model against an expected ~450, i.e. too noisy to trust (many real, non-fallback scenes coincidentally score identically to CV on this benchmark's coarse/bucketed PDM sub-metrics). So: fallback-scene-set equality ACROSS MODELS is NOT proven and should not be assumed either way. One structural fact that is NOT evidence of anything: every navhard_two_stage CSV, regardless of agent, splits into exactly 450 stage-one (frame_type=ORIGINAL) rows and 5462 stage-two (SYNTHETIC) rows by the split's own reactive_all_mapping design -- this is why two_frame_extended_comfort_stage_two shows NaN on exactly 450 rows in EVERY navhard CSV ever produced here, including cmd_tokens_film's and cls_tokens_film's reused Aug-16/21 runs. That NaN count matching 450 is a coincidence of counts (stage-one row count vs. distinct missing-file count), not proof the same scenes are involved -- an earlier version of this analysis wrongly conflated the two; this note is the correction.",
+  "cmd_cls_missing_data_status_UNRESOLVED": "Whether cmd_tokens_film's (Aug 16) and cls_tokens_film's (Aug 21) REUSED navhard rows -- both logging 0 explicit CV-fallbacks -- were affected by this same missing-JPEG gap under their older (now-superseded, unrecoverable) agent code is UNRESOLVED. Do not assert they are clean; do not assert they are affected. Re-running them was explicitly not done (would cost real GPU time for no new information, per coordinator instruction) -- their scores are reported as-is, with 0 fallbacks logged by their own run, and this open question flagged rather than answered either way.",
+  "nan_ec_fraction_field_meaning": "The nan_ec_fraction.navhard_stage1/navhard_stage2 numbers recorded per model below are a STRUCTURAL fact about the navhard_two_stage split's row layout (450 stage-one-only rows + 5462 stage-two-only rows, every row carries only one stage's metrics so the other stage's columns are trivially NaN for it) -- NOT a data-quality or missing-file signal. They are identical across every navhard run regardless of agent or missing sensor data and should not be read as evidence of anything beyond confirming all these runs used the same 5912-scenario split.",
+  "fallback_definition": "fallbacks = SLURM-log-confirmed 'falling back to constant-velocity trajectory' events (Ray-dedup-corrected grep count) for camera-based dino_agent.py-family agents. constant_velocity_agent itself needs no camera input (SensorConfig.build_no_sensors()) so it is structurally immune to this gap (0 fallbacks, confirmed). human_agent and transfuser_agent are not_scoreable on navhard for unrelated, separate structural reasons -- see their entries.",
+  "ROOT_CAUSE_CORRECTION_navhard_sensor_paths": "SUPERSEDES _meta.IMPORTANT_CAVEAT_navhard_missing_sensor_data below (kept for the record, not deleted). The navhard scores were NOT limited by missing sensor data -- they were limited by a CONFIG BUG in the eval scripts written this session: original_sensor_path was set to navhard_two_stage own sensor_blobs (which holds ONLY synthetic stage-2 renders) instead of navtest_sensor_blobs (which holds the real stage-1 frames navhard_two_stage reuses by reference). This is a PRE-EXISTING, DOCUMENTED trap: dino-cmd-fusion/docs/NAVSIM_EVAL.md Trap 2 names it explicitly and cites a prior measurement of 450/510 fallbacks from the identical mistake; jobs/eval.sbatch (the repos own authoritative script) already sets the correct paths and asserts zero fallbacks or refuses the result. Verified independently by a peer session AND by this session directly (confirmed the specific missing file exists under navtest_sensor_blobs, confirmed jobs/eval.sbatch uses the correct path). FIX: point original_sensor_path at $OPENSCENE_DATA_ROOT/navtest_sensor_blobs/openscene-v1.1/sensor_blobs/test, keep synthetic_sensor_path at navhard_two_stage/sensor_blobs. Effect once fixed: EPDMS1 (stage-one) is no longer identical across models (it was a dead giveaway -- 0.28958783900556795 for every camera-based model pre-fix, impossible for five independent networks unless all five were secretly scoring constant-velocity), EPDMS2 (stage-two) also shifts (stage-two is NOT independent of stage-one in this two-stage metric, contrary to an earlier assumption in this manifest), and the SAE arm ordering INVERTS: armBp (static suppression) beats armAp (control) once the contamination is removed (0.2175 vs 0.1993), the opposite of the pre-fix ordering (0.1178 vs 0.1158). The complete-subset-recompute analysis in IMPORTANT_CAVEAT_navhard_missing_sensor_data (the 3x naive-averaging error, the noisy CV-row-matching proxy) remains factually true as a description of why that recompute method does not work, but is now MOOT for this manifest since a proper full corrected re-run (the actually-correct fix) was cheap and available all along -- that path recompute was never needed once the real bug was found.",
+  "pathfix_note": "navhard rescored with original_sensor_path=navtest blobs (stage-1 frames live there). Superseded scores retained per-model as superseded_score. epdms1/epdms2 REFRESHED with post-fix per-stage aggregates (independently re-derived from each corrected CSV's own extended_pdm_score_stage_one/stage_two summary rows, cross-checked against a peer session's independent extraction -- both agree exactly). No longer identical across models (was the giveaway pre-fix): patch 0.6634/0.3775, cmd 0.6296/0.3762, cls 0.5457/0.3217, SAE-A' 0.5475/0.3523, SAE-B' 0.6018/0.3650. constant_velocity's epdms1/epdms2 were never contaminated (the agent needs no camera input, SensorConfig.build_no_sensors(), so the sensor-path bug never touched it) and are left as originally scored.",
+  "_resolved_note": "csv_path values missing from the source manifest were filled in here by matching each candidate result CSV's own extended_pdm_score_combined aggregate to the manifest's score exactly. Generated by visualize_distributions/resolve_manifest.py; the source manifest is not modified."
+ },
+ "models": {
+  "variant1_patch_tokens_film": {
+   "agent": "dino_patch_tokens_film_agent",
+   "checkpoint": "/scratch/eddie96/eddie/dino-cmd-fusion/runs/patch_tokens_film_navsim/20260822_232349/checkpoints/last.ckpt",
+   "checkpoint_global_step": 11008,
+   "checkpoint_epoch": 14,
+   "v1_pdms_navtest": {
+    "status": "scored",
+    "score": 0.8302150604783896,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/patch_tokens_film_v1/2026.08.28.00.38.26/2026.08.28.01.16.40.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146,
+    "note": "SLURM job 57189593 accounting shows OUT_OF_MEMORY (5 oom_kill events on individual Ray worker processes at 128G), but Ray retried the killed tasks and the run completed cleanly: 12146/12146 successful, 0 failed, architecture guard + exact-match state_dict confirmed in log. Treated as valid. Recommend bumping --mem above 128G for this agent family (720 patch tokens/forward) on future v1 runs."
+   },
+   "v2_epdms_navhard_two_stage": {
+    "score": 0.24689760645814343,
+    "fallbacks": 0,
+    "superseded_score": 0.24689760645814343,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_patch_tokens_film_pathfix/2026.08.28.02.26.52/2026.08.28.03.26.55.csv",
+    "n_scenes": 5912,
+    "status": "ok",
+    "note": "pathfix (corrected sensor paths)"
+   },
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   },
+   "retry_57192524": "Standalone determinism-check re-run of variant1_patch_tokens_film navhard (no concurrent GPU jobs this time). Launched to rule out filesystem contention as the fallback cause. If it COMPLETED with a similar ~450 fallback count before this manifest was read, that confirms determinism and its numbers may be used in place of job 57189729's above; if it had not finished by manifest finalization, job 57189729's numbers stand as reported and this field is left as a pointer for whoever checks it next -- see the delivery report for this run's final status at hand-off time.",
+   "v2_navhard_epdms1": 0.6634121768015052,
+   "v2_navhard_epdms2": 0.3775271058118026
+  },
+  "cmd_tokens_film": {
+   "agent": "dino_cmd_agent",
+   "checkpoint": "/scratch/eddie96/eddie/dino-cmd-fusion/runs/cmd_tokens_film/20260813_155646/checkpoints/epoch012-best.ckpt",
+   "checkpoint_global_step": 9540,
+   "checkpoint_epoch": 12,
+   "checkpoint_provenance_note": "same checkpoint previously reported at v2-one-stage-on-navtest 0.8421; confirmed this is also the checkpoint used for the existing navhard_cmd_tokens_film two-stage run being reused below",
+   "v1_pdms_navtest": {
+    "status": "scored",
+    "score": 0.8400143611791913,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/cmd_tokens_film_v1/2026.08.28.00.42.24/2026.08.28.01.20.10.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146
+   },
+   "v2_epdms_navhard_two_stage": {
+    "score": 0.24109533336875555,
+    "fallbacks": 0,
+    "superseded_score": 0.12162556165377175,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/cmd_tokens_film_pathfix2/2026.08.28.03.59.33/2026.08.28.05.01.40.csv",
+    "n_scenes": 5912,
+    "status": "ok",
+    "note": "pathfix (corrected sensor paths)"
+   },
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   },
+   "v2_navhard_epdms1": 0.629613085255002,
+   "v2_navhard_epdms2": 0.3762055132422499
+  },
+  "cls_tokens_film": {
+   "agent": "dino_cls_tokens_film_agent",
+   "checkpoint": "/scratch/eddie96/eddie/dino-cmd-fusion/runs/cls_tokens_film_navsim/20260820_225913/checkpoints/epoch013-best.ckpt",
+   "checkpoint_global_step": 10030,
+   "checkpoint_epoch": 13,
+   "v1_pdms_navtest": {
+    "status": "scored",
+    "score": 0.7690335120564665,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/cls_tokens_film_v1/2026.08.28.00.42.28/2026.08.28.01.12.52.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146
+   },
+   "v2_epdms_navhard_two_stage": {
+    "score": 0.17824429976113498,
+    "fallbacks": 0,
+    "superseded_score": 0.11360385657198482,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/cls_tokens_film_pathfix2/2026.08.28.03.59.33/2026.08.28.04.48.39.csv",
+    "n_scenes": 5912,
+    "status": "ok",
+    "note": "pathfix (corrected sensor paths)"
+   },
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   },
+   "v2_navhard_epdms1": 0.5457048496489547,
+   "v2_navhard_epdms2": 0.3217183151337004
+  },
+  "sae_armAp_control": {
+   "agent": "dino_patch_tokens_film_sae_agent",
+   "agent_kill_groups": "",
+   "checkpoint": "/scratch/eddie96/eddie/dino-sae/runs/sae_armAp_scratch_control/20260826_113831/checkpoints/last.ckpt",
+   "checkpoint_global_step": 11008,
+   "checkpoint_epoch": 14,
+   "v1_pdms_navtest": {
+    "status": "scored",
+    "score": 0.8091643107374076,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/sae_armAp_v1/2026.08.28.00.45.33/2026.08.28.01.23.44.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146,
+    "note": "SLURM job 57189596 accounting shows OUT_OF_MEMORY (11 oom_kill events, same pattern as variant1_patch_tokens_film -- this whole 720-patch-token agent family needs >128G for the 16-worker CPU run), but Ray retried and completed cleanly: 12146/12146 successful, 0 failed, suppressor-active + exact-match state_dict guards both confirmed (kill_groups='' -> 0 latents killed, correct for the control arm). Treated as valid."
+   },
+   "v2_epdms_navhard_two_stage": {
+    "score": 0.19925114783824494,
+    "fallbacks": 0,
+    "superseded_score": 0.19925114783824494,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_sae_armAp_pathfix/2026.08.28.02.26.50/2026.08.28.03.37.07.csv",
+    "n_scenes": 5912,
+    "status": "ok",
+    "note": "pathfix (corrected sensor paths)"
+   },
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   },
+   "v2_navhard_epdms1": 0.5475159521295904,
+   "v2_navhard_epdms2": 0.35234725950729034
+  },
+  "sae_armBp_static": {
+   "agent": "dino_patch_tokens_film_sae_agent",
+   "agent_kill_groups": "sky+nature+structures",
+   "checkpoint": "/scratch/eddie96/eddie/dino-sae/runs/sae_armBp_scratch_static/20260826_125803/checkpoints/last.ckpt",
+   "checkpoint_global_step": 11008,
+   "checkpoint_epoch": 14,
+   "v1_pdms_navtest": {
+    "status": "scored",
+    "score": 0.8140566809538212,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/sae_armBp_v1/2026.08.28.00.45.32/2026.08.28.01.35.24.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146,
+    "note": "Same OOM/Ray-retry pattern as variant1_patch_tokens_film and sae_armAp_control (17 oom_kill events on individual workers, job accounting shows OUT_OF_MEMORY) but completed cleanly: 12146/12146 successful, 0 failed, suppressor-active + exact-match state_dict guards both confirmed (kill_groups sky/nature/structures killed 1307/1353 latents on layers 10/11 as expected for this arm). Treated as valid."
+   },
+   "v2_epdms_navhard_two_stage": {
+    "score": 0.21748484807947413,
+    "fallbacks": 0,
+    "superseded_score": 0.21748484807947413,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_sae_armBp_pathfix/2026.08.28.02.26.51/2026.08.28.03.36.20.csv",
+    "n_scenes": 5912,
+    "status": "ok",
+    "note": "pathfix (corrected sensor paths)"
+   },
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   },
+   "v2_navhard_epdms1": 0.6018155335387866,
+   "v2_navhard_epdms2": 0.3649615605692398
+  },
+  "transfuser": {
+   "agent": "transfuser_agent",
+   "checkpoint": "/scratch/eddie96/eddie/navsim_workspace/baseline_ckpts/transfuser_seed_0.ckpt",
+   "checkpoint_global_step": 88700,
+   "checkpoint_epoch": 99,
+   "v1_pdms_navtest": {
+    "status": "reused",
+    "score": 0.8338995360379594,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/transfuser_v1/2026.08.25.03.39.00/2026.08.25.03.54.24.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146
+   },
+   "v2_epdms_navhard_two_stage": {
+    "status": "not_scoreable",
+    "score": null,
+    "csv_path": null,
+    "fallbacks": null,
+    "n_scenes": null,
+    "reason": "config.latent=false, so TransfuserAgent requests lidar_pc; navhard_two_stage's public sensor_blobs release has ZERO MergedPointCloud (LiDAR) directories across all 76 scene logs (confirmed locally AND via the HuggingFace OpenDriveLab/OpenScene navsim-v2 file listing -- exactly 3 navhard_two_stage_* tarballs exist, curr_sensors/hist_sensors/scene_pickles, no lidar tarball). Job 57189732 FAILED (00:13:47) on this. Matches why the published navhard reference baseline is 'Latent TransFuser', not plain TransFuser. transfuser_seed_0.ckpt was trained WITH lidar fusion (validated: its v1 navtest score 0.8339 matches the published non-latent TransFuser baseline) so forcing config.latent=true on it would silently run a mismatched forward path -- rejected on architecture-guard grounds, not attempted. A separately-trained, architecture-matched Latent TransFuser checkpoint (ltf_seed_0.ckpt) WAS tried instead -- see the 'transfuser_latent' entry below -- and it also could not be scored, for a different, structural reason (missing camera data, not lidar). TransFuser proper has no navhard number available with the data and checkpoints on this machine."
+   },
+   "v2_navhard_epdms1": null,
+   "v2_navhard_epdms2": null,
+   "nan_ec_fraction": {
+    "navhard_stage1": null,
+    "navhard_stage2": null,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   }
+  },
+  "transfuser_latent": {
+   "agent": "transfuser_agent",
+   "agent_config_override": "config.latent=true",
+   "checkpoint": "/scratch/eddie96/eddie/navsim_workspace/baseline_ckpts/ltf_seed_0.ckpt",
+   "checkpoint_global_step": 88700,
+   "checkpoint_epoch": 99,
+   "note_not_in_original_8_model_table": "NOT the table's 'TransFuser (user-trained)' model -- a separate, architecture-matched Latent TransFuser checkpoint (different md5, different size: 673235500 vs transfuser_seed_0.ckpt's 672447984 bytes), added only as an attempt to get SOME TransFuser-family navhard number once transfuser_seed_0.ckpt proved unscoreable there. 'LTF'/'Latent TransFuser' is NAVSIM's own official documented variant name (navsim/docs/agents.md:110-113: 'a variant of the TransFuser architecture that introduces a positional encoding as a substitute for LiDAR data ... enable this feature by setting agent.config.latent=True'), so agent.config.latent=true is the devkit-documented, architecture-correct way to run it -- this was not a guess.",
+   "v1_pdms_navtest": {
+    "status": "not_run",
+    "score": null,
+    "csv_path": null,
+    "fallbacks": null,
+    "n_scenes": null,
+    "note": "Out of scope -- only attempted on navhard as a fallback route for a TransFuser-family number; not part of the original 8-model v1 comparison."
+   },
+   "v2_epdms_navhard_two_stage": {
+    "status": "not_scoreable",
+    "score": null,
+    "csv_path": null,
+    "fallbacks": null,
+    "n_scenes": null,
+    "reason": "UPDATED after fixing original_sensor_path: job 57194640 got past the missing-CAM_F0-JPEG gap entirely (0 FileNotFoundErrors this time, confirming the path fix works for this agent too) but hit a NEW, separate failure: AssertionError(\"Invalid interval nan\") in navsim/planning/simulation/planner/pdm_planner/scoring/scene_aggregator.py:62 (_compute_two_frame_comfort), cascading into the same downstream TypeError converting NaN arrays to numeric that killed the pre-fix run. This looks like a genuine numerical/output issue specific to TransfuserAgent in latent mode on this navhard split (e.g. a degenerate or NaN-timestamp trajectory on at least one scene) rather than a sensor-path or data-availability problem -- TransfuserAgent has no per-scenario finite-output guard the way dino_agent.py does. Not investigated further (out of scope, bonus model). Still not_scoreable."
+   },
+   "v2_navhard_epdms1": null,
+   "v2_navhard_epdms2": null,
+   "nan_ec_fraction": {
+    "navhard_stage1": null,
+    "navhard_stage2": null,
+    "navtest": "n/a, not run"
+   }
+  },
+  "human": {
+   "agent": "human_agent",
+   "checkpoint": null,
+   "v1_pdms_navtest": {
+    "status": "reused",
+    "score": 0.9455140385323172,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/v1_human/2026.08.24.18.09.58/2026.08.24.18.13.51.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146
+   },
+   "v2_epdms_navhard_two_stage": {
+    "status": "not_scoreable",
+    "score": null,
+    "csv_path": null,
+    "fallbacks": null,
+    "n_scenes": null,
+    "reason": "human_agent.compute_trajectory() -> Scene.get_future_trajectory() indexes self.frames[num_history_frames-1 .. num_history_frames-1+num_future_frames] to read GT human ego poses (navsim/common/dataclasses.py:356-370), unconditionally, with no fallback path in human_agent.py (an 8-line class). navhard_two_stage stage-two frames are SYNTHETIC (perturbation) rollouts that do not carry that many post-perturbation GT frames, so this raises IndexError: list index out of range on every stage-two scenario -- job 57189733, FAILED, 00:15:08 elapsed, same traceback repeated (Ray-deduped) across all reactive-stage workers. Structural, not a config bug: EPDMS's own metric definition (navsim/docs/metrics.md) uses human trajectories only as the filter_m(agent, human) REFERENCE inside NC/DAC/DDC/TLC, never as a directly-scored agent, and the published navhard EPDMS reference table (CV 10.9, Ego-history MLP 12.7, Latent TransFuser 23.1, PDM-Closed 51.3, SimpleVSF 42.5-47.7) has no Human row -- consistent with Human simply not being a valid two-stage EPDMS agent. Not fixable without patching the devkit itself; out of scope."
+   },
+   "v2_navhard_epdms1": null,
+   "v2_navhard_epdms2": null,
+   "nan_ec_fraction": {
+    "navhard_stage1": null,
+    "navhard_stage2": null,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   }
+  },
+  "constant_velocity": {
+   "agent": "constant_velocity_agent",
+   "checkpoint": null,
+   "v1_pdms_navtest": {
+    "status": "reused",
+    "score": 0.20651651538926397,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/v1_cv/2026.08.24.18.09.57/2026.08.24.18.13.34.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146
+   },
+   "v2_epdms_navhard_two_stage": {
+    "status": "scored",
+    "score": 0.11481608446907529,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_constvel/2026.08.28.00.45.33/2026.08.28.00.58.01.csv",
+    "fallbacks": 0,
+    "n_scenes": 5912,
+    "note": "0 fallbacks and structurally immune to the missing-CAM_F0-JPEG gap: constant_velocity_agent's get_sensor_config() returns SensorConfig.build_no_sensors(), so it never touches camera imagery at all. This is the one navhard number on this machine NOT diluted by the sensor gap."
+   },
+   "v2_navhard_epdms1": 0.28958783901823343,
+   "v2_navhard_epdms2": 0.34246385161190046,
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   }
+  }
+ }
+}

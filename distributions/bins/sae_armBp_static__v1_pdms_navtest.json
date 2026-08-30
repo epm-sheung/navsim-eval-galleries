@@ -1,0 +1,182 @@
+{
+ "source_csv": "/scratch/eddie96/eddie/navsim_v1/exp/sae_armBp_v1/2026.08.28.00.45.32/2026.08.28.01.35.24.csv",
+ "split": "navtest",
+ "model_key": "sae_armBp_static",
+ "metric": "v1_pdms_navtest",
+ "per_bin": 2,
+ "total_scenes": 12146,
+ "rendered_count": 10,
+ "resolutions": {
+  "5": {
+   "edges": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+   ],
+   "bins": [
+    {
+     "lo": 0.0,
+     "hi": 0.2,
+     "n_rendered_available": 2,
+     "tokens": [
+      "00016f8b45c25a1d",
+      "b5668089b793502b"
+     ]
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.4,
+     "n_rendered_available": 2,
+     "tokens": [
+      "936c2cf5b8345663",
+      "bd3e71c7666156ee"
+     ]
+    },
+    {
+     "lo": 0.4,
+     "hi": 0.6,
+     "n_rendered_available": 2,
+     "tokens": [
+      "1968ed26cc315d75",
+      "ff5e13b14d735e52"
+     ]
+    },
+    {
+     "lo": 0.6,
+     "hi": 0.8,
+     "n_rendered_available": 2,
+     "tokens": [
+      "53f8bc4012fe5f29",
+      "0bd89ca329cd55f9"
+     ]
+    },
+    {
+     "lo": 0.8,
+     "hi": 1.0,
+     "n_rendered_available": 2,
+     "tokens": [
+      "c1133aca1539575e",
+      "ffe87d190cd358c8"
+     ]
+    }
+   ]
+  }
+ },
+ "tokens": [
+  "00016f8b45c25a1d",
+  "b5668089b793502b",
+  "936c2cf5b8345663",
+  "bd3e71c7666156ee",
+  "1968ed26cc315d75",
+  "ff5e13b14d735e52",
+  "53f8bc4012fe5f29",
+  "0bd89ca329cd55f9",
+  "c1133aca1539575e",
+  "ffe87d190cd358c8"
+ ],
+ "scenes": [
+  {
+   "token": "00016f8b45c25a1d",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 0.0,
+   "driving_direction_compliance": 0.0,
+   "ego_progress": 0.0,
+   "time_to_collision_within_bound": 1.0,
+   "comfort": 1.0,
+   "score": 0.0
+  },
+  {
+   "token": "b5668089b793502b",
+   "no_at_fault_collisions": 0.5,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 0.5590024736110543,
+   "time_to_collision_within_bound": 0.0,
+   "comfort": 1.0,
+   "score": 0.19979218200230298
+  },
+  {
+   "token": "936c2cf5b8345663",
+   "no_at_fault_collisions": 0.5,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 0.5,
+   "ego_progress": 0.577796290930043,
+   "time_to_collision_within_bound": 0.0,
+   "comfort": 1.0,
+   "score": 0.20370756061042564
+  },
+  {
+   "token": "bd3e71c7666156ee",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 0.5320263768876787,
+   "time_to_collision_within_bound": 0.0,
+   "comfort": 1.0,
+   "score": 0.38834432370319943
+  },
+  {
+   "token": "1968ed26cc315d75",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 0.5825150297874165,
+   "time_to_collision_within_bound": 0.0,
+   "comfort": 1.0,
+   "score": 0.40938126241142353
+  },
+  {
+   "token": "ff5e13b14d735e52",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 1.0,
+   "time_to_collision_within_bound": 0.0,
+   "comfort": 1.0,
+   "score": 0.5833333333333334
+  },
+  {
+   "token": "53f8bc4012fe5f29",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 0.23312574131922512,
+   "time_to_collision_within_bound": 1.0,
+   "comfort": 1.0,
+   "score": 0.6804690588830105
+  },
+  {
+   "token": "0bd89ca329cd55f9",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 0.5191606966611486,
+   "time_to_collision_within_bound": 1.0,
+   "comfort": 1.0,
+   "score": 0.7996502902754786
+  },
+  {
+   "token": "c1133aca1539575e",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 0.5206272951780251,
+   "time_to_collision_within_bound": 1.0,
+   "comfort": 1.0,
+   "score": 0.8002613729908438
+  },
+  {
+   "token": "ffe87d190cd358c8",
+   "no_at_fault_collisions": 1.0,
+   "drivable_area_compliance": 1.0,
+   "driving_direction_compliance": 1.0,
+   "ego_progress": 1.0,
+   "time_to_collision_within_bound": 1.0,
+   "comfort": 1.0,
+   "score": 1.0
+  }
+ ]
+}

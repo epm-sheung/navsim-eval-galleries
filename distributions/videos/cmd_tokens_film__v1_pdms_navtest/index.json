@@ -1,0 +1,134 @@
+{
+ "clips": [
+  {
+   "token": "00016f8b45c25a1d",
+   "video": "00016f8b45c25a1d.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 0.0,
+    "driving_direction_compliance": 0.5,
+    "ego_progress": 0.0,
+    "time_to_collision_within_bound": 1.0,
+    "comfort": 1.0,
+    "score": 0.0
+   }
+  },
+  {
+   "token": "a9e622747fc45a0a",
+   "video": "a9e622747fc45a0a.mp4",
+   "scores": {
+    "no_at_fault_collisions": 0.5,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 0.46892038988946383,
+    "time_to_collision_within_bound": 0.0,
+    "comfort": 1.0,
+    "score": 0.1810250812269716
+   }
+  },
+  {
+   "token": "e59a5171c33c5af9",
+   "video": "e59a5171c33c5af9.mp4",
+   "scores": {
+    "no_at_fault_collisions": 0.5,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 0.5871735863678277,
+    "time_to_collision_within_bound": 0.0,
+    "comfort": 1.0,
+    "score": 0.20566116382663077
+   }
+  },
+  {
+   "token": "ff5c0e17d20351ca",
+   "video": "ff5c0e17d20351ca.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 0.5371812692706082,
+    "time_to_collision_within_bound": 0.0,
+    "comfort": 1.0,
+    "score": 0.39049219552942005
+   }
+  },
+  {
+   "token": "784ddfd058865dcb",
+   "video": "784ddfd058865dcb.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 0.5,
+    "ego_progress": 0.5742734310693118,
+    "time_to_collision_within_bound": 0.0,
+    "comfort": 1.0,
+    "score": 0.40594726294554656
+   }
+  },
+  {
+   "token": "ffd429cac51751d9",
+   "video": "ffd429cac51751d9.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 1.0,
+    "time_to_collision_within_bound": 0.0,
+    "comfort": 1.0,
+    "score": 0.5833333333333334
+   }
+  },
+  {
+   "token": "673a88a4037f5b6b",
+   "video": "673a88a4037f5b6b.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 0.15111010976277264,
+    "time_to_collision_within_bound": 1.0,
+    "comfort": 1.0,
+    "score": 0.6462958790678219
+   }
+  },
+  {
+   "token": "078bc1027dde5d1a",
+   "video": "078bc1027dde5d1a.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 0.5,
+    "ego_progress": 0.5196756391173962,
+    "time_to_collision_within_bound": 1.0,
+    "comfort": 1.0,
+    "score": 0.7998648496322485
+   }
+  },
+  {
+   "token": "eeae24d38eb15e0a",
+   "video": "eeae24d38eb15e0a.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 0.5205553090304614,
+    "time_to_collision_within_bound": 1.0,
+    "comfort": 1.0,
+    "score": 0.8002313787626923
+   }
+  },
+  {
+   "token": "ffe87d190cd358c8",
+   "video": "ffe87d190cd358c8.mp4",
+   "scores": {
+    "no_at_fault_collisions": 1.0,
+    "drivable_area_compliance": 1.0,
+    "driving_direction_compliance": 1.0,
+    "ego_progress": 1.0,
+    "time_to_collision_within_bound": 1.0,
+    "comfort": 1.0,
+    "score": 1.0
+   }
+  }
+ ]
+}

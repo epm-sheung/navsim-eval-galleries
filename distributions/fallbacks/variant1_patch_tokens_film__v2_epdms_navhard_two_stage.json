@@ -1,0 +1,14 @@
+{
+ "model_pred": "eval_test/distributions/preds/variant1_patch_tokens_film__v2_epdms_navhard_two_stage.pkl",
+ "cv_pred": "eval_test/distributions/preds/cvprobe__variant1_patch_tokens_film__v2_epdms_navhard_two_stage.pkl",
+ "model_agent": "DINOPatchTokensFilmAgent",
+ "cv_agent": "ConstantVelocityAgent",
+ "tolerance": 1e-06,
+ "n_shared_tokens": 535,
+ "n_cv_fallback": 0,
+ "n_degenerate_zero_motion": 0,
+ "n_real_prediction": 535,
+ "cv_fallback_tokens": [],
+ "degenerate_zero_motion_tokens": [],
+ "method": "bit-wise comparison of predicted pose arrays against a ConstantVelocityAgent dump over the same scene filter; a fallback trajectory is produced by the same formula from the same ego_velocity and is therefore identical, not merely similarly scored"
+}

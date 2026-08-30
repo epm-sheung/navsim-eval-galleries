@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAVSIM Scoreboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#f4f5f3; --panel:#fbfbfa; --panel-2:#f0f1ee;
+  --ink:#1b2027; --ink-2:#4a535e; --ink-3:#78828e;
+  --rule:#dcdedb; --rule-2:#e9eae7;
+  --accent:#1f6f6b; --accent-soft:#e2eeec;
+  --good:#1d6b45; --good-bg:#e3efe7;
+  --bad:#9a3126; --bad-bg:#f5e5e2;
+  --warn:#8a5a10; --warn-bg:#f2ecd9;
+  --shadow:0 1px 2px rgba(27,32,39,.06),0 8px 24px -16px rgba(27,32,39,.28);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#14181c; --panel:#1b2025; --panel-2:#20262b;
+    --ink:#e8ebe9; --ink-2:#a8b2b8; --ink-3:#78838b;
+    --rule:#2c3238; --rule-2:#242a2f;
+    --accent:#5fbdb5; --accent-soft:#1d3230;
+    --good:#63c08d; --good-bg:#1a2e23;
+    --bad:#e08979; --bad-bg:#331f1c;
+    --warn:#d3b667; --warn-bg:#2e2717;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#14181c; --panel:#1b2025; --panel-2:#20262b;
+  --ink:#e8ebe9; --ink-2:#a8b2b8; --ink-3:#78838b;
+  --rule:#2c3238; --rule-2:#242a2f;
+  --accent:#5fbdb5; --accent-soft:#1d3230;
+  --good:#63c08d; --good-bg:#1a2e23;
+  --bad:#e08979; --bad-bg:#331f1c;
+  --warn:#d3b667; --warn-bg:#2e2717;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.5;}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px;}
+h1{font-size:clamp(24px,3.4vw,32px);font-weight:600;letter-spacing:-.02em;margin:0 0 8px;}
+h2{font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0;}
+p{margin:0 0 12px;max-width:78ch;}
+.lede{font-size:15px;color:var(--ink-2);max-width:78ch;}
+a{color:var(--accent);}
+.sec{margin-top:38px;}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px;}
+.sec-head::after{content:"";flex:1;height:1px;background:var(--rule);}
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--panel);box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;min-width:760px;}
+caption{caption-side:top;text-align:left;padding:13px 16px 9px;font-family:"IBM Plex Sans",sans-serif;
+  font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);}
+th,td{padding:8px 13px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule-2);
+  font-variant-numeric:tabular-nums;}
+th{font-family:"IBM Plex Sans",sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--panel);}
+th:first-child,td:first-child{text-align:left;}
+td{color:var(--ink-2);}
+td.name{font-family:"IBM Plex Sans",sans-serif;color:var(--ink);font-size:13px;font-weight:500;}
+td.dash{color:var(--ink-3);opacity:.55;text-align:center;}
+td.val{font-weight:600;color:var(--ink);}
+td.pub{color:var(--ink-3);}
+colgroup col.grp-start{border-left:1px solid var(--rule);}
+tbody tr:last-child td{border-bottom:none;}
+tr.grp td{background:var(--panel-2);font-family:"IBM Plex Sans",sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:6px 13px;}
+tr.base td.name{font-style:italic;}
+sup.fn{color:var(--accent);font-weight:700;cursor:default;margin-left:1px;}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:middle;}
+.note{font-family:"IBM Plex Sans",sans-serif;font-size:13px;color:var(--ink-2);
+  background:var(--panel-2);border-radius:5px;padding:11px 14px;margin-top:12px;}
+.note b{color:var(--ink);font-weight:600;}
+.note.warn{background:var(--warn-bg);color:var(--warn);}
+.note.warn b{color:var(--warn);}
+code{font-family:"IBM Plex Mono",monospace;font-size:.92em;background:var(--rule-2);padding:1px 5px;border-radius:3px;color:var(--ink);}
+.foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-family:"IBM Plex Sans",sans-serif;
+  font-size:12px;color:var(--ink-3);}
+.foot ol{padding-left:18px;margin:8px 0 0;}
+.foot li{margin:4px 0;}
+.legendbar{display:flex;flex-wrap:wrap;gap:6px 16px;margin:2px 0 0;font-family:"IBM Plex Sans",sans-serif;font-size:12px;color:var(--ink-3);}
+.sortbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;flex-wrap:wrap;font-family:"IBM Plex Sans",sans-serif;}
+.sortbar span.lbl{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);}
+.sortbar button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:6px;
+  border:1.5px solid var(--rule);background:var(--panel);color:var(--ink-2);cursor:pointer;}
+.sortbar button:hover{background:var(--panel-2);}
+.sortbar button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+td.rank{color:var(--ink-3);font-size:12px;text-align:right;padding-right:6px;}
+span.cfg{display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;
+  color:var(--ink-3);font-weight:400;letter-spacing:0;text-transform:none;margin-top:1px;}
+tr.ours-row td{background:var(--accent-soft);}
+tr.ours-row td.name{color:var(--accent);font-weight:700;}
+tr.ours-row td.name span.cfg{color:var(--accent);opacity:.8;}
+td.name b.ourstag{color:var(--accent);font-weight:700;background:none;padding:0;margin-right:5px;}
+tr[data-v1=""] td.val, tr[data-v1=""] td.pub{opacity:.9;}
+</style>
+</head>
+<body>
+
+<style id="navsim-tabbar-css">
+#navsim-tabbar{
+  position:sticky;top:0;z-index:99999;
+  display:flex;gap:2px;flex-wrap:wrap;align-items:center;
+  padding:8px 14px;margin:0 0 4px;
+  background:#fbfbfa;border-bottom:1px solid #dcdedb;
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+}
+#navsim-tabbar .nt-home{
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#78828e;margin-right:12px;text-decoration:none;
+}
+#navsim-tabbar a.nt{
+  font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;
+  padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;
+}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt:focus-visible{outline:2px solid #1f6f6b;outline-offset:-2px;}
+#navsim-tabbar a.nt[aria-current="page"]{
+  background:#e2eeec;border-color:#1f6f6b;color:#1f6f6b;font-weight:600;
+}
+#navsim-tabbar .nt-n{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;
+  color:#78828e;margin-left:6px;
+}
+@media (prefers-color-scheme:dark){
+  #navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}
+  #navsim-tabbar a.nt{color:#a8b2b8;}
+  #navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}
+  #navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}
+  #navsim-tabbar .nt-home,#navsim-tabbar .nt-n{color:#78838b;}
+}
+</style>
+<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="index.html" aria-current="page">Scoreboard</a><a class="nt" href="../scenes/index.html">Scenes</a><a class="nt" href="../distributions/index.html">Distributions</a></nav>
+
+
+<style id="navsim-statusbar-css">
+#navsim-statusbar{margin:0 0 10px;padding:10px 14px;
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.55;
+  border-bottom:1px solid #dcdedb;}
+#navsim-statusbar.partial{background:#fdf4e6;color:#4a3a1e;border-left:4px solid #c9820a;}
+#navsim-statusbar.final{background:#e9f5ec;color:#1d3d28;border-left:4px solid #2e8b57;}
+#navsim-statusbar .sb-h{font-weight:600;display:block;margin-bottom:4px;}
+#navsim-statusbar ul{margin:5px 0 0;padding-left:20px;}
+#navsim-statusbar li{margin:1px 0;}
+#navsim-statusbar code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;}
+@media (prefers-color-scheme:dark){
+  #navsim-statusbar{border-bottom-color:#2c3238;}
+  #navsim-statusbar.partial{background:#2e2616;color:#e8d9b8;border-left-color:#c9820a;}
+  #navsim-statusbar.final{background:#172c1f;color:#cfe8d7;border-left-color:#4caf7d;}
+}
+</style>
+<div id="navsim-statusbar" class="final" role="status"><span class="sb-h">Every surface in this package is final</span><ul><li><b>FINAL</b> &mdash; <code>scenes</code> &mdash; 210 scenes (150 navtest scored with v1 PDMS, 60 navhard with v2 EPDMS), trajectories drawn per method</li><li><b>FINAL</b> &mdash; navtest <b>v1 PDMS</b> distributions &mdash; 8 charts, one per method</li><li><b>FINAL</b> &mdash; navhard <b>v2 EPDMS</b> distributions &mdash; 6 charts, built from the group-level export and reconciled to the official aggregate</li><li><b>FINAL</b> &mdash; <code>session_scoreboard</code> &mdash; published vs ours, &mdash; where we did not evaluate</li></ul><div style="margin-top:6px;opacity:.75">This banner is derived from the files on disk at build time, not from a hand-set flag.</div></div>
+
+
+<div class="wrap">
+
+  <header>
+    <h2 style="margin-bottom:12px">NAVSIM &middot; navtest (v1 PDMS) &amp; navhard (v2 EPDMS)</h2>
+    <h1>Scoreboard</h1>
+    <p class="lede">Every method this project evaluated, plus every published baseline it is compared
+    against. <b>PUBLISHED</b> is the paper/leaderboard figure; <b>OURS</b> is this pipeline's own
+    run, traced to a per-scene CSV or SLURM log. A method not evaluated under a given metric prints
+    a literal <code>&mdash;</code> &mdash; nothing here is interpolated, estimated, or left blank to imply
+    zero. Ranked <b>high to low by v1 PDMS</b> (the column nearly every published method reports, and
+    the only one where the whole field is comparable) &mdash; rows with no v1 figure sort to the
+    bottom, never as zero. Every method's backbone/config is printed under its name so the ranking
+    is auditable rather than implicitly apples-to-apples: DriveSuprim's 93.5 is ViT-Large, most
+    others are ResNet-34, ours is a <b>frozen</b> DINOv2 ViT-S with a small head &mdash; not
+    like-for-like, and a bare rank invites the wrong read.</p>
+  </header>
+
+  <section class="sec">
+    <div class="sec-head"><h2>Scoreboard</h2></div>
+    <div class="sortbar" role="group" aria-label="Sort scoreboard">
+      <span class="lbl">Sort by</span>
+      <button type="button" class="sb-btn" data-sort="v1" aria-pressed="true">v1 PDMS (default)</button>
+      <button type="button" class="sb-btn" data-sort="v2" aria-pressed="false">v2 EPDMS</button>
+    </div>
+    <div class="scroll">
+      <table id="scoreboard-table">
+        <colgroup>
+          <col style="width:26px">
+          <col>
+          <col class="grp-start"><col>
+          <col class="grp-start"><col>
+        </colgroup>
+        <thead>
+          <tr>
+            <th rowspan="2">#</th>
+            <th rowspan="2">Method</th>
+            <th colspan="2" style="text-align:center">v1 PDMS &middot; navtest</th>
+            <th colspan="2" style="text-align:center">v2 EPDMS &middot; navhard</th>
+          </tr>
+          <tr>
+            <th>published</th><th>ours</th>
+            <th>published</th><th>ours</th>
+          </tr>
+        </thead>
+        <tbody>
+
+<tr data-v1="94.55" data-v2=""><td class="rank"></td><td class="name">Human<span class="cfg">recorded driving log &mdash; not a model, not ground truth for the prediction task</span></td>
+  <td class="pub" title="NAVSIM (Dauner et al., NeurIPS 2024) official baseline figure; reproduced identically in every later NAVSIM comparison table checked for this page (e.g. DiffusionDriveV2 arXiv:2512.07745 Table 1: 94.8).">94.80</td><td class="val">94.55</td>
+  <td class="pub">&mdash;</td><td class="dash">&mdash;<sup class="fn">1</sup></td></tr>
+
+<tr data-v1="93.5" data-v2=""><td class="rank"></td><td class="name">DriveSuprim<span class="cfg">ViT-Large, no extra data</span></td>
+  <td class="pub" title="DriveSuprim (Xu et al.), arXiv:2506.06659, own abstract: &quot;93.5% PDMS in NAVSIM v1 ... without extra data&quot; (ViT-Large, headline config). Their ResNet-34 config -- for backbone parity with the rest of this column -- scores 89.9 in the same paper's Table 2.">93.5</td><td class="dash">&mdash;</td>
+  <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="91.2" data-v2=""><td class="rank"></td><td class="name">DiffusionDriveV2<span class="cfg">ResNet-34, camera+LiDAR-BEV</span></td>
+  <td class="pub" title="DiffusionDriveV2 (Liao et al.), arXiv:2512.07745, Table 1, own row (ResNet-34).">91.2</td><td class="dash">&mdash;</td>
+  <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="88.1" data-v2=""><td class="rank"></td><td class="name">DiffusionDrive<span class="cfg">ResNet-34</span></td>
+  <td class="pub" title="Cross-validated, not primary-read: DiffusionDrive's own CVPR openaccess page returned HTTP 403 on fetch. Cited identically (88.1, ResNet-34) in two independent papers' own tables -- DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2 -- matching DiffusionDrive's own abstract claim (&quot;record-breaking 88.1 PDMS ... ResNet-34&quot;).">88.1<sup class="fn">7</sup></td><td class="dash">&mdash;</td>
+  <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="86.5" data-v2=""><td class="rank"></td><td class="name">Hydra-MDP<span class="cfg">ResNet-34, LiDAR+Camera (V8192-W-EP)</span></td>
+  <td class="pub" title="Hydra-MDP (Li et al.), arXiv:2406.06978, Table 1, row &quot;Hydra-MDP-V8192-W-EP&quot; -- their bolded best single-model ResNet-34+LiDAR config. A V2-99-backbone variant in the same table reaches 90.3; not used here so this row stays backbone-comparable with the rest of the column.">86.5</td><td class="dash">&mdash;</td>
+  <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="85.5" data-v2=""><td class="rank"></td><td class="name">DRAMA<span class="cfg">ResNet-34, camera+LiDAR-BEV, Mamba fusion</span></td>
+  <td class="pub" title="DRAMA (Yuan et al.), arXiv:2408.03601, Table 1, row &quot;DRAMA w/ MSC&quot; (their full model) -- PDM Score 0.855.">85.5</td><td class="dash">&mdash;</td>
+  <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="84.0" data-v2=""><td class="rank"></td><td class="name">PARA-Drive<span class="cfg">ResNet-34</span></td>
+  <td class="pub" title="Not from PARA-Drive's own paper (Weng et al., CVPR 2024, targets nuScenes, no NAVSIM/PDMS eval) -- this is the standard NAVSIM-reproduction figure the field cites for it, identically 84.0/ResNet-34 in both DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2.">84.0<sup class="fn">8</sup></td><td class="dash">&mdash;</td>
+  <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="84.00" data-v2="24.11"><td class="rank"></td><td class="name"><span class="swatch" style="background:#1baf7a"></span>cmd_tokens_film<span class="cfg">frozen DINOv2 ViT-S + cmd-token FiLM head, camera-only</span></td>
+  <td class="pub">&mdash;</td><td class="val">84.00</td>
+  <td class="pub">&mdash;</td><td class="val">24.11</td></tr>
+
+<tr data-v1="83.40" data-v2=""><td class="rank"></td><td class="name">UniAD<span class="cfg">ResNet-34</span></td>
+  <td class="pub" title="Not from UniAD's own paper (Hu et al., CVPR 2023, targets nuScenes open-loop) -- this is the NAVSIM closed-loop reproduction figure the field cites, confirmed 83.4/ResNet-34 in both DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2.">83.40</td><td class="dash">&mdash;</td>
+  <td class="pub">&mdash;</td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="83.39" data-v2=""><td class="rank"></td><td class="name">TransFuser<span class="cfg">ResNet-34, LiDAR+Camera</span></td>
+  <td class="pub" title="Transfuser (Chitta et al., TPAMI 2022); NAVSIM baseline figure, confirmed 84.0/ResNet-34 in both DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2.">84.00</td><td class="val">83.39</td>
+  <td class="pub">&mdash;</td><td class="dash">&mdash;<sup class="fn">3</sup></td></tr>
+
+<tr class="ours-row" data-v1="83.02" data-v2="24.69"><td class="rank"></td><td class="name"><span class="swatch" style="background:#eb6834"></span><b class="ourstag">OURS (Navtrain)</b><span class="cfg">frozen DINOv2 ViT-S + patch-token FiLM head, camera-only &middot; variant1_patch_tokens_film</span></td>
+  <td class="pub">&mdash;</td><td class="val">83.02</td>
+  <td class="pub">&mdash;</td><td class="val">24.69</td></tr>
+
+<tr data-v1="81.41" data-v2="21.75"><td class="rank"></td><td class="name"><span class="swatch" style="background:#7a5cd6"></span>SAE B&prime; (static-suppress)<span class="cfg">frozen DINOv2 ViT-S + SAE static-suppress arm, camera-only &middot; sae_armBp_static</span></td>
+  <td class="pub">&mdash;</td><td class="val">81.41</td>
+  <td class="pub">&mdash;</td><td class="val">21.75</td></tr>
+
+<tr data-v1="80.92" data-v2="19.93"><td class="rank"></td><td class="name"><span class="swatch" style="background:#eda100"></span>SAE A&prime; (control)<span class="cfg">frozen DINOv2 ViT-S + SAE control arm, camera-only &middot; sae_armAp_control</span></td>
+  <td class="pub">&mdash;</td><td class="val">80.92</td>
+  <td class="pub">&mdash;</td><td class="val">19.93</td></tr>
+
+<tr data-v1="76.90" data-v2="17.82"><td class="rank"></td><td class="name"><span class="swatch" style="background:#c23b6f"></span>cls_tokens_film<span class="cfg">frozen DINOv2 ViT-S + CLS-token (9-tok) aggregator, camera-only</span></td>
+  <td class="pub">&mdash;</td><td class="val">76.90</td>
+  <td class="pub">&mdash;</td><td class="val">17.82</td></tr>
+
+<tr data-v1="65.52" data-v2="14.17"><td class="rank"></td><td class="name">Ego-Status MLP<span class="cfg">no camera (ego-status only)</span></td>
+  <td class="pub">65.60</td><td class="val">65.52</td>
+  <td class="pub">12.70</td><td class="val">14.17<sup class="fn">2</sup></td></tr>
+
+<tr data-v1="20.65" data-v2="11.48"><td class="rank"></td><td class="name">Constant Velocity<span class="cfg">no model (kinematic extrapolation)</span></td>
+  <td class="pub">20.60</td><td class="val">20.65</td>
+  <td class="pub">10.90</td><td class="val">11.48</td></tr>
+
+<tr data-v1="" data-v2="51.30"><td class="rank"></td><td class="name">PDM-Closed<span class="cfg">rule-based planner, privileged GT perception</span></td>
+  <td class="pub">&mdash;</td><td class="dash">&mdash;</td>
+  <td class="pub" title="Pseudo-Simulation for Autonomous Driving (Cao et al.), arXiv:2506.04218, Table 2 &quot;navhard leaderboard&quot; -- one of only 4 baselines published there (CV, MLP, LTF, PDM-Closed).">51.30</td><td class="dash">&mdash;</td></tr>
+
+<tr data-v1="" data-v2="24.78"><td class="rank"></td><td class="name">Latent TransFuser (LTF)<span class="cfg">ResNet-34, camera-only, latent fusion</span></td>
+  <td class="pub">&mdash;</td><td class="dash">&mdash;<sup class="fn">4</sup></td>
+  <td class="pub" title="Pseudo-Simulation for Autonomous Driving (Cao et al.), arXiv:2506.04218, Table 2 &quot;navhard leaderboard&quot;.">23.10</td><td class="val">24.78<sup class="fn">5</sup></td></tr>
+
+        </tbody>
+      </table>
+    </div>
+    <div class="legendbar">Swatches match the colour a method uses in the Scenes tab checkboxes/canvas and in the Distributions charts &mdash; same hex values throughout. Hover a published figure for its source citation.</div>
+    <div class="note"><b>v1 PDMS and v2 EPDMS are different metrics on different splits &mdash; never compare a number across the two halves of this table.</b>
+    v1 PDMS is 2 multiplicative gates over 5 weighted subscores, scored on <b>navtest</b> (12,146 scenes, one-stage).
+    v2 EPDMS is 4 multiplicative gates over 9 weighted subscores, scored on <b>navhard</b> (5,912 scenes, two-stage:
+    real stage-1 sensors &rarr; synthetic stage-2 perturbation). Every published baseline in this table's left half
+    (v1) is a v1 PDMS figure; every one in the right half (v2) is a v2 EPDMS figure &mdash; there is no baseline that
+    is directly comparable across the split.</div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-head"><h2>Footnotes</h2></div>
+    <div class="scroll" style="padding:2px 0">
+      <table style="min-width:0">
+        <tbody>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">1</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            <code>human_agent</code> is structurally not scoreable on navhard&rsquo;s two-stage EPDMS: it reads
+            ground-truth future ego poses directly out of the scene, and navhard&rsquo;s synthetic stage-two
+            scenarios do not carry that many post-perturbation GT frames &mdash; every stage-two scenario raised
+            <code>IndexError</code> (job 57189733). The published EPDMS reference table has no Human row either,
+            consistent with Human not being a valid two-stage agent under this metric. Not "not yet run" &mdash;
+            not runnable as specified.</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">2</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            <b>Not yet in <code>scores_manifest.json</code> at time of writing</b> &mdash; traced directly to
+            <code>logs/eval_egomlp_navhard_57242302.log</code>: &ldquo;Final extended pdm score of valid results:
+            0.14172503166297634&rdquo; / &ldquo;<code>extended_pdm_score_combined = 14.17</code>&rdquo;, 5,912/5,912
+            scenes, 0 CV-fallbacks logged. CSV:
+            <code>navsim_workspace/exp/navhard_ego_status_mlp/2026.08.28.10.48.11/2026.08.28.11.15.47.csv</code>.</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">3</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            Plain <code>transfuser_agent</code> requests LiDAR (<code>config.latent=false</code>), and
+            navhard_two_stage&rsquo;s public sensor release ships zero <code>MergedPointCloud</code> directories
+            across all 76 scene logs &mdash; confirmed locally and against the HuggingFace file listing. Job 57189732
+            failed in 13:47. Forcing <code>latent=true</code> onto a checkpoint trained with LiDAR fusion was
+            rejected on architecture-guard grounds rather than silently run mismatched &mdash; see the separate
+            Latent TransFuser checkpoint (footnotes 4&ndash;5) for the fallback route that was tried instead.</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">4</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            Out of scope for v1: the Latent TransFuser checkpoint (<code>ltf_seed_0.ckpt</code>, architecture-matched,
+            a different checkpoint from the plain TransFuser row above) was only ever run to get a navhard v2 number
+            once plain TransFuser proved unscoreable there &mdash; it was never part of the original v1 navtest
+            comparison.</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">5</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            <b>Not yet in <code>scores_manifest.json</code> at time of writing</b> &mdash; traced directly to
+            <code>logs/eval_ltf_robust_navhard_57245189.log</code>: &ldquo;Final extended pdm score of valid results:
+            0.24781827291220337&rdquo; / &ldquo;<code>extended_pdm_score_combined = 24.78</code>&rdquo;, 5,912/5,912
+            scenes. <b>33 of those 5,912 scenes (0.56%) hit the RobustLatentTransfuserAgent&rsquo;s
+            <code>missing_sensor_data</code> fallback guard</b> (33 distinct <code>FALLBACK_EVENT</code> log lines,
+            each a different <code>CAM_F0</code> frame missing <code>cam_l0</code>/<code>cam_r0</code>) and were
+            scored on a constant-velocity substitute trajectory instead of the model&rsquo;s own prediction. The
+            other 5,879 scenes (99.44%) are real Latent TransFuser predictions. CSV:
+            <code>navsim_workspace/exp/navhard_ltf_robust/2026.08.28.11.00.01/2026.08.28.11.28.32.csv</code>.</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">6</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            <b>Why DriveSuprim / DiffusionDriveV2 / DiffusionDrive / Hydra-MDP / DRAMA / PARA-Drive all show
+            &mdash; in the v2 EPDMS &middot; navhard published column.</b> The actual navhard leaderboard
+            (<i>Pseudo-Simulation for Autonomous Driving</i>, Cao et al., arXiv:2506.04218, Table 2 &ldquo;navhard
+            leaderboard&rdquo;) publishes EPDMS for exactly four baselines &mdash; Constant Velocity (10.9),
+            Ego-Status MLP (12.7), Latent TransFuser (23.1), PDM-Closed (51.3), all already in this table &mdash;
+            and no others; none of these six methods appear in it. Several of them <i>do</i> report a number
+            they call &ldquo;EPDMS&rdquo; elsewhere, but scored on the plain <b>navtest</b> split (one-stage)
+            under the v2 metric formula, not on <b>navhard</b> (two-stage) &mdash; a different benchmark from
+            this column despite the shared metric name, per docs/NAVSIM_EVAL.md's v1/v2-vs-navtest/navhard
+            distinction. Recorded here rather than silently omitted, and NOT placed in this column because doing
+            so would misrepresent one benchmark's figure as another's: DiffusionDriveV2 85.5 (own paper, Table 2,
+            &ldquo;NAVSIM v2 navtest split&rdquo;), DriveSuprim 87.1 (own abstract, ViT-L no extra data),
+            Hydra-MDP++ 81.4 (DriveSuprim Table 3 &mdash; note this is Hydra-MDP++, a different, later paper from
+            plain Hydra-MDP), TransFuser 76.7 and Ego-Status MLP 64.0 (DiffusionDriveV2 Table 2, navtest-v2, for
+            reference only &mdash; not the same figures as this table's TransFuser/Ego-Status MLP rows, which are
+            v1 PDMS and navhard v2 EPDMS respectively).</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">7</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            DiffusionDrive's 88.1 is <b>cross-validated, not primary-read</b>: its own CVPR openaccess page
+            returned HTTP 403 when fetched directly for this page. The figure is cited identically (88.1,
+            ResNet-34) in two independent later papers' own comparison tables &mdash; DiffusionDriveV2
+            (arXiv:2512.07745) Table 1 and DriveSuprim (arXiv:2506.06659) Table 2 &mdash; and matches
+            DiffusionDrive's own abstract/README claim (&ldquo;record-breaking 88.1 PDMS &hellip; ResNet-34&rdquo;).
+            Flagged as cross-validated rather than primary per the distinction being worth preserving.</td></tr>
+          <tr><td style="width:22px;text-align:right;vertical-align:top;border-bottom:none">8</td>
+            <td style="text-align:left;border-bottom:none;color:var(--ink-2);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+            PARA-Drive's own paper (Weng et al., CVPR 2024) targets nuScenes open-loop metrics and does not
+            evaluate on NAVSIM/PDMS at all. The 84.0 figure here is the community-standard NAVSIM reproduction
+            of PARA-Drive that later papers cite in their own comparison tables (identically 84.0, ResNet-34, in
+            both DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2) &mdash; not a
+            number from PARA-Drive's own paper. UniAD's 83.4 is the same situation (original paper targets
+            nuScenes open-loop; 83.4 is the field's NAVSIM closed-loop reproduction, same two citing tables) but
+            is not double-footnoted here -- see its cell's title attribute.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">
+    All OURS figures trace to a per-scene CSV under <code>navsim_v1/exp/</code> or
+    <code>navsim_workspace/exp/</code>, or (Ego-Status MLP's and Latent TransFuser's v2 EPDMS, footnotes
+    2 and 5, pending a manifest update) directly to a SLURM log under <code>logs/</code>. Every navtest
+    run is 12,146/12,146 scenes; every navhard run is 5,912/5,912 scenes. Source of truth:
+    <code>/scratch/eddie96/eddie/navsim_v1/scores_manifest.json</code>. Per-scene subscores and
+    clip-level detail for any of these methods are in the <a href="../scenes/index.html">Scenes</a>
+    tab; full score distributions are in <a href="../distributions/index.html">Distributions</a>.
+  </p>
+
+</div>
+
+<script>
+(function(){
+  var tbody = document.querySelector("#scoreboard-table tbody");
+  if (!tbody) return;
+  var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
+  var btns = Array.prototype.slice.call(document.querySelectorAll(".sb-btn"));
+
+  function num(v){ return v === "" || v === null || v === undefined ? null : parseFloat(v); }
+
+  function applySort(key){
+    var withVal = [], without = [];
+    rows.forEach(function(r){
+      var v = num(r.getAttribute("data-" + key));
+      if (v === null || isNaN(v)) without.push(r); else withVal.push({row: r, v: v});
+    });
+    withVal.sort(function(a, b){ return b.v - a.v; });
+
+    var frag = document.createDocumentFragment();
+    var rank = 1;
+    withVal.forEach(function(item){
+      item.row.querySelector("td.rank").textContent = rank++;
+      frag.appendChild(item.row);
+    });
+    without.forEach(function(r){
+      r.querySelector("td.rank").textContent = "–";
+      frag.appendChild(r);
+    });
+    tbody.appendChild(frag);
+
+    btns.forEach(function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-sort") === key ? "true" : "false");
+    });
+  }
+
+  btns.forEach(function(b){
+    b.addEventListener("click", function(){ applySort(b.getAttribute("data-sort")); });
+  });
+
+  applySort("v1");
+})();
+</script>
+</body>
+</html>
