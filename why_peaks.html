@@ -3,14 +3,14 @@
 <style>
   :root{--ground:#f4f5f3;--panel:#fbfbfa;--panel-2:#eceeea;--ink:#1b2027;--ink-2:#4a535e;
     --ink-3:#78828e;--rule:#dcdedb;--accent:#1f6f6b;--accent-soft:#e2eeec;--grid:#e4e6e2;
-    --good:#2f7d4f;--warn:#b06a12;--crit:#a8322d;}
+    --good:#2f7d4f;--warn:#b06a12;--crit:#a8322d;--half:#6b4fa8;}
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
     --ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;
     --ink-3:#78838b;--rule:#2c3238;--accent:#5fbdb5;--accent-soft:#1d3230;--grid:#252c31;
-    --good:#69c48d;--warn:#d69b44;--crit:#e08079;}}
+    --good:#69c48d;--warn:#d69b44;--crit:#e08079;--half:#a78bda;}}
   :root[data-theme="dark"]{--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;
     --ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;--accent:#5fbdb5;--accent-soft:#1d3230;
-    --grid:#252c31;--good:#69c48d;--warn:#d69b44;--crit:#e08079;}
+    --grid:#252c31;--good:#69c48d;--warn:#d69b44;--crit:#e08079;--half:#a78bda;}
   *{box-sizing:border-box;}
   body{margin:0;background:var(--ground);color:var(--ink);
     font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.65;}
@@ -159,7 +159,7 @@
   </figure>
   <div class="scroll"><table>
     <thead><tr><th>Failure mode</th><th>Scenes</th><th>Share</th><th>Why it forms a separate peak</th></tr></thead>
-    <tbody><tr><td><span class="sw" style="background:var(--crit)"></span>Gate failure</td><td class="n">1,216</td><td class="n">10.0%</td><td>NC or DAC = 0 &rarr; score is exactly 0</td></tr><tr><td><span class="sw" style="background:var(--warn)"></span>Half collision credit</td><td class="n">20</td><td class="n">0.2%</td><td>NC = 0.5 halves everything</td></tr><tr><td><span class="sw" style="background:var(--warn)"></span>TTC failure</td><td class="n">504</td><td class="n">4.1%</td><td>TTC = 0 removes 5&frasl;12</td></tr><tr><td><span class="sw" style="background:var(--ink-3)"></span>Comfort failure</td><td class="n">2</td><td class="n">0.0%</td><td>C = 0 removes 2&frasl;12</td></tr><tr><td><span class="sw" style="background:var(--accent)"></span>All components pass</td><td class="n">10,404</td><td class="n">85.7%</td><td>score = (5&middot;EP + 7)&frasl;12</td></tr></tbody>
+    <tbody><tr><td><span class="sw" style="background:var(--crit)"></span>Gate failure</td><td class="n">1,216</td><td class="n">10.0%</td><td>NC or DAC = 0 &rarr; score is exactly 0</td></tr><tr><td><span class="sw" style="background:var(--half)"></span>Half collision credit</td><td class="n">20</td><td class="n">0.2%</td><td>NC = 0.5 halves everything</td></tr><tr><td><span class="sw" style="background:var(--warn)"></span>TTC failure</td><td class="n">504</td><td class="n">4.1%</td><td>TTC = 0 removes 5&frasl;12</td></tr><tr><td><span class="sw" style="background:var(--ink-3)"></span>Comfort failure</td><td class="n">2</td><td class="n">0.0%</td><td>C = 0 removes 2&frasl;12</td></tr><tr><td><span class="sw" style="background:var(--accent)"></span>All components pass</td><td class="n">10,404</td><td class="n">85.7%</td><td>score = (5&middot;EP + 7)&frasl;12</td></tr></tbody>
   </table></div>
 </section>
 
@@ -210,8 +210,8 @@ var NS="http://www.w3.org/2000/svg";
 function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
 function txt(s,a){var e=el("text",a);e.textContent=s;return e;}
 var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
-           ["half","NC = 0.5",'var(--warn)'],
-           ["nottc","TTC = 0",'var(--warn)'],
+           ["half","NC = 0.5 (half collision credit)","var(--half)"],
+           ["nottc","TTC = 0 (time-to-collision)","var(--warn)"],
            ["nocomf","Comfort = 0","var(--ink-3)"],
            ["full","All pass","var(--accent)"]];
 (function(){
