@@ -1,0 +1,290 @@
+<title>Why the Score Has Peaks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ground:#f4f5f3;--panel:#fbfbfa;--panel-2:#eceeea;--ink:#1b2027;--ink-2:#4a535e;
+    --ink-3:#78828e;--rule:#dcdedb;--accent:#1f6f6b;--accent-soft:#e2eeec;--grid:#e4e6e2;
+    --good:#2f7d4f;--warn:#b06a12;--crit:#a8322d;}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;
+    --ink-3:#78838b;--rule:#2c3238;--accent:#5fbdb5;--accent-soft:#1d3230;--grid:#252c31;
+    --good:#69c48d;--warn:#d69b44;--crit:#e08079;}}
+  :root[data-theme="dark"]{--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;
+    --ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;--accent:#5fbdb5;--accent-soft:#1d3230;
+    --grid:#252c31;--good:#69c48d;--warn:#d69b44;--crit:#e08079;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.65;}
+  .wrap{max-width:980px;margin:0 auto;padding:30px 26px 90px;
+    display:flex;flex-direction:column;gap:34px;}
+  .measure{max-width:68ch;}
+  h1{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:32px;
+    margin:0;letter-spacing:-.015em;line-height:1.2;text-wrap:balance;}
+  h2{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:22px;margin:0 0 4px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-3);}
+  .standfirst{font-size:17px;color:var(--ink-2);margin:0;max-width:64ch;}
+  header{display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--rule);
+    padding-bottom:24px;}
+  section{display:flex;flex-direction:column;gap:14px;}
+  p{margin:0;} .note{font-size:14px;color:var(--ink-2);}
+  figure{margin:0;background:var(--panel);border:1px solid var(--rule);border-radius:5px;
+    padding:16px 18px 12px;display:flex;flex-direction:column;gap:10px;}
+  .figtitle{font-size:13.5px;font-weight:600;}
+  figcaption{font-size:13px;color:var(--ink-2);line-height:1.5;}
+  svg{display:block;max-width:100%;}
+  .chart{overflow-x:auto;}
+  .ax{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--ink-3);}
+  .axlab{font-size:11px;fill:var(--ink-2);}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:2px;
+    vertical-align:-1px;margin-right:6px;}
+  .scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:5px;background:var(--panel);}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;}
+  th,td{padding:7px 11px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule);}
+  th:first-child,td:first-child,td:last-child,th:last-child{text-align:left;white-space:normal;}
+  thead th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-3);font-weight:500;background:var(--panel-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  .callout{border-left:3px solid var(--accent);background:var(--panel);padding:14px 17px;
+    border-radius:0 5px 5px 0;display:flex;flex-direction:column;gap:8px;}
+  code,.mono{font-family:"IBM Plex Mono",monospace;font-size:.92em;}
+  code{background:var(--panel-2);padding:1px 5px;border-radius:3px;}
+  .eq{font-family:"IBM Plex Mono",monospace;font-size:14px;background:var(--panel);
+    border:1px solid var(--rule);border-radius:5px;padding:13px 16px;overflow-x:auto;}
+  ul{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:6px;}
+  .clips{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));}
+  .clip{background:var(--panel);border:1px solid var(--rule);border-radius:5px;
+    padding:9px;display:flex;flex-direction:column;gap:6px;}
+  .clip video{width:100%;border-radius:3px;background:#000;}
+  .clip .meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+    display:flex;justify-content:space-between;gap:8px;}
+  a{color:var(--accent);}
+</style>
+<style id="navsim-tabbar-css">
+#navsim-tabbar{
+  position:sticky;top:0;z-index:99999;
+  display:flex;gap:2px;flex-wrap:wrap;align-items:center;
+  padding:8px 14px;margin:0 0 4px;
+  background:#fbfbfa;border-bottom:1px solid #dcdedb;
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+}
+#navsim-tabbar .nt-home{
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#78828e;margin-right:12px;text-decoration:none;
+}
+#navsim-tabbar a.nt{
+  font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;
+  padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;
+}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt:focus-visible{outline:2px solid #1f6f6b;outline-offset:-2px;}
+#navsim-tabbar a.nt[aria-current="page"]{
+  background:#e2eeec;border-color:#1f6f6b;color:#1f6f6b;font-weight:600;
+}
+#navsim-tabbar .nt-n{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;
+  color:#78828e;margin-left:6px;
+}
+@media (prefers-color-scheme:dark){
+  #navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}
+  #navsim-tabbar a.nt{color:#a8b2b8;}
+  #navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}
+  #navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}
+  #navsim-tabbar .nt-home,#navsim-tabbar .nt-n{color:#78838b;}
+}
+</style>
+<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="index.html">Findings</a><a class="nt" href="why_peaks.html" aria-current="page">Why peaks</a><a class="nt" href="session_scoreboard/index.html">Scoreboard</a><a class="nt" href="scenes/index.html">Scenes</a><a class="nt" href="distributions/index.html">Distributions</a></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">NAVSIM v1 PDMS · navtest · 12,146 scenes · Variant 1</div>
+  <h1>Why the score distribution has peaks</h1>
+  <p class="standfirst">The multi-modality is not a property of the model. It is forced by the
+  metric's own arithmetic: five of the six components are discrete, and only one varies
+  continuously.</p>
+</header>
+
+<section>
+  <h2>The mechanism</h2>
+  <p class="measure">v1 PDMS is two multiplicative gates times a weighted sum:</p>
+  <div class="eq">PDMS &nbsp;=&nbsp; NC &times; DAC &times; ( 5&middot;EP &nbsp;+&nbsp; 5&middot;TTC &nbsp;+&nbsp; 2&middot;C ) / 12</div>
+  <p class="measure">Reading the per-scene values straight out of the scoring CSV shows how few
+  values each term can take:</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Component</th><th>Distinct values</th><th>Weight</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>no_at_fault_collisions (NC)</td><td class="n">3</td><td class="n">gate</td><td>0, 0.5 or 1 — multiplies the whole score</td></tr>
+      <tr><td>drivable_area_compliance (DAC)</td><td class="n">2</td><td class="n">gate</td><td>0 or 1 — multiplies the whole score</td></tr>
+      <tr><td>time_to_collision (TTC)</td><td class="n">2</td><td class="n">5&frasl;12</td><td>0 or 1 — adds or removes a fixed 0.417</td></tr>
+      <tr><td>comfort (C)</td><td class="n">2</td><td class="n">2&frasl;12</td><td>0 or 1 — adds or removes a fixed 0.167</td></tr>
+      <tr><td>ego_progress (EP)</td><td class="n">7,272</td><td class="n">5&frasl;12</td><td><b>the only continuous term</b></td></tr>
+      <tr><td>driving_direction (DDC)</td><td class="n">3</td><td class="n">0</td><td>computed but inert in v1</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">
+    <p><strong>So the score is a continuous variable sitting on top of a small set of discrete
+    offsets.</strong> Ego progress smears each group across a band 5&frasl;12 = 0.417 wide, and the
+    binary terms shift whole bands up or down by fixed amounts. Each combination becomes its own
+    hump.</p>
+  </div>
+</section>
+
+<section>
+  <h2>The peaks, predicted before looking</h2>
+  <p class="measure">Setting the gates to 1 and enumerating the binary terms gives four bands.
+  Every observed score falls inside its predicted band:</p>
+  <div class="scroll"><table>
+    <thead><tr><th>TTC</th><th>C</th><th>Predicted band</th><th>Observed range</th><th>Scenes</th><th>Share</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td class="n">1</td><td class="n">[0.583, 1.000]</td><td class="n">[0.663, 1.000]</td><td class="n">10,404</td><td class="n">85.7%</td></tr>
+      <tr><td class="n">0</td><td class="n">1</td><td class="n">[0.167, 0.583]</td><td class="n">[0.326, 0.583]</td><td class="n">504</td><td class="n">4.1%</td></tr>
+      <tr><td class="n">1</td><td class="n">0</td><td class="n">[0.417, 0.833]</td><td class="n">[0.833, 0.833]</td><td class="n">2</td><td class="n">0.0%</td></tr>
+      <tr><td class="n">0</td><td class="n">0</td><td class="n">[0.000, 0.417]</td><td class="dim">no scenes</td><td class="n">0</td><td class="n">0.0%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note measure">Plus the gates: any scene with NC = 0 or DAC = 0 scores <strong>exactly
+  zero</strong> regardless of how good the trajectory was — 1,216 scenes, 10.0%. That is the spike
+  at the left edge, and it is a different kind of event from a low score.</p>
+</section>
+
+<section>
+  <h2>The distribution, decomposed</h2>
+  <figure>
+    <div class="figtitle">Every scene coloured by which components passed</div>
+    <div class="chart"><div id="c-stack"></div></div>
+    <div class="legend" id="lg"></div>
+    <figcaption>Stacked histogram, 50 bins, log scale. The peaks separate cleanly by failure mode:
+    the spike at 0 is gate failures, the hump around 0.33–0.58 is time-to-collision failures, and
+    the main mass above 0.66 is scenes where everything passed and only ego progress varies.</figcaption>
+  </figure>
+  <div class="scroll"><table>
+    <thead><tr><th>Failure mode</th><th>Scenes</th><th>Share</th><th>Why it forms a separate peak</th></tr></thead>
+    <tbody><tr><td><span class="sw" style="background:var(--crit)"></span>Gate failure</td><td class="n">1,216</td><td class="n">10.0%</td><td>NC or DAC = 0 &rarr; score is exactly 0</td></tr><tr><td><span class="sw" style="background:var(--warn)"></span>Half collision credit</td><td class="n">20</td><td class="n">0.2%</td><td>NC = 0.5 halves everything</td></tr><tr><td><span class="sw" style="background:var(--warn)"></span>TTC failure</td><td class="n">504</td><td class="n">4.1%</td><td>TTC = 0 removes 5&frasl;12</td></tr><tr><td><span class="sw" style="background:var(--ink-3)"></span>Comfort failure</td><td class="n">2</td><td class="n">0.0%</td><td>C = 0 removes 2&frasl;12</td></tr><tr><td><span class="sw" style="background:var(--accent)"></span>All components pass</td><td class="n">10,404</td><td class="n">85.7%</td><td>score = (5&middot;EP + 7)&frasl;12</td></tr></tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>The gaps are structural</h2>
+  <p class="measure">The empty stretch between roughly 0.583 and 0.663 is not sampling noise — it
+  is arithmetic. A scene with TTC = 0 is <em>capped</em> at (5&middot;1 + 0 + 2)/12 = 0.583, and a
+  scene with TTC = 1 is <em>floored</em> at (0 + 5 + 2)/12 = 0.583. The value 0.583 is a hard
+  boundary between two populations, and scenes only appear just above it when ego progress is
+  also poor — which is rare among scenes that passed everything else.</p>
+  <p class="measure">The same logic explains the emptiness between 0 and 0.326: to land there you
+  would need to pass both gates and still score almost nothing on progress, which essentially does
+  not happen. Scenes that go wrong go wrong through a gate, and land on exactly zero.</p>
+</section>
+
+<section>
+  <h2>What it looks like</h2>
+  <p class="measure">Example scenes from each mode, drawn from the rendered gallery. Camera view
+  left, bird's-eye right; trajectories are drawn per method in the
+  <a href="scenes/index.html">Scenes</a> tab.</p>
+  <div id="clips"></div>
+</section>
+
+<section>
+  <h2>What follows from this</h2>
+  <ul class="measure">
+    <li><strong>The mean is a poor summary.</strong> An 83.02 aggregate is a mixture of 85.7% of
+    scenes scoring above 0.66 and 10% scoring exactly zero — not a population centred on 0.83.</li>
+    <li><strong>Improving the score means moving scenes between modes, not nudging them.</strong>
+    Rescuing one gate failure is worth more than improving progress on dozens of already-passing
+    scenes.</li>
+    <li><strong>Rank statistics on the raw distribution are dominated by the ties.</strong> 26.8%
+    of scenes sit at exactly 1.000 and 10.0% at exactly 0 — which is why every correlation in the
+    <a href="index.html">findings report</a> is also reported over the interior only.</li>
+  </ul>
+</section>
+
+<footer style="border-top:1px solid var(--rule);padding-top:18px;font-size:13px;color:var(--ink-3)">
+  Source: per-scene v1 PDMS CSV for variant1_patch_tokens_film, 12,146 navtest scenes, via
+  <span class="mono">navsim_v1/scores_manifest.json</span>. Component value counts and band
+  predictions computed directly from that file; every observed range was checked against its
+  predicted band.
+</footer>
+</div>
+<script>
+var D={"hist": {"gate": [1216, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "nottc": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 3, 4, 11, 18, 22, 36, 37, 30, 340, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "half": [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 9, 0, 2, 1, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "nocomf": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0], "full": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 2, 3, 6, 24, 84, 166, 318, 424, 644, 944, 1019, 1048, 1051, 761, 3905]}, "examples": {"full": [["015ef5e7f5a55db8", 1.0], ["0012a35a78a151b5", 0.922], ["002a52b0ed5650da", 0.886]], "half": [["59504d2ffda35a72", 0.197], ["455f894b6e3b58ab", 0.292], ["936c2cf5b8345663", 0.204]], "gate": [["0cd0aaeb35c95094", 0.0], ["b81c602d68a25e90", 0.0], ["0e0e30877d725664", 0.0]], "nottc": [["0749cf83cbbd5284", 0.583], ["0b81fee06b6156d5", 0.583], ["0e7f7322726f5b86", 0.583]]}, "counts": {"gate": 1216, "nottc": 504, "half": 20, "nocomf": 2, "full": 10404}};
+var NS="http://www.w3.org/2000/svg";
+function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+function txt(s,a){var e=el("text",a);e.textContent=s;return e;}
+var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
+           ["half","NC = 0.5",'var(--warn)'],
+           ["nottc","TTC = 0",'var(--warn)'],
+           ["nocomf","Comfort = 0","var(--ink-3)"],
+           ["full","All pass","var(--accent)"]];
+(function(){
+  var lg=document.getElementById("lg");
+  MODES.forEach(function(m){
+    if(!D.counts[m[0]]) return;
+    var s=document.createElement("span");
+    s.innerHTML='<span class="sw" style="background:'+m[2]+'"></span>'+m[1]+
+                ' ('+D.counts[m[0]].toLocaleString()+')';
+    lg.appendChild(s);
+  });
+  var NB=50,W=920,H=310,padL=52,padR=16,padT=16,padB=42;
+  var pw=W-padL-padR, ph=H-padT-padB;
+  var tot=[];for(var i=0;i<NB;i++){var t=0;MODES.forEach(function(m){t+=D.hist[m[0]][i];});tot.push(t);}
+  var mx=Math.max.apply(null,tot);
+  function y(v){ return v<=0?padT+ph : padT+ph*(1-Math.log10(v+1)/Math.log10(mx+1)); }
+  var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img"});
+  [1,10,100,1000,10000].forEach(function(t){
+    if(t>mx)return; var yy=y(t);
+    svg.appendChild(el("line",{x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:"var(--grid)"}));
+    svg.appendChild(txt(t.toLocaleString(),{x:padL-8,y:yy+4,"text-anchor":"end","class":"ax"}));
+  });
+  var bw=pw/NB;
+  for(var i=0;i<NB;i++){
+    var base=padT+ph, x=padL+i*bw;
+    MODES.forEach(function(m){
+      var v=D.hist[m[0]][i]; if(!v) return;
+      var top=y(v), h=base-top;
+      svg.appendChild(el("rect",{x:x+0.6,y:base-h,width:Math.max(bw-1.2,1),height:h,
+        fill:m[2],opacity:m[0]==="full"?0.95:1}));
+      base-=h;
+    });
+  }
+  [0,0.25,0.5,0.583,0.75,1].forEach(function(t){
+    var x=padL+pw*t;
+    if(t===0.583){
+      svg.appendChild(el("line",{x1:x,y1:padT,x2:x,y2:padT+ph,stroke:"var(--ink-3)",
+        "stroke-dasharray":"3 3"}));
+      svg.appendChild(txt("0.583 — TTC boundary",{x:x+5,y:padT+12,"class":"ax"}));
+    }
+    svg.appendChild(txt(t.toFixed(t===0.583?3:2),{x:x,y:H-padB+16,"text-anchor":"middle","class":"ax"}));
+  });
+  svg.appendChild(txt("v1 PDMS",{x:padL+pw/2,y:H-6,"text-anchor":"middle","class":"axlab"}));
+  svg.appendChild(txt("scenes (log)",{x:padL-8,y:padT-4,"text-anchor":"end","class":"ax"}));
+  document.getElementById("c-stack").appendChild(svg);
+
+  var box=document.getElementById("clips");
+  MODES.forEach(function(m){
+    var ex=D.examples[m[0]]||[]; if(!ex.length) return;
+    var h=document.createElement("p");
+    h.innerHTML='<b>'+m[1]+'</b>';
+    h.style.cssText="margin-top:8px";
+    box.appendChild(h);
+    var g=document.createElement("div"); g.className="clips";
+    ex.slice(0,3).forEach(function(t){
+      var c=document.createElement("div"); c.className="clip";
+      var v=document.createElement("video");
+      v.src="scenes/clips/"+t[0]+".mp4"; v.muted=true; v.loop=true;
+      v.playsInline=true; v.preload="none"; v.controls=true;
+      var meta=document.createElement("div"); meta.className="meta";
+      meta.innerHTML='<span>'+t[0].slice(0,10)+'</span><span>PDMS '+t[1]+'</span>';
+      c.appendChild(v); c.appendChild(meta); g.appendChild(c);
+    });
+    box.appendChild(g);
+  });
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        var v=e.target;
+        if(e.isIntersecting){ v.play().catch(function(){}); } else { v.pause(); }
+      });
+    },{threshold:0.25});
+    box.querySelectorAll("video").forEach(function(v){io.observe(v);});
+  }
+})();
+</script>
