@@ -116,22 +116,42 @@
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
 
+<style id="navsim-tabbar-css">
+#navsim-tabbar{
+  position:sticky;top:0;z-index:99999;
+  display:flex;gap:2px;flex-wrap:wrap;align-items:center;
+  padding:8px 14px;margin:0 0 4px;
+  background:#fbfbfa;border-bottom:1px solid #dcdedb;
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+}
+#navsim-tabbar .nt-home{
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#78828e;margin-right:12px;text-decoration:none;
+}
+#navsim-tabbar a.nt{
+  font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;
+  padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;
+}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt:focus-visible{outline:2px solid #1f6f6b;outline-offset:-2px;}
+#navsim-tabbar a.nt[aria-current="page"]{
+  background:#e2eeec;border-color:#1f6f6b;color:#1f6f6b;font-weight:600;
+}
+#navsim-tabbar .nt-n{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;
+  color:#78828e;margin-left:6px;
+}
+@media (prefers-color-scheme:dark){
+  #navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}
+  #navsim-tabbar a.nt{color:#a8b2b8;}
+  #navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}
+  #navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}
+  #navsim-tabbar .nt-home,#navsim-tabbar .nt-n{color:#78838b;}
+}
+</style>
+<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="index.html" aria-current="page">Findings</a><a class="nt" href="session_scoreboard/index.html">Scoreboard</a><a class="nt" href="scenes/index.html">Scenes</a><a class="nt" href="distributions/index.html">Distributions</a></nav>
 <div class="wrap">
 
-<nav style="display:flex;gap:2px;flex-wrap:wrap;align-items:center;padding:8px 0 14px;
-     border-bottom:1px solid var(--rule);margin-bottom:6px;">
-  <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
-        letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-right:12px;">NAVSIM eval</span>
-  <a href="index.html" aria-current="page" style="font-size:13.5px;font-weight:600;
-     text-decoration:none;padding:7px 13px;border-radius:5px;background:var(--accent-soft);
-     color:var(--accent);border:1px solid var(--accent);">Findings</a>
-  <a href="session_scoreboard/index.html" style="font-size:13.5px;font-weight:500;
-     text-decoration:none;padding:7px 13px;border-radius:5px;color:var(--ink-2);">Scoreboard</a>
-  <a href="scenes/index.html" style="font-size:13.5px;font-weight:500;
-     text-decoration:none;padding:7px 13px;border-radius:5px;color:var(--ink-2);">Scenes</a>
-  <a href="distributions/index.html" style="font-size:13.5px;font-weight:500;
-     text-decoration:none;padding:7px 13px;border-radius:5px;color:var(--ink-2);">Distributions</a>
-</nav>
 
 
 <header>
