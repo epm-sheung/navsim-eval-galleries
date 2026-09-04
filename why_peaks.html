@@ -46,6 +46,7 @@
     text-transform:uppercase;color:var(--ink-3);font-weight:500;background:var(--panel-2);}
   tbody tr:last-child td{border-bottom:none;}
   td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  tr.hl td{background:var(--accent-soft);}
   .callout{border-left:3px solid var(--accent);background:var(--panel);padding:14px 17px;
     border-radius:0 5px 5px 0;display:flex;flex-direction:column;gap:8px;}
   code,.mono{font-family:"IBM Plex Mono",monospace;font-size:.92em;}
@@ -108,19 +109,35 @@
   <h2>The mechanism</h2>
   <p class="measure">v1 PDMS is two multiplicative gates times a weighted sum:</p>
   <div class="eq">PDMS &nbsp;=&nbsp; NC &times; DAC &times; ( 5&middot;EP &nbsp;+&nbsp; 5&middot;TTC &nbsp;+&nbsp; 2&middot;C ) / 12</div>
-  <p class="measure">Reading the per-scene values straight out of the scoring CSV shows how few
-  values each term can take:</p>
+  <p class="measure">Reading the per-scene values straight out of the scoring CSV shows that
+  <strong>five of the six components are switches</strong> — they take one of two or three fixed
+  values and nothing in between. Only ego progress varies smoothly:</p>
   <div class="scroll"><table>
-    <thead><tr><th>Component</th><th>Distinct values</th><th>Weight</th><th>Behaviour</th></tr></thead>
+    <thead><tr><th>Component</th><th>Weight</th><th>Values it takes, and how often</th><th>Behaviour</th></tr></thead>
     <tbody>
-      <tr><td>no_at_fault_collisions (NC)</td><td class="n">3</td><td class="n">gate</td><td>0, 0.5 or 1 — multiplies the whole score</td></tr>
-      <tr><td>drivable_area_compliance (DAC)</td><td class="n">2</td><td class="n">gate</td><td>0 or 1 — multiplies the whole score</td></tr>
-      <tr><td>time_to_collision (TTC)</td><td class="n">2</td><td class="n">5&frasl;12</td><td>0 or 1 — adds or removes a fixed 0.417</td></tr>
-      <tr><td>comfort (C)</td><td class="n">2</td><td class="n">2&frasl;12</td><td>0 or 1 — adds or removes a fixed 0.167</td></tr>
-      <tr><td>ego_progress (EP)</td><td class="n">7,272</td><td class="n">5&frasl;12</td><td><b>the only continuous term</b></td></tr>
-      <tr><td>driving_direction (DDC)</td><td class="n">3</td><td class="n">0</td><td>computed but inert in v1</td></tr>
-    </tbody>
-  </table></div>
+      <tr><td>no_at_fault_collisions (NC)</td><td class="n">gate</td>
+        <td class="n">1 &rarr; 97.2% &middot; 0.5 &rarr; 0.4% &middot; 0 &rarr; 2.5%</td>
+        <td>switch — multiplies the whole score</td></tr>
+      <tr><td>drivable_area_compliance (DAC)</td><td class="n">gate</td>
+        <td class="n">1 &rarr; 92.3% &middot; 0 &rarr; 7.7%</td>
+        <td>switch — multiplies the whole score</td></tr>
+      <tr><td>time_to_collision (TTC)</td><td class="n">5&frasl;12</td>
+        <td class="n">1 &rarr; 92.6% &middot; 0 &rarr; 7.4%</td>
+        <td>switch — adds or removes a fixed 0.417</td></tr>
+      <tr><td>comfort (C)</td><td class="n">2&frasl;12</td>
+        <td class="n">1 &rarr; 100.0% &middot; 0 &rarr; 2 scenes</td>
+        <td>switch — effectively always on</td></tr>
+      <tr class="hl"><td>ego_progress (EP)</td><td class="n">5&frasl;12</td>
+        <td class="n">median 0.86 &middot; quartiles 0.72&ndash;1.00</td>
+        <td><b>dial — the only continuous term</b></td></tr>
+      <tr><td>driving_direction (DDC)</td><td class="n">0</td>
+        <td class="n">1 &rarr; 96.1% &middot; 0.5 &rarr; 2.5% &middot; 0 &rarr; 1.4%</td>
+        <td>computed but inert in v1</td></tr>
+    </tbody></table></div>
+  <p class="note measure">Ego progress is itself piled up at the ends — 29.6% of scenes score
+  exactly 1.0 and 10.0% exactly 0 — but the remaining 60% spread continuously across the range,
+  and that is what fills each band.</p>
+
   <div class="callout">
     <p><strong>So the score is a continuous variable sitting on top of a small set of discrete
     offsets.</strong> Ego progress smears each group across a band 5&frasl;12 = 0.417 wide, and the
