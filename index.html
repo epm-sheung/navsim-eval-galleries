@@ -1,36 +1,661 @@
-<title>NAVSIM Evaluation Galleries</title>
-<meta http-equiv="refresh" content="0; url=session_scoreboard/index.html">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<title>Loss–Metric Divergence</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-  html,body{height:100%;margin:0;}
-  body{
-    background:#f4f5f3;color:#1b2027;
-    font-family:"IBM Plex Sans",system-ui,sans-serif;
-    display:flex;align-items:center;justify-content:center;
+  :root{
+    --ground:#f4f5f3; --panel:#fbfbfa; --panel-2:#eceeea;
+    --ink:#1b2027; --ink-2:#4a535e; --ink-3:#78828e;
+    --rule:#dcdedb; --accent:#1f6f6b; --accent-soft:#e2eeec;
+    --good:#2f7d4f; --warn:#b06a12; --crit:#a8322d; --grid:#e4e6e2;
+    --good-bg:#e7f1ea; --warn-bg:#f6eddf; --crit-bg:#f6e6e5;
   }
-  .box{max-width:46ch;text-align:center;padding:26px 30px;
-       background:#fbfbfa;border:1px solid #dcdedb;border-radius:6px;}
-  h1{font-size:19px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em;}
-  p{font-size:14px;color:#4a535e;margin:0 0 16px;line-height:1.6;}
-  a{color:#1f6f6b;font-weight:600;}
-  ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;
-     font-size:14px;text-align:left;}
   @media (prefers-color-scheme:dark){
-    body{background:#14181c;color:#e8ebe9;}
-    .box{background:#1b2025;border-color:#2c3238;}
-    p{color:#a8b2b8;}
-    a{color:#5fbdb5;}
+    :root:not([data-theme="light"]){
+      --ground:#14181c; --panel:#1b2025; --panel-2:#242a2f;
+      --ink:#e8ebe9; --ink-2:#a8b2b8; --ink-3:#78838b;
+      --rule:#2c3238; --accent:#5fbdb5; --accent-soft:#1d3230; --grid:#252c31;
+      --good:#69c48d; --warn:#d69b44; --crit:#e08079;
+      --good-bg:#17281e; --warn-bg:#2b2415; --crit-bg:#2c1c1b;
+    }
   }
+  :root[data-theme="dark"]{
+    --ground:#14181c; --panel:#1b2025; --panel-2:#242a2f;
+    --ink:#e8ebe9; --ink-2:#a8b2b8; --ink-3:#78838b;
+    --rule:#2c3238; --accent:#5fbdb5; --accent-soft:#1d3230; --grid:#252c31;
+    --good:#69c48d; --warn:#d69b44; --crit:#e08079;
+    --good-bg:#17281e; --warn-bg:#2b2415; --crit-bg:#2c1c1b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--ground); color:var(--ink);
+       font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+       font-size:15.5px; line-height:1.65;}
+  .wrap{max-width:980px; margin:0 auto; padding:44px 26px 90px;
+        display:flex; flex-direction:column; gap:40px;}
+  .measure{max-width:68ch;}
+
+  header{display:flex; flex-direction:column; gap:10px;
+         border-bottom:1px solid var(--rule); padding-bottom:26px;}
+  .eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px;
+           letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3);}
+  h1{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:34px;
+     line-height:1.18; margin:0; letter-spacing:-.015em; text-wrap:balance;}
+  .standfirst{font-size:17px; color:var(--ink-2); margin:0; max-width:64ch;}
+
+  h2{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:23px;
+     margin:0 0 4px; letter-spacing:-.01em; text-wrap:balance;}
+  h3{font-size:15px; font-weight:600; margin:0 0 2px;}
+  section{display:flex; flex-direction:column; gap:15px;}
+  p{margin:0;}
+  .note{font-size:14px; color:var(--ink-2);}
+
+  .verdicts{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(206px,1fr));}
+  .v{background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+     padding:14px 15px; display:flex; flex-direction:column; gap:5px;}
+  .v .lab{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
+          letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3);}
+  .v .num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:25px;
+          font-weight:500; font-variant-numeric:tabular-nums; line-height:1.1;}
+  .v .cap{font-size:13px; color:var(--ink-2); line-height:1.45;}
+  .v.crit .num{color:var(--crit);} .v.warn .num{color:var(--warn);}
+  .v.neutral .num{color:var(--accent);}
+
+  figure{margin:0; background:var(--panel); border:1px solid var(--rule);
+         border-radius:5px; padding:16px 18px 12px;
+         display:flex; flex-direction:column; gap:10px;}
+  figcaption{font-size:13px; color:var(--ink-2); line-height:1.5;}
+  .figtitle{font-size:13.5px; font-weight:600;}
+  .chart{width:100%; overflow-x:auto;}
+  svg{display:block; max-width:100%;}
+  .ax{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10px;
+      fill:var(--ink-3);}
+  .axlab{font-family:"IBM Plex Sans",sans-serif; font-size:11px; fill:var(--ink-2);}
+  .legend{display:flex; gap:15px; flex-wrap:wrap; font-size:12px; color:var(--ink-2);}
+  .sw{display:inline-block; width:11px; height:11px; border-radius:2px;
+      vertical-align:-1px; margin-right:5px;}
+
+  .scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:5px;
+          background:var(--panel);}
+  table{border-collapse:collapse; width:100%; font-size:13.5px;}
+  th,td{padding:7px 11px; text-align:right; white-space:nowrap;
+        border-bottom:1px solid var(--rule);}
+  th:first-child,td:first-child{text-align:left;}
+  thead th{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
+           letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+           font-weight:500; background:var(--panel-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.n{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  tr.hl td{background:var(--accent-soft);}
+  .neg{color:var(--crit);} .pos{color:var(--good);} .dim{color:var(--ink-3);}
+  .dir{display:block; font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:9.5px;
+       font-weight:400; letter-spacing:.03em; text-transform:none; color:var(--accent);
+       margin-top:2px;}
+  .dir.na{color:var(--ink-3);}
+  .dirin{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:9.5px;
+         color:var(--accent); letter-spacing:.03em;}
+
+  .callout{border-left:3px solid var(--accent); background:var(--panel);
+           padding:14px 17px; border-radius:0 5px 5px 0;
+           display:flex; flex-direction:column; gap:8px;}
+  .callout.crit{border-left-color:var(--crit); background:var(--crit-bg);}
+  .callout.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .callout h3{font-size:14.5px;}
+
+  ol.steps{margin:0; padding-left:0; list-style:none;
+           display:flex; flex-direction:column; gap:11px; counter-reset:s;}
+  ol.steps li{counter-increment:s; padding-left:34px; position:relative; font-size:14.5px;}
+  ol.steps li::before{content:counter(s); position:absolute; left:0; top:1px;
+    width:22px; height:22px; border-radius:50%; background:var(--accent-soft);
+    color:var(--accent); font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+    font-weight:500; display:flex; align-items:center; justify-content:center;}
+
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.92em;}
+  code{background:var(--panel-2); padding:1px 5px; border-radius:3px;}
+  ul{margin:0; padding-left:19px; display:flex; flex-direction:column; gap:6px;}
+  footer{border-top:1px solid var(--rule); padding-top:20px; font-size:13px;
+         color:var(--ink-3); display:flex; flex-direction:column; gap:5px;}
+  a{color:var(--accent);}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
 
-<div class="box">
-  <h1>NAVSIM Evaluation Galleries</h1>
-  <p>Opening the Scoreboard&hellip; every page carries the tab bar, so you can move
-  between galleries from there. If nothing happens, pick one:</p>
-  <ul>
-    <li><a href="session_scoreboard/index.html">Scoreboard</a></li>
-    <li><a href="scenes/index.html">Scenes &mdash; every method, both splits, checkbox overlay</a></li>
-    <li><a href="findings/index.html"><b>Findings</b> &mdash; loss vs metric, seed variance, failure modes</a></li>
-    <li><a href="distributions/index.html">Distributions</a></li>
+<div class="wrap">
+
+<nav style="display:flex;gap:2px;flex-wrap:wrap;align-items:center;padding:8px 0 14px;
+     border-bottom:1px solid var(--rule);margin-bottom:6px;">
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+        letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-right:12px;">NAVSIM eval</span>
+  <a href="index.html" aria-current="page" style="font-size:13.5px;font-weight:600;
+     text-decoration:none;padding:7px 13px;border-radius:5px;background:var(--accent-soft);
+     color:var(--accent);border:1px solid var(--accent);">Findings</a>
+  <a href="session_scoreboard/index.html" style="font-size:13.5px;font-weight:500;
+     text-decoration:none;padding:7px 13px;border-radius:5px;color:var(--ink-2);">Scoreboard</a>
+  <a href="scenes/index.html" style="font-size:13.5px;font-weight:500;
+     text-decoration:none;padding:7px 13px;border-radius:5px;color:var(--ink-2);">Scenes</a>
+  <a href="distributions/index.html" style="font-size:13.5px;font-weight:500;
+     text-decoration:none;padding:7px 13px;border-radius:5px;color:var(--ink-2);">Distributions</a>
+</nav>
+
+
+<header>
+  <div class="eyebrow">NAVSIM · navtest 12,146 scenes · navhard 225 groups · 3 Sep 2026</div>
+  <h1>What our training loss actually measures</h1>
+  <p class="standfirst">Four investigations into the gap between the objective we optimise and the
+  benchmark we are judged on. The short version: they are close to unrelated, and the one thing the
+  loss tracks best is the one thing that cannot change the score.</p>
+</header>
+
+<section>
+  <div class="verdicts">
+    <div class="v crit">
+      <div class="lab">Loss → score <span class="dirin">↓ better</span></div><div class="num">−0.09</div>
+      <div class="cap">Spearman, Variant 1, interior scenes. Near-zero: the loss barely ranks
+      scenes the way the metric does.</div>
+    </div>
+    <div class="v crit">
+      <div class="lab">Seed variance <span class="dirin">↓ better</span></div><div class="num">2.3 / 3.6</div>
+      <div class="cap">Points between two identical runs, navtest / navhard. Most scoreboard gaps
+      sit inside this.</div>
+    </div>
+    <div class="v warn">
+      <div class="lab">Right vs straight <span class="dirin">→0 better</span></div><div class="num">−9.5</div>
+      <div class="cap">PDMS points, Variant 1. TransFuser loses only 3.4 on the same scenes.</div>
+    </div>
+    <div class="v neutral">
+      <div class="lab">Reconciliation <span class="dirin">↓ better</span></div><div class="num">&lt;1e−14</div>
+      <div class="cap">All six models' per-scene means match their official scores. The inputs
+      are sound.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── METHOD ───────────────────────── -->
+<section>
+  <h2>How the comparison was made</h2>
+  <p class="measure">The question is whether a scene our model finds <em>easy</em> (low training
+  loss) is also a scene the benchmark <em>rewards</em> (high PDMS). Both quantities had to exist
+  for the same 12,146 scenes before they could be compared.</p>
+
+  <ol class="steps">
+    <li><strong>Dump every prediction.</strong> For each of 6 models we ran the agent over the full
+    navtest split and saved its predicted trajectory per scene — 12,146 each. These are the
+    <em>same</em> poses the official scorer consumed, so no frame-convention mismatch can creep in.</li>
+    <li><strong>Recompute the training loss per scene.</strong> Not the loss in the current config
+    — the one that actually trained these checkpoints:
+    <span class="mono">0.7·latent_L1 + 0.3·scaled_Huber</span>, where the latent term is an L1 in a
+    frozen 4-dimensional whitened-velocity autoencoder space. Ground-truth futures came from the
+    scene loader, since no converted navtest set exists.</li>
+    <li><strong>Take the metric per scene</strong> from the official eval CSVs — the total PDMS and
+    all six subscores, already on disk from the scoring runs.</li>
+    <li><strong>Rank-correlate the two.</strong> Spearman and Kendall, which compare <em>orderings</em>
+    rather than raw values — appropriate here because loss is in arbitrary units and PDMS is
+    bounded 0–1. Negative is the expected direction: lower loss should mean higher score.</li>
+    <li><strong>Split out the ceiling.</strong> 26.8% of scenes score exactly 1.000. That tie block
+    distorts any rank statistic, so every figure is reported twice — over all scenes, and over the
+    <em>interior</em> only, where 0 &lt; score &lt; 1 and the scenes actually discriminate.</li>
+  </ol>
+
+  <div class="callout">
+    <h3>What could have invalidated this, and why it didn't</h3>
+    <p>Every model's per-scene scores were averaged back up and checked against its published
+    official score. All six matched to better than 1e−14 (largest error 2.22e−16). If the join
+    between predictions and scores had been wrong — misaligned tokens, dropped rows — that check
+    would have failed. It is the reason these correlations can be read as real rather than as an
+    artefact of bad plumbing.</p>
+  </div>
+
+  <p class="note measure"><strong>One honest limitation.</strong> The trainer's
+  <span class="mono">huber_scale</span> is a per-batch detached scalar — it has no per-sample
+  value. We used a single global <span class="mono">mean(latent)/mean(huber)</span> per model,
+  the same convention the existing PAV scorer uses. This changes the loss's absolute scale but not
+  the ordering of scenes within a model, which is all a rank correlation depends on.</p>
+</section>
+
+<!-- ───────────────────────── FINDING 1 ───────────────────────── -->
+<section>
+  <h2>1 · The loss does not predict the metric</h2>
+  <p class="measure"><strong>How to read these numbers.</strong> Spearman ρ measures whether two
+  rankings agree — scenes ordered by lowest loss, against scenes ordered by highest score.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>ρ<span class="dir">closer to −1 is better</span></th><th>What it would mean</th></tr></thead>
+    <tbody>
+      <tr><td class="n neg">−1.00</td><td>The loss ranks scenes exactly as the metric does.
+        A perfect predictor.</td></tr>
+      <tr><td class="n dim">&nbsp;0.00</td><td>The loss tells you nothing about the score.</td></tr>
+      <tr><td class="n pos">+1.00</td><td>The loss ranks scenes exactly backwards — the scenes it
+        fits best are the ones it drives worst.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="measure">Everything below sits between −0.24 and +0.05.</p>
+
+  <figure>
+    <div class="figtitle">Loss vs each PDMS component — Variant 1, interior scenes <span class="dirin">further left = better</span></div>
+    <div class="chart"><div id="c-sub"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--crit)"></span>negative — correct direction</span>
+      <span><span class="sw" style="background:var(--good)"></span>positive — inverted</span>
+    </div>
+    <figcaption>Spearman ρ on interior scenes (0 &lt; score &lt; 1). <strong>Further left is
+    better</strong> — a bar reaching −1 would mean the loss ranks scenes for that component
+    perfectly. A bar at zero means no relationship; a bar pointing right means the loss is
+    inverted on that component. The grey line under each label is the component's weight in
+    PDMS.</figcaption>
+  </figure>
+
+  <div class="callout crit">
+    <h3>The loss tracks the one component that cannot move the score</h3>
+    <p>Read the chart top to bottom. <strong>Driving direction compliance</strong> has the
+    strongest correlation — and carries <code>driving_direction_weight = 0.0</code> in v1. It is
+    computed, reported, and completely inert.</p>
+    <p>Below it, <strong>ego progress flips positive</strong>: on the scenes that discriminate,
+    lower loss goes with <em>less</em> progress. Ego progress is weighted 5⁄12, joint-largest.
+    Fitting the expert trajectory more tightly is mildly associated with getting less far.</p>
+    <p class="note">Precision matters here: −0.215 is the <em>least weak</em> correlation, not a
+    strong one. The honest summary is not "the loss predicts driving direction" but "the loss
+    predicts nothing well, and what it predicts least badly is inert."</p>
+  </div>
+
+  <div class="callout warn">
+    <h3>Two heavy components, pulling opposite ways</h3>
+    <p>Time-to-collision is the strongest correlation with anything that <em>counts</em>
+    (−0.191), and it is nearly as strong as the inert one. That is the loss working as designed:
+    70% of its weight is a velocity-profile term, and TTC is fundamentally a question about speed
+    and spacing.</p>
+    <p>But TTC and ego progress carry <strong>identical weight — 5⁄12 each</strong> — and the loss
+    goes opposite ways on them. It predicts safety-by-timing correctly while leaning against
+    getting down the road. Two effects of similar size, cancelling.</p>
+    <p>That reframes the near-zero headline. The loss is not uniformly useless; it has one half of
+    what it needs. Nothing in the objective rewards progress, so a trajectory that hugs the
+    expert's velocity profile scores well on loss whether or not it actually advances.</p>
+  </div>
+
+  <figure>
+    <div class="figtitle">Loss and ADE as predictors of PDMS — the five trained models <span class="dirin">longer bar = better</span></div>
+    <div class="chart"><div id="c-mod"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--accent)"></span>training loss</span>
+      <span><span class="sw" style="background:var(--ink-3)"></span>ADE (displacement error)</span>
+    </div>
+    <figcaption>Spearman ρ against total PDMS, interior scenes only — both predictors measured
+    against the same target, so the comparison is like-for-like. All are weak; the training loss
+    beats plain displacement error on every model. <strong>Constant velocity is omitted</strong>
+    from this chart: its interior ρ of +0.378 is computed from only 4,016 scenes (it scores exactly
+    zero on 8,130) and would dominate the axis without meaning much — its full-set figure is in the
+    table below.</figcaption>
+  </figure>
+
+  <p class="measure">That last point is a genuine, if modest, vindication of the loss design. The
+  velocity-latent term <em>is</em> earning its place — it is simply a better version of a weak
+  predictor. It is also the first direct confirmation on NAVSIM that ADE is weak here, rather than
+  an inference carried over from the PAV dataset.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Model</th>
+      <th>Loss ~ score<span class="dir">more negative = better</span></th>
+      <th>interior<span class="dir">more negative = better</span></th>
+      <th>ADE ~ score<span class="dir">more negative = better</span></th>
+      <th>interior<span class="dir">more negative = better</span></th>
+      <th>% at 1.000<span class="dir na">context, not a score</span></th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>variant1_patch_tokens_film</td><td class="n neg">−0.2317</td>
+        <td class="n neg">−0.0924</td><td class="n neg">−0.1730</td><td class="n neg">−0.0835</td>
+        <td class="n dim">26.8%</td></tr>
+      <tr><td>cmd_tokens_film</td><td class="n neg">−0.2130</td><td class="n neg">−0.1395</td>
+        <td class="n neg">−0.1710</td><td class="n neg">−0.1161</td><td class="n dim">27.4%</td></tr>
+      <tr><td>cls_tokens_film</td><td class="n neg">−0.3099</td><td class="n neg">−0.1422</td>
+        <td class="n neg">−0.2502</td><td class="n neg">−0.1187</td><td class="n dim">26.4%</td></tr>
+      <tr><td>sae_armAp_control</td><td class="n neg">−0.2579</td><td class="n neg">−0.1443</td>
+        <td class="n neg">−0.1868</td><td class="n neg">−0.1025</td><td class="n dim">27.4%</td></tr>
+      <tr><td>sae_armBp_static</td><td class="n neg">−0.2209</td><td class="n neg">−0.1139</td>
+        <td class="n neg">−0.1687</td><td class="n neg">−0.0752</td><td class="n dim">27.2%</td></tr>
+      <tr><td>constant_velocity</td><td class="n dim">−0.0292</td><td class="n pos">+0.3780</td>
+        <td class="n dim">+0.0009</td><td class="n pos">+0.1719</td><td class="n dim">0.0%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note measure"><strong>Constant velocity, read carefully.</strong> Its full-set ρ of
+  −0.029 against the learned models' −0.22 to −0.31 is the meaningful comparison: a model with no
+  learned behaviour carries no signal, so the learned models' weak-but-real correlation is a
+  property of the models rather than of the metric. Its <em>interior</em> +0.378 should not be read
+  as a clean contrast — constant velocity scores exactly zero on 8,130 of 12,146 scenes and never
+  reaches 1.0, so its interior is only 4,016 unrepresentative scenes: the ones where blind velocity
+  extrapolation half-works.</p>
+
+  <p class="note measure"><strong>Scope.</strong> This is a <em>within-model, per-scene</em>
+  correlation. The frequently-cited −0.36 / +0.90 (arXiv:2605.00066) is a <em>between-model</em>
+  correlation over 8 published methods — one point per method. Different unit of analysis; this
+  neither reproduces nor contradicts it.</p>
+</section>
+
+<!-- ───────────────────────── FINDING 2 ───────────────────────── -->
+<section>
+  <h2>2 · Seed variance is larger than most of our conclusions</h2>
+  <p class="measure">A seed fixes the randomness in training — weight initialisation, batch order,
+  nondeterministic GPU arithmetic. Same seed, same result. We retrained Variant 1 changing
+  <em>only</em> the seed, holding code, data, recipe and environment identical.</p>
+
+  <figure>
+    <div class="figtitle">Same model, same recipe, different seed <span class="dirin">narrower band = better</span></div>
+    <div class="chart"><div id="c-seed"></div></div>
+    <figcaption>Grey bands show the spread between the two runs. Any comparison between two
+    <em>different</em> models that falls inside its band cannot be distinguished from luck.</figcaption>
+  </figure>
+
+  <div class="callout warn">
+    <h3>What this puts in doubt</h3>
+    <p>Against the 3.62-point navhard spread:</p>
+    <ul>
+      <li><strong>SAE B′ vs A′ — 1.82 points. Inside noise.</strong> This is the comparison the
+      entire SAE arm rests on, and the ordering that reversed after the sensor-path fix. On one run
+      each, it is not established.</li>
+      <li><strong>Variant 1 vs SAE B′ — 2.94 points. Inside noise.</strong></li>
+      <li><strong>Variant 1 vs cmd_tokens_film — 0.58 points.</strong> Well inside, on both splits.</li>
+      <li><strong>Variant 1 vs cls_tokens_film — 6.87 points. Outside.</strong> Patch-vs-CLS
+      survives, as does Variant 1 over SAE A′ at 4.76.</li>
+    </ul>
+    <p class="note">Two runs give a <em>range</em>, not a standard deviation — this bounds nothing
+    formally. Separating the sub-4-point comparisons needs 3–5 seeds per arm, roughly 10 GPU-hours
+    each at 1h41 per run. Until then those rows are "not separated", not ranked.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── FINDING 3 ───────────────────────── -->
+<section>
+  <h2>3 · Where the models actually fail</h2>
+  <p class="measure">Every navtest scene characterised by speed, curvature, agent count and
+  drivable-area margin, then grouped into the 20 score bins. Two variables separate the bins
+  cleanly — and one runs backwards.</p>
+
+  <figure>
+    <div class="figtitle">Scene properties across the score range <span class="dirin">bins run worst → best</span></div>
+    <div class="chart"><div id="c-bins"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--accent)"></span>drivable-area margin (m)</span>
+      <span><span class="sw" style="background:var(--warn)"></span>agents in scene</span>
+    </div>
+    <figcaption>Bins run worst (left) to best (right). Margin rises with score as expected.
+    Agent count rises too — the opposite of the intuition that traffic makes scenes hard.</figcaption>
+  </figure>
+
+  <ul class="measure">
+    <li><strong>Drivable-area margin is the cleanest predictor</strong> — 2.84 m in the failure bin
+    against 4.69 m at the top, rising almost monotonically. Scenes fail where the road is tight,
+    and the zero bin is dominated by drivable-area gate failures.</li>
+    <li><strong>Agent count runs backwards.</strong> Hardest bin averages 31.7 agents, easiest
+    50.4. Plausibly dense traffic implies wide multi-lane roads. Whatever the mechanism,
+    "crowded means hard" is wrong here.</li>
+    <li><strong>Speed barely separates</strong> (4.4–6.9 m/s throughout). These are not high-speed
+    failures.</li>
+    <li><strong>Two distinct failure modes.</strong> Bin 0 is 100% intrinsically hard — all six
+    models fail together. Bins 0.70–0.85 carry a model-weakness signature, up to 74% of scenes
+    having exactly one of six models fail. Benchmark difficulty versus a fixable gap.</li>
   </ul>
+</section>
+
+<!-- ───────────────────────── FINDING 4 ───────────────────────── -->
+<section>
+  <h2>4 · Turns are where we lose</h2>
+  <p class="measure">Every scene clustered by its driving command. Unknown is <strong>0.00%</strong>
+  on navtest — the same degenerate pattern as navtrain, unlike private_test_hard's 5.45% — so it is
+  dropped rather than reported from nothing.</p>
+
+  <figure>
+    <div class="figtitle">Mean PDMS by driving command <span class="dirin">further right = better · tighter cluster = better</span></div>
+    <div class="chart"><div id="c-cmd"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--accent)"></span>straight</span>
+      <span><span class="sw" style="background:var(--warn)"></span>left</span>
+      <span><span class="sw" style="background:var(--crit)"></span>right</span>
+    </div>
+    <figcaption>Every learned model drops sharply on right turns. TransFuser and the human ceiling
+    drop far less — so most of the penalty is ours, not the benchmark's.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <h3>Three things this says</h3>
+    <ul>
+      <li><strong>Our right-turn penalty is 9.5 points; TransFuser's is 3.4</strong> at a similar
+      aggregate score. Tempting to credit LiDAR — but the literature prices LiDAR at
+      <strong>+0.2 PDMS</strong> overall (camera-only LTF 83.8 vs TransFuser 84.0, NAVSIM Table 1),
+      so that explanation is not supported. The gap is real and localised to turns; its cause is
+      more likely the BEV representation than the sensor. Open question.</li>
+      <li><strong>Constant velocity is the only model that does not degrade on turns</strong> —
+      marginally better, because it never attempts one. The degradation is specific to models that
+      try.</li>
+      <li><strong>The human ceiling also dips</strong> (−1.9), so part of this is intrinsic
+      difficulty. Ours is five times that, so most of it is not.</li>
+    </ul>
+  </div>
+  <p class="note measure">Right turns are also the rarest command — 1,575 scenes, 13.0% of the
+  split, against 66.4% straight. Rarest and worst is suggestive, but this data cannot separate
+  "under-represented in training" from "intrinsically harder".</p>
+</section>
+
+<section>
+  <h2>What follows</h2>
+  <ul class="measure">
+    <li><strong>Do not read sub-4-point differences as results</strong> without multiple seeds
+    behind them. That includes both SAE arms.</li>
+    <li><strong>The loss is a weak proxy and mildly anti-correlated with ego progress</strong> on
+    discriminating scenes — direct on-NAVSIM evidence for metric distillation, which optimises the
+    thing being measured rather than a velocity reconstruction that happens to correlate at −0.09.</li>
+    <li><strong>Right turns and tight drivable area are the specific failure mode.</strong> A far
+    sharper target than "improve PDMS".</li>
+    <li><strong>ADE is confirmed weak on NAVSIM directly</strong>, not by analogy — it ranks worse
+    than the training loss on every model tested.</li>
+  </ul>
+</section>
+
+<footer>
+  <div>Sources: <span class="mono">eval_test/loss_metric_correlation/</span>,
+  <span class="mono">eval_test/bin_hardness/</span>,
+  navtest scored with NAVSIM v1.1 PDMS
+  (2 gates, 5 subscores); navhard with v2 EPDMS (4 gates, 9 subscores). The two are not
+  interconvertible.</div>
+  <div>All six models' per-scene means reconcile to their official scores to &lt;1e−14 (max error
+  2.22e−16, n = 12,146 each). Seed-43 navhard EPDMS = 0.2107, scored with zero constant-velocity
+  fallbacks.</div>
+</footer>
+
 </div>
+
+<script>
+(function(){
+  var NS="http://www.w3.org/2000/svg";
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  function txt(s,a){var e=el("text",a);e.textContent=s;return e;}
+
+  /* ---------- diverging horizontal bars (correlations) ---------- */
+  function diverging(host,rows,opts){
+    opts=opts||{};
+    var W=Math.max(560,opts.w||660), rowH=26, padT=22, padB=26,
+        labW=opts.labW||210, valW=54,
+        H=padT+rows.length*rowH+padB,
+        plotL=labW, plotR=W-valW-14, plotW=plotR-plotL,
+        max=opts.max||0.30, zero=plotL+plotW*(max/(2*max));
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img"});
+    /* grid + axis */
+    [-0.3,-0.2,-0.1,0,0.1,0.2,0.3].forEach(function(t){
+      if(Math.abs(t)>max+1e-9)return;
+      var x=zero+plotW*(t/(2*max));
+      svg.appendChild(el("line",{x1:x,y1:padT-6,x2:x,y2:H-padB+2,
+        stroke:t===0?"var(--ink-3)":"var(--grid)","stroke-width":t===0?1.2:1}));
+      svg.appendChild(txt(t.toFixed(1),{x:x,y:H-padB+15,"text-anchor":"middle","class":"ax"}));
+    });
+    rows.forEach(function(r,i){
+      var y=padT+i*rowH, cy=y+rowH/2;
+      svg.appendChild(txt(r.label,{x:labW-12,y:cy+4,"text-anchor":"end","class":"axlab"}));
+      if(r.sub) svg.appendChild(txt(r.sub,{x:labW-12,y:cy+15,"text-anchor":"end","class":"ax"}));
+      var w=Math.abs(r.v)/(2*max)*plotW, x=r.v<0?zero-w:zero;
+      svg.appendChild(el("rect",{x:x,y:cy-7,width:Math.max(w,1.5),height:14,rx:2,
+        fill:r.v<0?"var(--crit)":"var(--good)"}));
+      svg.appendChild(txt((r.v>0?"+":"")+r.v.toFixed(3),
+        {x:plotR+10,y:cy+4,"class":"ax","text-anchor":"start"}));
+    });
+    host.appendChild(svg);
+  }
+
+  /* ---------- grouped horizontal bars (2 series) ---------- */
+  function grouped2(host,rows,opts){
+    opts=opts||{};
+    var W=Math.max(560,opts.w||660), rowH=34, padT=16, padB=26, labW=opts.labW||210,
+        H=padT+rows.length*rowH+padB, plotL=labW, plotR=W-62, plotW=plotR-plotL,
+        max=opts.max||0.40;
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img"});
+    [0,0.1,0.2,0.3,0.4].forEach(function(t){
+      if(t>max+1e-9)return;
+      var x=plotL+plotW*(t/max);
+      svg.appendChild(el("line",{x1:x,y1:padT-4,x2:x,y2:H-padB+2,stroke:"var(--grid)"}));
+      svg.appendChild(txt(t.toFixed(1),{x:x,y:H-padB+15,"text-anchor":"middle","class":"ax"}));
+    });
+    rows.forEach(function(r,i){
+      var y=padT+i*rowH;
+      svg.appendChild(txt(r.label,{x:labW-12,y:y+20,"text-anchor":"end","class":"axlab"}));
+      [[r.a,"var(--accent)",0],[r.b,"var(--ink-3)",13]].forEach(function(s){
+        var w=Math.abs(s[0])/max*plotW;
+        svg.appendChild(el("rect",{x:plotL,y:y+4+s[2],width:Math.max(w,1.5),height:11,rx:2,fill:s[1]}));
+      });
+      svg.appendChild(txt(r.a.toFixed(3),{x:plotR+8,y:y+13,"class":"ax"}));
+      svg.appendChild(txt(r.b.toFixed(3),{x:plotR+8,y:y+26,"class":"ax"}));
+    });
+    host.appendChild(svg);
+  }
+
+  /* ---------- dual-series line over bins ---------- */
+  function dualLine(host,bins,opts){
+    var W=700,H=250,padL=46,padR=48,padT=18,padB=40;
+    var pw=W-padL-padR, ph=H-padT-padB;
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img"});
+    var aMin=2.5,aMax=5.0, bMin=25,bMax=55;
+    function x(i){return padL+pw*(i/(bins.length-1));}
+    function yA(v){return padT+ph*(1-(v-aMin)/(aMax-aMin));}
+    function yB(v){return padT+ph*(1-(v-bMin)/(bMax-bMin));}
+    [2.5,3.0,3.5,4.0,4.5,5.0].forEach(function(t){
+      var y=yA(t);
+      svg.appendChild(el("line",{x1:padL,y1:y,x2:W-padR,y2:y,stroke:"var(--grid)"}));
+      svg.appendChild(txt(t.toFixed(1),{x:padL-8,y:y+4,"text-anchor":"end","class":"ax"}));
+    });
+    [30,40,50].forEach(function(t){
+      svg.appendChild(txt(String(t),{x:W-padR+8,y:yB(t)+4,"class":"ax"}));
+    });
+    function path(acc,col,dash){
+      var d=bins.map(function(b,i){return (i?"L":"M")+x(i).toFixed(1)+" "+acc(b).toFixed(1);}).join(" ");
+      svg.appendChild(el("path",{d:d,fill:"none",stroke:col,"stroke-width":2,
+        "stroke-linejoin":"round","stroke-dasharray":dash||""}));
+      bins.forEach(function(b,i){
+        svg.appendChild(el("circle",{cx:x(i),cy:acc(b),r:2.6,fill:col}));
+      });
+    }
+    path(function(b){return yA(b.margin);},"var(--accent)");
+    path(function(b){return yB(b.agents);},"var(--warn)","4 3");
+    bins.forEach(function(b,i){
+      if(i%3===0||i===bins.length-1)
+        svg.appendChild(txt(b.bin,{x:x(i),y:H-padB+16,"text-anchor":"middle","class":"ax"}));
+    });
+    svg.appendChild(txt("score bin  (0 = worst · 19 = best)",
+      {x:padL+pw/2,y:H-6,"text-anchor":"middle","class":"axlab"}));
+    svg.appendChild(txt("margin (m)",{x:padL-8,y:padT-6,"text-anchor":"end","class":"ax"}));
+    svg.appendChild(txt("agents",{x:W-padR+8,y:padT-6,"class":"ax"}));
+    host.appendChild(svg);
+  }
+
+  /* ---------- seed variance paired bars ---------- */
+  function seedChart(host){
+    var data=[
+      {label:"navtest · v1 PDMS",a:0.8302,b:0.8069,max:1.0,fmt:function(v){return v.toFixed(4);}},
+      {label:"navhard · v2 EPDMS",a:0.2469,b:0.2107,max:0.32,fmt:function(v){return v.toFixed(4);}}
+    ];
+    var W=700,rowH=76,H=data.length*rowH+26;
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img"});
+    var padL=150,padR=96,pw=W-padL-padR;
+    data.forEach(function(d,i){
+      var y=i*rowH+18;
+      svg.appendChild(txt(d.label,{x:padL-14,y:y+26,"text-anchor":"end","class":"axlab"}));
+      var wa=d.a/d.max*pw, wb=d.b/d.max*pw;
+      svg.appendChild(el("rect",{x:padL,y:y,width:wa,height:17,rx:2,fill:"var(--accent)"}));
+      svg.appendChild(el("rect",{x:padL,y:y+22,width:wb,height:17,rx:2,fill:"var(--ink-3)"}));
+      /* spread band */
+      svg.appendChild(el("rect",{x:padL+wb,y:y-3,width:wa-wb,height:45,fill:"var(--crit)",
+        opacity:"0.14"}));
+      svg.appendChild(txt("original "+d.fmt(d.a),{x:padL+wa+9,y:y+13,"class":"ax"}));
+      svg.appendChild(txt("seed 43 "+d.fmt(d.b),{x:padL+wb+9,y:y+35,"class":"ax"}));
+      svg.appendChild(txt("spread "+((d.a-d.b)*100).toFixed(2)+" pts",
+        {x:padL+wb+(wa-wb)/2,y:y+53,"text-anchor":"middle","class":"ax",fill:"var(--crit)"}));
+    });
+    host.appendChild(svg);
+  }
+
+  /* ---------- command chart ---------- */
+  function cmdChart(host){
+    var rows=[
+      {m:"cmd_tokens_film",s:0.8631,l:0.8051,r:0.7770},
+      {m:"variant1 (patch)",s:0.8547,l:0.7958,r:0.7596},
+      {m:"transfuser",s:0.8377,l:0.8406,r:0.8040},
+      {m:"sae_armBp_static",s:0.8336,l:0.7881,r:0.7552},
+      {m:"sae_armAp_control",s:0.8320,l:0.7789,r:0.7404},
+      {m:"cls_tokens_film",s:0.7867,l:0.7485,r:0.7109},
+      {m:"human (log)",s:0.9490,l:0.9439,r:0.9300}
+    ];
+    var W=700,rowH=44,padT=14,padB=30,padL=160,padR=54;
+    var H=padT+rows.length*rowH+padB, pw=W-padL-padR, min=0.68,max=0.98;
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img"});
+    function x(v){return padL+pw*((v-min)/(max-min));}
+    [0.70,0.75,0.80,0.85,0.90,0.95].forEach(function(t){
+      svg.appendChild(el("line",{x1:x(t),y1:padT-4,x2:x(t),y2:H-padB+2,stroke:"var(--grid)"}));
+      svg.appendChild(txt(t.toFixed(2),{x:x(t),y:H-padB+15,"text-anchor":"middle","class":"ax"}));
+    });
+    rows.forEach(function(r,i){
+      var y=padT+i*rowH;
+      svg.appendChild(txt(r.m,{x:padL-12,y:y+22,"text-anchor":"end","class":"axlab"}));
+      /* connector */
+      svg.appendChild(el("line",{x1:x(r.r),y1:y+18,x2:x(r.s),y2:y+18,
+        stroke:"var(--rule)","stroke-width":2}));
+      [[r.s,"var(--accent)"],[r.l,"var(--warn)"],[r.r,"var(--crit)"]].forEach(function(p){
+        svg.appendChild(el("circle",{cx:x(p[0]),cy:y+18,r:5,fill:p[1]}));
+      });
+      var gap=((r.r-r.s)*100).toFixed(1);
+      svg.appendChild(txt(gap,{x:W-padR+10,y:y+22,"class":"ax",
+        fill:(r.r-r.s)<-0.05?"var(--crit)":"var(--ink-3)"}));
+    });
+    svg.appendChild(txt("mean PDMS",{x:padL+pw/2,y:H-4,"text-anchor":"middle","class":"axlab"}));
+    svg.appendChild(txt("R−S",{x:W-padR+10,y:padT+2,"class":"ax"}));
+    host.appendChild(svg);
+  }
+
+  diverging(document.getElementById("c-sub"),[
+    {label:"driving direction",sub:"weight 0 — inert",v:-0.2154},
+    {label:"time to collision",sub:"weight 5⁄12",v:-0.1907},
+    {label:"total PDMS",sub:"the target",v:-0.0924},
+    {label:"no at-fault collision",sub:"gate",v:-0.0385},
+    {label:"comfort",sub:"weight 2⁄12",v:-0.0227},
+    {label:"ego progress",sub:"weight 5⁄12 — wrong sign",v:+0.0527}
+  ],{max:0.25});
+
+  grouped2(document.getElementById("c-mod"),[
+    {label:"sae_armAp_control",a:-0.1443,b:-0.1025},
+    {label:"cls_tokens_film",a:-0.1422,b:-0.1187},
+    {label:"cmd_tokens_film",a:-0.1395,b:-0.1161},
+    {label:"sae_armBp_static",a:-0.1139,b:-0.0752},
+    {label:"variant1 (patch)",a:-0.0924,b:-0.0835}
+  ],{max:0.20});
+
+  seedChart(document.getElementById("c-seed"));
+
+  dualLine(document.getElementById("c-bins"),[
+    {bin:0,margin:2.84,agents:31.7},{bin:1,margin:4.13,agents:47.3},
+    {bin:2,margin:2.46,agents:27.5},{bin:3,margin:3.67,agents:37.5},
+    {bin:4,margin:3.50,agents:41.6},{bin:5,margin:3.21,agents:35.4},
+    {bin:6,margin:3.21,agents:30.9},{bin:7,margin:3.81,agents:43.0},
+    {bin:8,margin:3.17,agents:28.6},{bin:9,margin:3.27,agents:35.8},
+    {bin:10,margin:3.49,agents:37.9},{bin:11,margin:3.37,agents:32.9},
+    {bin:12,margin:3.04,agents:31.9},{bin:13,margin:3.27,agents:35.0},
+    {bin:14,margin:3.34,agents:33.2},{bin:15,margin:3.46,agents:36.5},
+    {bin:16,margin:3.57,agents:37.4},{bin:17,margin:3.99,agents:41.2},
+    {bin:18,margin:4.24,agents:43.0},{bin:19,margin:4.69,agents:50.4}
+  ]);
+
+  cmdChart(document.getElementById("c-cmd"));
+})();
+</script>
