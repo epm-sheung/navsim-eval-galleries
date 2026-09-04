@@ -46,6 +46,7 @@
     text-transform:uppercase;color:var(--ink-3);font-weight:500;background:var(--panel-2);}
   tbody tr:last-child td{border-bottom:none;}
   td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  .dim{color:var(--ink-3);}
   tr.hl td{background:var(--accent-soft);}
   .callout{border-left:3px solid var(--accent);background:var(--panel);padding:14px 17px;
     border-radius:0 5px 5px 0;display:flex;flex-direction:column;gap:8px;}
@@ -147,17 +148,10 @@
 </section>
 
 <section>
-  <h2>The peaks, predicted before looking</h2>
-  <p class="measure">Setting the gates to 1 and enumerating the binary terms gives four bands.
-  Every observed score falls inside its predicted band:</p>
+  <h2>Where each combination lands</h2>
+  <p class="measure">With both gates passing, the two remaining switches give four possible combinations. Each one lands its scenes in a different part of the range:</p>
   <div class="scroll"><table>
-    <thead><tr><th>TTC</th><th>C</th><th>Predicted band</th><th>Observed range</th><th>Scenes</th><th>Share</th></tr></thead>
-    <tbody>
-      <tr><td class="n">1</td><td class="n">1</td><td class="n">[0.583, 1.000]</td><td class="n">[0.663, 1.000]</td><td class="n">10,404</td><td class="n">85.7%</td></tr>
-      <tr><td class="n">0</td><td class="n">1</td><td class="n">[0.167, 0.583]</td><td class="n">[0.326, 0.583]</td><td class="n">504</td><td class="n">4.1%</td></tr>
-      <tr><td class="n">1</td><td class="n">0</td><td class="n">[0.417, 0.833]</td><td class="n">[0.833, 0.833]</td><td class="n">2</td><td class="n">0.0%</td></tr>
-      <tr><td class="n">0</td><td class="n">0</td><td class="n">[0.000, 0.417]</td><td class="dim">no scenes</td><td class="n">0</td><td class="n">0.0%</td></tr>
-    </tbody>
+    <thead><tr><th>TTC</th><th>C</th><th>Where those scenes land</th><th>Scenes</th><th>Share</th></tr></thead><tbody><tr><td class="n">1</td><td class="n">1</td><td class="n">[0.663, 1.000]</td><td class="n">10,404</td><td class="n">85.7%</td></tr><tr><td class="n">0</td><td class="n">1</td><td class="n">[0.326, 0.583]</td><td class="n">504</td><td class="n">4.1%</td></tr><tr><td class="n">1</td><td class="n">0</td><td class="n">[0.833, 0.833]</td><td class="n">2</td><td class="n">0.0%</td></tr><tr><td class="n">0</td><td class="n">0</td><td class="n"><span class="dim">no scenes</span></td><td class="n">0</td><td class="n">0.0%</td></tr></tbody>
   </table></div>
   <p class="note measure">Plus the gates: any scene with NC = 0 or DAC = 0 scores <strong>exactly
   zero</strong> regardless of how good the trajectory was — 1,216 scenes, 10.0%. That is the spike
