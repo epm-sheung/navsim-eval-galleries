@@ -290,6 +290,50 @@ function frameCountFor(traj, methods, ticks){
   return 4;
 }
 
+// The trajectory belongs to the LAST HISTORY frame (held for every dwell
+// copy that follows it, see frameCountFor's docstring above): cam is null on
+// every earlier frame, only bev has data there. A page that never sets
+// video.currentTime (preload="none", autoplay blocked, or the clip simply
+// hasn't started playing yet) sits at currentTime=0 -> frame index 0 forever
+// -> the cam overlay draws nothing while bev draws fine, even though data
+// exists. firstOverlayFrame finds the earliest frame that actually has cam
+// data for a currently-drawn method, so a caller can seek there up front
+// instead of depending on playback ever starting. Only `ticks`-drawn methods
+// count (an overlay for an unticked method should not affect where an
+// UNPLAYED clip parks); if none of them ever has cam data, 0 is returned
+// (the least-wrong fallback: BEV still renders at 0).
+function firstOverlayFrame(traj, methods, ticks){
+  var list = methods || [];
+  var n = frameCountFor(traj, methods, ticks);
+  for (var idx = 0; idx < n; idx++){
+    for (var i = 0; i < list.length; i++){
+      var m = list[i];
+      if (ticks && !ticks[m]) continue;
+      var e = traj.methods[m];
+      var pts = e && e.cam && e.cam[idx];
+      if (pts && pts.length) return idx;
+    }
+  }
+  return 0;
+}
+
+// Sets video.currentTime to the MIDDLE of frame `idx` (not its leading edge)
+// so currentFrameIndex's floor(currentTime * fps) lands squarely on idx
+// instead of teetering on a rounding boundary -- e.g. fps=2, idx=3 ->
+// currentTime=1.75, floor(1.75*2)=floor(3.5)=3. Guards against a duration
+// that isn't known/finite yet (a bare metadata load can leave `duration` as
+// Infinity or NaN momentarily) by simply not clamping in that case, and
+// against a video that cannot be seeked yet (readyState 0) by swallowing the
+// assignment's exception rather than throwing out of an event handler.
+function seekToOverlayFrame(video, idx, fps){
+  fps = fps || 2;
+  var t = (idx + 0.5) / fps;
+  if (!isFinite(t) || t < 0) return;
+  var dur = video.duration;
+  if (isFinite(dur) && dur > 0) t = Math.min(t, dur);
+  try { video.currentTime = t; } catch (e) { /* not seekable yet */ }
+}
+
 // Sizes/positions camCanvas over the left (cam) fraction of stageEl and
 // bevCanvas over the right (bev) fraction, backing store scaled by
 // devicePixelRatio so lines are crisp on HiDPI screens instead of
@@ -506,6 +550,7 @@ return {
   LINE_W: LINE_W, MARKER_R: MARKER_R, HUMAN_DASH: HUMAN_DASH, HUMAN_OUTLINE_W: HUMAN_OUTLINE_W,
   colourFor: colourFor, labelFor: labelFor, currentFrameIndex: currentFrameIndex,
   frameCountFor: frameCountFor,
+  firstOverlayFrame: firstOverlayFrame, seekToOverlayFrame: seekToOverlayFrame,
   layoutCanvases: layoutCanvases, drawPanel: drawPanel, drawStage: drawStage, makeLoop: makeLoop,
   setupFullscreen: setupFullscreen
 };
@@ -549,7 +594,7 @@ function labelFor(key){ return NavsimOverlay.labelFor(LABEL, key); }
 
 // Fixed aspect ratio for every stage box, derived once from the panel
 // dimensions every clip shares -- lets each card reserve its final on-page
-// size (via CSS aspect-ratio) BEFORE its <video> (preload="none") has ever
+// size (via CSS aspect-ratio) BEFORE its <video> (preload="metadata") has ever
 // loaded metadata, so scrolling never triggers a layout shift when a clip
 // lazily loads in. object-fit:fill on the video then exactly fills that box,
 // which is safe (no letterboxing skew) because the reserved ratio IS the
@@ -627,7 +672,21 @@ function ensureTraj(card){
 function onTrajReady(card){
   card.fps = card.traj.fps || DATA.fps || 2;
   renderScoreTableFor(card);
+  trySeekToOverlayFrame(card);   // traj may resolve after metadata already did
   if (card.video.src) drawCard(card);   // nothing decoded yet -> nothing to redraw
+}
+
+// Parks the video at the first frame that actually has cam overlay data
+// (NavsimOverlay.firstOverlayFrame), instead of leaving it at currentTime=0
+// where cam is always null (the trajectory belongs to the last history
+// frame, held across every dwell copy -- see traj_overlay.py's data
+// contract). Needs BOTH traj (for firstOverlayFrame) and video metadata (for
+// a seekable duration) to be ready; a no-op otherwise is fine because
+// whichever of onTrajReady/loadedmetadata resolves second calls this again.
+function trySeekToOverlayFrame(card){
+  if (!card.traj || card.video.readyState < 1) return;
+  var idx = NavsimOverlay.firstOverlayFrame(card.traj, card.methods, ticks);
+  NavsimOverlay.seekToOverlayFrame(card.video, idx, card.fps);
 }
 
 var state = { split: null };
@@ -802,7 +861,17 @@ function activateCard(card){
   if (!card.video.src){
     card.video.src = (card.scene && card.scene.clip) ? card.scene.clip : ("clips/" + card.token + ".mp4");
     card.video.load();
-    card.video.addEventListener("loadedmetadata", function(){ layoutCanvasesFor(card); }, { once: true });
+    card.video.addEventListener("loadedmetadata", function(){
+      layoutCanvasesFor(card);
+      trySeekToOverlayFrame(card);
+    }, { once: true });
+    // Redraws once the seek set above actually lands -- currentTime is an
+    // async request, and this is what makes the canvas match the frame the
+    // <video> element is really displaying instead of whatever was painted
+    // (stale or blank) the instant seekToOverlayFrame was called.
+    card.video.addEventListener("seeked", function(){ drawCard(card); });
+  } else {
+    trySeekToOverlayFrame(card);   // re-activated (scrolled away and back)
   }
   var p = card.video.play();
   if (p && p.catch) p.catch(function(){ /* autoplay may be blocked; still frame stays visible */ });
@@ -850,7 +919,7 @@ function buildCard(scene){
   var stage = document.createElement("div");
   stage.className = "stage";
   var video = document.createElement("video");
-  video.preload = "none"; video.playsInline = true; video.muted = true; video.loop = true;
+  video.preload = "metadata"; video.playsInline = true; video.muted = true; video.loop = true;
   var camCanvas = document.createElement("canvas");
   var bevCanvas = document.createElement("canvas");
   stage.appendChild(video); stage.appendChild(camCanvas); stage.appendChild(bevCanvas);

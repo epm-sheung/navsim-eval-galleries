@@ -63,7 +63,7 @@
      traj_overlay.py's module docstring. aspect-ratio is fixed (not computed
      from a data blob, this page has none) from the known panel dims,
      960+540 wide over 540 tall, so the box reserves its final size before
-     the preload=none video has ever loaded metadata -- no layout shift when
+     the preload=metadata video has ever loaded metadata -- no layout shift when
      a clip lazily loads in. object-fit:fill then keeps canvas and video
      exactly co-extensive at any box size. */
   .clip .stage{position:relative;width:100%;aspect-ratio:2.77778;background:#000;
@@ -304,6 +304,50 @@ function frameCountFor(traj, methods, ticks){
   return 4;
 }
 
+// The trajectory belongs to the LAST HISTORY frame (held for every dwell
+// copy that follows it, see frameCountFor's docstring above): cam is null on
+// every earlier frame, only bev has data there. A page that never sets
+// video.currentTime (preload="none", autoplay blocked, or the clip simply
+// hasn't started playing yet) sits at currentTime=0 -> frame index 0 forever
+// -> the cam overlay draws nothing while bev draws fine, even though data
+// exists. firstOverlayFrame finds the earliest frame that actually has cam
+// data for a currently-drawn method, so a caller can seek there up front
+// instead of depending on playback ever starting. Only `ticks`-drawn methods
+// count (an overlay for an unticked method should not affect where an
+// UNPLAYED clip parks); if none of them ever has cam data, 0 is returned
+// (the least-wrong fallback: BEV still renders at 0).
+function firstOverlayFrame(traj, methods, ticks){
+  var list = methods || [];
+  var n = frameCountFor(traj, methods, ticks);
+  for (var idx = 0; idx < n; idx++){
+    for (var i = 0; i < list.length; i++){
+      var m = list[i];
+      if (ticks && !ticks[m]) continue;
+      var e = traj.methods[m];
+      var pts = e && e.cam && e.cam[idx];
+      if (pts && pts.length) return idx;
+    }
+  }
+  return 0;
+}
+
+// Sets video.currentTime to the MIDDLE of frame `idx` (not its leading edge)
+// so currentFrameIndex's floor(currentTime * fps) lands squarely on idx
+// instead of teetering on a rounding boundary -- e.g. fps=2, idx=3 ->
+// currentTime=1.75, floor(1.75*2)=floor(3.5)=3. Guards against a duration
+// that isn't known/finite yet (a bare metadata load can leave `duration` as
+// Infinity or NaN momentarily) by simply not clamping in that case, and
+// against a video that cannot be seeked yet (readyState 0) by swallowing the
+// assignment's exception rather than throwing out of an event handler.
+function seekToOverlayFrame(video, idx, fps){
+  fps = fps || 2;
+  var t = (idx + 0.5) / fps;
+  if (!isFinite(t) || t < 0) return;
+  var dur = video.duration;
+  if (isFinite(dur) && dur > 0) t = Math.min(t, dur);
+  try { video.currentTime = t; } catch (e) { /* not seekable yet */ }
+}
+
 // Sizes/positions camCanvas over the left (cam) fraction of stageEl and
 // bevCanvas over the right (bev) fraction, backing store scaled by
 // devicePixelRatio so lines are crisp on HiDPI screens instead of
@@ -520,6 +564,7 @@ return {
   LINE_W: LINE_W, MARKER_R: MARKER_R, HUMAN_DASH: HUMAN_DASH, HUMAN_OUTLINE_W: HUMAN_OUTLINE_W,
   colourFor: colourFor, labelFor: labelFor, currentFrameIndex: currentFrameIndex,
   frameCountFor: frameCountFor,
+  firstOverlayFrame: firstOverlayFrame, seekToOverlayFrame: seekToOverlayFrame,
   layoutCanvases: layoutCanvases, drawPanel: drawPanel, drawStage: drawStage, makeLoop: makeLoop,
   setupFullscreen: setupFullscreen
 };
@@ -584,6 +629,7 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
     if (cached){
       if (cached.status === "loaded" && !inst.traj){
         inst.traj = cached.data; inst.fps = cached.data.fps || OV_FPS;
+        trySeekToOverlayFrame(inst);
         NavsimOverlay.drawStage(inst);
       }
       return;
@@ -599,6 +645,7 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
         var inst2 = instByToken[token];
         if (inst2){
           inst2.traj = doc; inst2.fps = doc.fps || OV_FPS;
+          trySeekToOverlayFrame(inst2);
           NavsimOverlay.drawStage(inst2);
         }
       })
@@ -606,6 +653,19 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
         trajCache[token] = { status: "error" };
         console.warn("[why_peaks] traj fetch failed for " + token + ":", err);
       });
+  }
+
+  // Parks the video at the first frame that actually has cam overlay data
+  // (NavsimOverlay.firstOverlayFrame) instead of leaving it at currentTime=0,
+  // where cam is always null -- the trajectory belongs to the last history
+  // frame, held across every dwell copy (see traj_overlay.py's data
+  // contract). Needs BOTH traj (for firstOverlayFrame) and video metadata
+  // (for a seekable duration); a no-op otherwise is fine because whichever of
+  // ensureTraj/loadedmetadata resolves second calls this again.
+  function trySeekToOverlayFrame(inst){
+    if (!inst || !inst.traj || inst.video.readyState < 1) return;
+    var idx = NavsimOverlay.firstOverlayFrame(inst.traj, inst.methods, inst.ticks);
+    NavsimOverlay.seekToOverlayFrame(inst.video, idx, inst.fps);
   }
 
   // Wires one example clip's <video> + its two overlay canvases to
@@ -628,7 +688,15 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
     }
     var ro = new ResizeObserver(layout);
     ro.observe(stage);
-    video.addEventListener("loadedmetadata", layout);
+    video.addEventListener("loadedmetadata", function(){
+      layout();
+      trySeekToOverlayFrame(inst);
+    });
+    // Redraws once the seek set above actually lands -- currentTime is an
+    // async request, and this is what makes the canvas match the frame the
+    // <video> element is really displaying instead of whatever was painted
+    // (stale or blank) the instant seekToOverlayFrame was called.
+    video.addEventListener("seeked", function(){ NavsimOverlay.drawStage(inst); });
     var loop = NavsimOverlay.makeLoop(video, function(){ NavsimOverlay.drawStage(inst); });
     video.addEventListener("play", loop.start);
     video.addEventListener("pause", loop.stop);
@@ -696,7 +764,7 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
       var stage=document.createElement("div"); stage.className="stage";
       var v=document.createElement("video");
       v.src="scenes/clips/"+t[0]+".mp4"; v.muted=true; v.loop=true;
-      v.playsInline=true; v.preload="none"; v.controls=true;
+      v.playsInline=true; v.preload="metadata"; v.controls=true;
       v.setAttribute("controlsList","nofullscreen");
       v.dataset.token=t[0];
       var camCanvas=document.createElement("canvas");
@@ -713,7 +781,11 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
     var io=new IntersectionObserver(function(es){
       es.forEach(function(e){
         var v=e.target;
-        if(e.isIntersecting){ ensureTraj(v.dataset.token); v.play().catch(function(){}); } else { v.pause(); }
+        if(e.isIntersecting){
+          ensureTraj(v.dataset.token);
+          trySeekToOverlayFrame(instByToken[v.dataset.token]);   // metadata may already be ready
+          v.play().catch(function(){});
+        } else { v.pause(); }
       });
     },{threshold:0.25});
     box.querySelectorAll("video").forEach(function(v){io.observe(v);});
