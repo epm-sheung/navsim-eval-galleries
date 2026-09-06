@@ -378,16 +378,207 @@ function layoutCanvases(stageEl, camCanvas, bevCanvas, panels){
   return { camCssW: camCssW, camCssH: cssH, bevCssW: bevCssW, bevCssH: cssH, dpr: dpr };
 }
 
+// ---------------------------------------------------------------------
+// Failure-mode overlays -- events_px/<token>.json, exported by
+// _events/_tools/export_events_px.py, which projects the Phase-1 sidecar
+// geometry into these very panels' pixels using each scene's OWN bev_bounds
+// and CAM_F0 model. An overlay vertex and a trajectory vertex at the same
+// metre therefore land on the same pixel by construction, not by agreement.
+//
+// COLOURS are deliberately outside PALETTE's range (no method is red, pure
+// yellow or violet) and every stroke is laid over a dark halo, because the
+// same overlay has to read on a bright-sky daytime clip and on a night one;
+// a single flat stroke does not survive both.
+//
+// HIERARCHY: agents and the drivable-area outline are CONTEXT -- thin,
+// mostly transparent, drawn UNDER the trajectories. Failures are the point
+// of this layer and draw OVER them. Trajectories remain the subject.
+//
+// Only variant1_patch_tokens_film has any failure on navtest (human has
+// ZERO across all 1644 scenes), so in practice this draws for one method.
+// Nothing here hardcodes that: it iterates whichever ticked methods the
+// events doc actually carries an entry for, and draws nothing for the rest.
+// ---------------------------------------------------------------------
+var EVENT_PALETTE = {
+  agents:   "#c9d4e0",
+  drivable: "#4fd3e8",
+  nc:       "#ff3b30",
+  ttc:      "#ffd400",
+  dac:      "#b14bff",
+  sim:      "#ffffff"
+};
+var EVENT_LAYERS = ["agents", "drivable", "failures"];
+var EVENT_LAYER_LABEL = { agents: "Agents", drivable: "Drivable area", failures: "Failures" };
+var HALO = "rgba(0,0,0,0.6)";
+
+function eventPath(ctx, pts, sx, sy, close){
+  ctx.beginPath();
+  for (var i = 0; i < pts.length; i++){
+    var x = pts[i][0] * sx, y = pts[i][1] * sy;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  if (close) ctx.closePath();
+}
+function strokePoly(ctx, pts, sx, sy, colour, w, dash, close, alpha){
+  if (!pts || pts.length < 2) return;
+  ctx.save();
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.globalAlpha = (alpha == null) ? 1 : alpha;
+  eventPath(ctx, pts, sx, sy, close);
+  ctx.setLineDash([]);
+  ctx.lineWidth = w + 1.6; ctx.strokeStyle = HALO; ctx.stroke();
+  ctx.setLineDash(dash || []);
+  ctx.lineWidth = w; ctx.strokeStyle = colour; ctx.stroke();
+  ctx.restore();
+}
+// Impact marker: ring + crosshair drawn twice (dark, then coloured) so it
+// stays visible whatever it lands on.
+function markImpact(ctx, p, sx, sy, colour){
+  if (!p) return;
+  var x = p[0] * sx, y = p[1] * sy, r = 5.5, pass;
+  ctx.save();
+  ctx.lineCap = "round"; ctx.setLineDash([]);
+  for (pass = 0; pass < 2; pass++){
+    ctx.lineWidth = (pass === 0) ? 3.4 : 1.7;
+    ctx.strokeStyle = (pass === 0) ? HALO : colour;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - r - 2, y); ctx.lineTo(x + r + 2, y);
+    ctx.moveTo(x, y - r - 2); ctx.lineTo(x, y + r + 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// {bottom:[[u,v]...], top:[[u,v]...]} -- the exporter emits the two rings in
+// matching vertex order, so the verticals are index-to-index.
+function drawBox3d(ctx, box, sx, sy, colour, w, alpha, dash){
+  if (!box || !box.bottom || !box.top || box.bottom.length !== box.top.length) return;
+  strokePoly(ctx, box.bottom, sx, sy, colour, w, dash, true, alpha);
+  strokePoly(ctx, box.top, sx, sy, colour, w, dash, true, alpha);
+  for (var i = 0; i < box.bottom.length; i++){
+    strokePoly(ctx, [box.bottom[i], box.top[i]], sx, sy, colour, w, dash, false, alpha);
+  }
+}
+// Camera geometry belongs to the last history frame and its dwell copies --
+// exactly the frames the trajectory's own cam array is non-null on. The
+// exporter reads that index list out of the scene's traj doc and ships it as
+// cam_frames, so the two appear and disappear in lockstep. If it is ever
+// missing, derive it from the traj doc rather than guessing a frame count.
+function camFramesFor(events, traj){
+  if (events && events.cam_frames && events.cam_frames.length) return events.cam_frames;
+  var out = [];
+  if (!traj || !traj.methods) return out;
+  for (var k in traj.methods){
+    if (!traj.methods.hasOwnProperty(k)) continue;
+    var arr = traj.methods[k].cam || [];
+    for (var i = 0; i < arr.length; i++){
+      if (arr[i] && arr[i].length && out.indexOf(i) < 0) out.push(i);
+    }
+  }
+  return out;
+}
+function drawEventContext(ctx, sx, sy, panelKey, camOK, events, evTicks){
+  if (panelKey === "bev" && evTicks.drivable && events.drivable_area){
+    var polys = events.drivable_area.bev || [];
+    for (var i = 0; i < polys.length; i++){
+      strokePoly(ctx, polys[i].shell, sx, sy, EVENT_PALETTE.drivable, 1.1, [5, 4], true, 0.7);
+      var holes = polys[i].holes || [];
+      for (var j = 0; j < holes.length; j++){
+        strokePoly(ctx, holes[j], sx, sy, EVENT_PALETTE.drivable, 1.1, [5, 4], true, 0.7);
+      }
+    }
+  }
+  if (!evTicks.agents || !events.agents) return;
+  var objs = events.agents.objects || [];
+  for (var k = 0; k < objs.length; k++){
+    if (panelKey === "bev"){
+      // Index 0 is t0 -- the state the imagery actually shows. The later
+      // timesteps are the replay track across the scored 4 s, drawn much
+      // fainter (BEV is a map, and the trajectory beside it is already the
+      // whole future). A null entry is a timestep at which the replay log
+      // has no box for that track: it is SKIPPED, never interpolated across.
+      var series = objs[k].bev || [];
+      for (var t = series.length - 1; t >= 0; t--){
+        if (!series[t]) continue;
+        strokePoly(ctx, series[t], sx, sy, EVENT_PALETTE.agents,
+                   (t === 0) ? 1.3 : 1.0, null, true, (t === 0) ? 0.75 : 0.2);
+      }
+    } else if (camOK){
+      // t0 only on the camera: the imagery under it IS t0, so a box drawn at
+      // t = 2 s would sit where nothing is.
+      drawBox3d(ctx, objs[k].cam_box, sx, sy, EVENT_PALETTE.agents, 1.1, 0.6);
+    }
+  }
+}
+// SOLID = now (t0, the state the imagery shows), DASHED = at the failure
+// timestep. The sidecar's agent polygon is the agent AT THE FAILURE, which on
+// the camera can be metres from where the car is in the picture -- see
+// export_events_px.py's "THE TIME TRAP". The impact marker is a fixed ground
+// point in the t0 frame and needs no such distinction.
+function drawOneFailure(ctx, sx, sy, panelKey, camOK, ev, colour){
+  if (!ev) return;
+  if (panelKey === "bev"){
+    var b = ev.bev || {};
+    if (b.ego_projected) strokePoly(ctx, b.ego_projected, sx, sy, colour, 1.3, [4, 3], true, 0.75);
+    if (b.agent_t0) strokePoly(ctx, b.agent_t0, sx, sy, colour, 1.2, null, true, 0.5);
+    if (b.ego) strokePoly(ctx, b.ego, sx, sy, colour, 1.6, null, true, 0.9);
+    if (b.agent) strokePoly(ctx, b.agent, sx, sy, colour, 2.2, null, true, 1);
+    markImpact(ctx, b.impact, sx, sy, colour);
+  } else if (camOK){
+    var c = ev.cam || {};
+    drawBox3d(ctx, c.agent_box_at_event, sx, sy, colour, 1.2, 0.55, [4, 4]);
+    drawBox3d(ctx, c.agent_box, sx, sy, colour, 2.2, 1, null);
+    markImpact(ctx, c.impact, sx, sy, colour);
+  }
+}
+function drawEventFailures(ctx, sx, sy, panelKey, camOK, events, evTicks, methods, ticks){
+  if (!evTicks.failures || !events.methods) return;
+  for (var i = 0; i < methods.length; i++){
+    var m = methods[i];
+    if (!ticks[m]) continue;
+    var e = events.methods[m];
+    if (!e || !(e.collision || e.ttc || e.dac)) continue;
+    if (panelKey === "bev" && e.sim_path_bev){
+      // The scorer does not drive the drawn polyline: it tracks it with an
+      // LQR controller through a kinematic bicycle model, so the footprint
+      // that actually violates sits on the SIMULATED path, up to a metre or
+      // two off the line. Without this faint path an off-road footprint
+      // looks dropped into empty space beside the trajectory.
+      strokePoly(ctx, e.sim_path_bev, sx, sy, EVENT_PALETTE.sim, 1.0, [2, 3], false, 0.4);
+    }
+    if (e.dac && panelKey === "bev"){
+      var ps = e.dac.bev || [];
+      for (var j = 0; j < ps.length; j++){
+        strokePoly(ctx, ps[j], sx, sy, EVENT_PALETTE.dac, 1.8, null, true, 0.95);
+      }
+    }
+    // TTC first, collision second: where both name the same agent, the
+    // at-fault collision is the stronger statement and wins the pixel.
+    drawOneFailure(ctx, sx, sy, panelKey, camOK, e.ttc, EVENT_PALETTE.ttc);
+    drawOneFailure(ctx, sx, sy, panelKey, camOK, e.collision, EVENT_PALETTE.nc);
+  }
+}
+
 // Draws ONE panel's trajectories at frame `idx`. Coordinates are panel-local
 // (0..panelDims.w x 0..panelDims.h) -- NEVER offset by the other panel's
 // width, confirmed against the exporter's own bev_to_px(), which does not
 // add the cam panel's width. `ticks` maps method key -> bool (drawn or not).
-function drawPanel(ctx, canvas, cssW, cssH, dpr, panelDims, methods, ticks, traj, palette, panelKey, idx){
+//
+// `events`/`evTicks` are OPTIONAL (events_px/<token>.json plus its layer tick
+// map). A caller that has neither -- including one whose events fetch failed
+// or is still in flight -- passes nothing and gets exactly the
+// trajectory-only rendering it got before this layer existed.
+function drawPanel(ctx, canvas, cssW, cssH, dpr, panelDims, methods, ticks, traj, palette, panelKey, idx, events, evTicks){
   if (!canvas.width || !canvas.height) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   var sx = cssW / panelDims.w, sy = cssH / panelDims.h;
+  var camOK = false;
+  if (events && evTicks){
+    camOK = (panelKey === "cam") && (camFramesFor(events, traj).indexOf(idx) >= 0);
+    drawEventContext(ctx, sx, sy, panelKey, camOK, events, evTicks);
+  }
   methods.forEach(function(m){
     if (!ticks[m]) return;
     var series = traj.methods[m] && traj.methods[m][panelKey];
@@ -423,6 +614,9 @@ function drawPanel(ctx, canvas, cssW, cssH, dpr, panelDims, methods, ticks, traj
       ctx.fill();
     });
   });
+  if (events && evTicks){
+    drawEventFailures(ctx, sx, sy, panelKey, camOK, events, evTicks, methods, ticks);
+  }
 }
 
 // Draws both panels of one "stage" instance for its current frame in one
@@ -431,13 +625,18 @@ function drawPanel(ctx, canvas, cssW, cssH, dpr, panelDims, methods, ticks, traj
 // plain object the caller owns: { video, camCtx, camCanvas, bevCtx,
 // bevCanvas, dims:{camCssW,camCssH,bevCssW,bevCssH,dpr}, panels:{cam,bev},
 // methods:[...], ticks:{...}, traj, palette, fps }.
+// `inst.events`/`inst.evTicks` are optional -- a caller that never fetches
+// events_px simply never sets them, and both panels render trajectories
+// exactly as before.
 function drawStage(inst){
   if (!inst.traj) return;
   var idx = currentFrameIndex(inst.video, inst.fps, frameCountFor(inst.traj, inst.methods, inst.ticks));
   drawPanel(inst.camCtx, inst.camCanvas, inst.dims.camCssW, inst.dims.camCssH, inst.dims.dpr,
-    inst.panels.cam, inst.methods, inst.ticks, inst.traj, inst.palette, "cam", idx);
+    inst.panels.cam, inst.methods, inst.ticks, inst.traj, inst.palette, "cam", idx,
+    inst.events, inst.evTicks);
   drawPanel(inst.bevCtx, inst.bevCanvas, inst.dims.bevCssW, inst.dims.bevCssH, inst.dims.dpr,
-    inst.panels.bev, inst.methods, inst.ticks, inst.traj, inst.palette, "bev", idx);
+    inst.panels.bev, inst.methods, inst.ticks, inst.traj, inst.palette, "bev", idx,
+    inst.events, inst.evTicks);
 }
 
 // requestVideoFrameCallback where available (frame-accurate redraw), rAF
@@ -562,6 +761,8 @@ function setupFullscreen(stage, video, relayout){
 
 return {
   LINE_W: LINE_W, MARKER_R: MARKER_R, HUMAN_DASH: HUMAN_DASH, HUMAN_OUTLINE_W: HUMAN_OUTLINE_W,
+  EVENT_PALETTE: EVENT_PALETTE, EVENT_LAYERS: EVENT_LAYERS, EVENT_LAYER_LABEL: EVENT_LAYER_LABEL,
+  camFramesFor: camFramesFor,
   colourFor: colourFor, labelFor: labelFor, currentFrameIndex: currentFrameIndex,
   frameCountFor: frameCountFor,
   firstOverlayFrame: firstOverlayFrame, seekToOverlayFrame: seekToOverlayFrame,
