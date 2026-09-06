@@ -81,6 +81,25 @@
   .ovlegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:-2px 0 2px;}
   .ovlegend .sw{display:inline-block;width:11px;height:11px;border-radius:2px;
     vertical-align:-1px;margin-right:6px;}
+  /* Failure-mode layer ticks -- one compact row directly above the clips
+     they control, NOT tucked into a sidebar: on this page the scorer's own
+     failure geometry is the whole point, so all three default ON. */
+  .ovlayers{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    margin:2px 0 10px;padding:6px 9px;border-radius:5px;background:var(--panel);
+    border:1px solid var(--rule);font-size:12px;}
+  .ovlayers .lltitle{font-size:10px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-3);}
+  .ovlayers label{display:flex;align-items:center;gap:6px;color:var(--ink-2);cursor:pointer;}
+  .ovlayers input{accent-color:var(--accent);width:13px;height:13px;flex:0 0 auto;}
+  .ovlayers .lsw{width:10px;height:10px;border-radius:3px;flex:0 0 auto;}
+  .ovlayers .lnote{color:var(--ink-3);font-size:11px;font-style:italic;}
+  /* What the scorer says went wrong, in words, under the clip it belongs to. */
+  .clip .failnote{display:flex;flex-direction:column;gap:4px;}
+  .clip .failnote[hidden]{display:none;}
+  .clip .failchip{display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.35;
+    padding:4px 6px;border-radius:4px;background:var(--panel-2);border:1px solid var(--rule);}
+  .clip .failchip .fdot{width:8px;height:8px;border-radius:2px;flex:0 0 auto;margin-top:3px;}
+  .clip .failchip .ft{color:var(--ink);}
   a{color:var(--accent);}
 </style>
 <style id="navsim-tabbar-css">
@@ -210,8 +229,14 @@
   <h2>What it looks like</h2>
   <p class="measure">Example scenes from each mode, drawn from the rendered gallery. Camera view
   left, bird's-eye right; each clip overlays the human log and Variant 1 (patch tokens) trajectories
-  directly. Every method is available in the <a href="scenes/index.html">Scenes</a> tab.</p>
+  directly. Every method is available in the <a href="scenes/index.html">Scenes</a> tab.
+  The <b>Layers</b> ticks below draw the scorer&rsquo;s own failure geometry on top &mdash; the tracked
+  agents, the drivable-area boundary, and, where Variant 1 failed, the agent it collided with, the
+  time-to-collision projection that hit, and the ego footprints that left the drivable area &mdash;
+  each captioned in words under its clip. That is what the modes above look like from the inside,
+  so all three layers are on by default.</p>
   <div class="ovlegend" id="ovlegend"></div>
+  <div class="ovlayers" id="ovlayers"></div>
   <div id="clips"></div>
 </section>
 
@@ -810,6 +835,128 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
     });
   })();
 
+  // ---------------------------------------------------------------------
+  // Failure-mode overlay layers -- scenes/events/<token>.json, wired exactly
+  // the way the Scenes tab wires it (build_scene_viewer.py's ensureEvents /
+  // eventsCache / evTicks), against the SAME shared renderer inlined above.
+  // Fetched lazily by the SAME IntersectionObserver that already fetches
+  // traj/<token>.json, cached per token, never embedded.
+  //
+  // Default ON: this page is an explainer ABOUT the failure modes, so the
+  // geometry is the subject, not a decoration.
+  //
+  // A missing or failed events fetch is a NON-EVENT: the clip keeps its
+  // trajectories and simply shows no failure layers. The sidecars exist for
+  // navtest only, so a 404 is expected, not a fault -- warned about ONCE for
+  // the whole page, never per clip.
+  // ---------------------------------------------------------------------
+  var evTicks = { agents: true, drivable: true, failures: true };
+  // token -> {status:"loading"} | {status:"loaded", data} | {status:"error"}
+  var eventsCache = {};
+  var eventsWarned = false;
+  // token -> the caption element under that clip
+  var noteByToken = {};
+
+  function ensureEvents(token){
+    var inst = instByToken[token];
+    if (!inst || inst.events) return;
+    var cached = eventsCache[token];
+    if (cached){
+      if (cached.status === "loaded") applyEvents(token, cached.data);
+      return;
+    }
+    eventsCache[token] = { status: "loading" };
+    fetch("scenes/events/" + encodeURIComponent(token) + ".json")
+      .then(function(resp){
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      })
+      .then(function(doc){
+        eventsCache[token] = { status: "loaded", data: doc };
+        applyEvents(token, doc);
+      })
+      .catch(function(err){
+        eventsCache[token] = { status: "error" };
+        if (!eventsWarned){
+          eventsWarned = true;
+          console.warn("[why_peaks] failure-overlay events unavailable (navtest-only sidecars); "
+            + "clips render trajectories only:", err);
+        }
+        renderFailNote(token);   // hides the caption; never throws
+      });
+  }
+  function applyEvents(token, doc){
+    var inst = instByToken[token];
+    if (inst){
+      inst.events = doc;
+      NavsimOverlay.drawStage(inst);
+    }
+    renderFailNote(token);
+  }
+
+  // The caption: what the scorer says went wrong, in words, for every ticked
+  // method that failed. Hidden when nothing failed, when the Failures layer
+  // is off, or when the events doc never arrived.
+  function renderFailNote(token){
+    var note = noteByToken[token];
+    if (!note) return;
+    note.innerHTML = "";
+    var inst = instByToken[token];
+    var ev = inst && inst.events;
+    if (!ev || !ev.methods || !evTicks.failures){ note.hidden = true; return; }
+    var pal = NavsimOverlay.EVENT_PALETTE;
+    var rows = [];
+    OV_METHODS.forEach(function(m){
+      if (!OV_TICKS[m]) return;
+      var e = ev.methods[m];
+      if (!e || !e.captions) return;
+      e.captions.forEach(function(c){ rows.push(c); });
+    });
+    if (!rows.length){ note.hidden = true; return; }
+    rows.forEach(function(c){
+      var chip = document.createElement("div"); chip.className = "failchip";
+      var dot = document.createElement("span"); dot.className = "fdot";
+      dot.style.background = pal[c.kind] || "var(--ink-3)";
+      var tx = document.createElement("span"); tx.className = "ft"; tx.textContent = c.text;
+      chip.appendChild(dot); chip.appendChild(tx);
+      note.appendChild(chip);
+    });
+    note.hidden = false;
+  }
+
+  // One compact tick row above the clips. Swatch colours come from
+  // NavsimOverlay.EVENT_PALETTE itself, so there is no second copy of the
+  // palette to drift -- same construction as the Scenes tab's
+  // renderLayerList().
+  (function buildLayerRow(){
+    var row = document.getElementById("ovlayers");
+    if (!row) return;
+    var title = document.createElement("span"); title.className = "lltitle";
+    title.textContent = "Layers"; row.appendChild(title);
+    var pal = NavsimOverlay.EVENT_PALETTE;
+    var swatchFor = { agents: pal.agents, drivable: pal.drivable, failures: pal.nc };
+    NavsimOverlay.EVENT_LAYERS.forEach(function(k){
+      var lab = document.createElement("label");
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!evTicks[k];
+      cb.addEventListener("change", function(){ evTicks[k] = cb.checked; refreshLayers(); });
+      var sw = document.createElement("span"); sw.className = "lsw";
+      sw.style.background = swatchFor[k] || pal.agents;
+      var nm = document.createElement("span");
+      nm.textContent = NavsimOverlay.EVENT_LAYER_LABEL[k] || k;
+      lab.appendChild(cb); lab.appendChild(sw); lab.appendChild(nm);
+      row.appendChild(lab);
+    });
+    var note = document.createElement("span"); note.className = "lnote";
+    note.textContent = "the scorer’s own failure geometry, captured from the v1.1 PDM scorer";
+    row.appendChild(note);
+  })();
+  function refreshLayers(){
+    Object.keys(instByToken).forEach(function(token){
+      renderFailNote(token);
+      NavsimOverlay.drawStage(instByToken[token]);
+    });
+  }
+
   // token -> {status:"loading"} | {status:"loaded", data} | {status:"error"}
   var trajCache = {};
   // token -> the overlay `inst` object for that clip, so a fetch that
@@ -880,6 +1027,10 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
       bevCtx: bevCanvas.getContext("2d"), bevCanvas: bevCanvas,
       panels: OV_PANELS, methods: OV_METHODS, ticks: OV_TICKS,
       traj: null, palette: OV_PALETTE, fps: OV_FPS,
+      // scenes/events/<token>.json + its layer ticks: drawStage() reads both
+      // straight off the instance and skips the whole failure layer while
+      // `events` is still null (never fetched, in flight, or 404).
+      events: null, evTicks: evTicks,
       dims: { camCssW: 0, camCssH: 0, bevCssW: 0, bevCssH: 0, dpr: window.devicePixelRatio || 1 },
     };
     instByToken[token] = inst;
@@ -974,7 +1125,12 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
       setupClipOverlay(stage, v, camCanvas, bevCanvas, t[0]);
       var meta=document.createElement("div"); meta.className="meta";
       meta.innerHTML='<span>'+t[0].slice(0,10)+'</span><span>PDMS '+t[1]+'</span>';
-      c.appendChild(stage); c.appendChild(meta); g.appendChild(c);
+      // Caption for whatever the scorer says went wrong on this scene, filled
+      // in by renderFailNote() once the events doc lands (and re-run whenever
+      // the Failures tick changes). Starts hidden -- most scenes fail nothing.
+      var note=document.createElement("div"); note.className="failnote"; note.hidden=true;
+      noteByToken[t[0]]=note;
+      c.appendChild(stage); c.appendChild(meta); c.appendChild(note); g.appendChild(c);
     });
     box.appendChild(g);
   });
@@ -984,6 +1140,10 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
         var v=e.target;
         if(e.isIntersecting){
           ensureTraj(v.dataset.token);
+          // Same lazy, cached-per-token fetch as the trajectory beside it, and
+          // independent of it: a 404 (navhard) or a network failure leaves the
+          // clip playing with its trajectories and no failure layers.
+          ensureEvents(v.dataset.token);
           trySeekToOverlayFrame(instByToken[v.dataset.token]);   // metadata may already be ready
           v.play().catch(function(){});
         } else { v.pause(); }

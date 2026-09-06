@@ -143,6 +143,31 @@ code{font-family:"IBM Plex Mono",monospace;font-size:.92em;background:var(--rule
 .reveal a.gotoscene{display:inline-block;font-family:"IBM Plex Sans",sans-serif;
   font-size:11.5px;font-weight:600;color:var(--accent,#1f6f6b);text-decoration:none;}
 .reveal a.gotoscene:hover{text-decoration:underline;}
+
+/* Failure-mode overlay layers -- the SAME three ticks the Scenes tab shows
+   (NavsimOverlay.EVENT_LAYERS), scoped to the whole reveal panel rather than
+   to one clip: a bin reveals up to 20 small stages at once, and a per-clip
+   tick row would be 20 copies of one global decision. State lives in the
+   page-level `evTicks`, so it survives the panel being rebuilt. */
+.reveal .rv-layers{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:2px 0 8px;padding:6px 8px;border-radius:5px;background:var(--panel);
+  border:1px solid var(--rule);font-family:"IBM Plex Sans",sans-serif;font-size:11.5px;}
+.reveal .rv-layers .rv-lltitle{font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);}
+.reveal .rv-layers label{display:flex;align-items:center;gap:6px;color:var(--ink-2);cursor:pointer;}
+.reveal .rv-layers input{accent-color:var(--accent,#1f6f6b);width:13px;height:13px;flex:0 0 auto;}
+.reveal .rv-layers .rv-sw{width:10px;height:10px;border-radius:3px;flex:0 0 auto;}
+.reveal .rv-layers .rv-lnote{color:var(--ink-3);font-size:11px;font-style:italic;}
+/* Caption for whatever the scorer says went wrong, in words, under the clip
+   it belongs to. Its own flex line (flex-basis 100%) inside the .ex row so it
+   spans clip + score table instead of squeezing either. */
+.reveal .ex-fail{flex:1 1 100%;display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+.reveal .ex-fail[hidden]{display:none;}
+.reveal .failchip{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:1.35;
+  padding:5px 8px;border-radius:5px;background:var(--panel);border:1px solid var(--rule);
+  font-family:"IBM Plex Sans",sans-serif;}
+.reveal .failchip .fdot{width:9px;height:9px;border-radius:2px;flex:0 0 auto;margin-top:4px;}
+.reveal .failchip .ft{color:var(--ink);}
 </style>
 </head>
 <body>
@@ -214,7 +239,11 @@ code{font-family:"IBM Plex Mono",monospace;font-size:.92em;background:var(--rule
     20 (the panel says so, with the real count). navhard (v2) bins carry <b>zero</b>
     examples structurally, not from a coverage gap: its group export is keyed by 16-char stage-one
     tokens while the rendered navhard clips are 17-char stage-two tokens, a disjoint identifier space
-    (see <code>distributions/scripts/export_chart_data.py</code>'s module docstring).</p>
+    (see <code>distributions/scripts/export_chart_data.py</code>'s module docstring).
+    Each revealed panel carries the same <b>Layers</b> ticks as the Scenes tab: the tracked agents,
+    the drivable-area boundary, and &mdash; where this method failed &mdash; the agent it collided
+    with, the time-to-collision projection that hit, and the ego footprints that left the drivable
+    area, each captioned in words under its clip. That geometry exists for navtest scenes only.</p>
   
   <div class="switchbar" role="group" aria-label="Metric version">
     <button type="button" class="sw-btn v1" data-metric="v1" aria-pressed="true">v1 PDMS &middot; navtest</button>
@@ -776,6 +805,128 @@ var DATA = JSON.parse(document.getElementById("chart-data").textContent);
 var wrapRoot = document.getElementById("wrapRoot");
 var SVGNS = "http://www.w3.org/2000/svg";
 
+// ---------------------------------------------------------------------
+// Failure-mode overlay layers -- scenes/events/<token>.json, wired exactly
+// the way the Scenes tab wires it (build_scene_viewer.py's ensureEvents /
+// eventsCache / evTicks), against the SAME shared renderer. NOT embedded:
+// this page already embeds its traj docs (17MB); the events sidecars are
+// another ~21MB, so they are fetched lazily, per token, on first reveal,
+// and cached for the life of the page. The path is one level up because
+// this page is served from /distributions/.
+//
+// A missing or failed events fetch is a NON-EVENT: the clip keeps its
+// trajectory overlay and its score table and simply shows no failure
+// layers. Events exist for navtest only (1644 tokens), so navhard tokens
+// 404 by construction -- expected, warned about ONCE for the whole page,
+// never per clip.
+// ---------------------------------------------------------------------
+var evTicks = { agents: true, drivable: true, failures: true };
+var eventsCache = {};   // token -> {status:"loaded", data} | {status:"error"}
+var eventsWarned = false;
+// Every example row currently mounted in the OPEN reveal panel:
+// {token, methodKey, inst, note, events, eventsStatus}. Cleared by
+// stopAllRevealPlayback() alongside every other per-reveal handle, so a
+// layer tick only ever redraws what is actually on screen.
+var liveExamples = [];
+
+function ensureEvents(ex){
+  if (ex.events || ex.eventsStatus === "loading" || ex.eventsStatus === "error") return;
+  var cached = eventsCache[ex.token];
+  if (cached){
+    if (cached.status === "loaded") applyEvents(ex, cached.data);
+    else ex.eventsStatus = "error";
+    return;
+  }
+  ex.eventsStatus = "loading";
+  fetch("../scenes/events/" + encodeURIComponent(ex.token) + ".json")
+    .then(function(resp){
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      return resp.json();
+    })
+    .then(function(doc){
+      eventsCache[ex.token] = { status: "loaded", data: doc };
+      applyEvents(ex, doc);
+    })
+    .catch(function(err){
+      eventsCache[ex.token] = { status: "error" };
+      ex.eventsStatus = "error";
+      ex.events = null;
+      if (ex.inst) ex.inst.events = null;
+      if (!eventsWarned){
+        eventsWarned = true;
+        console.warn("[distributions] failure-overlay events unavailable (navtest-only sidecars); "
+          + "clips render trajectories only:", err);
+      }
+      renderFailNote(ex);   // hides the caption; never throws
+    });
+}
+function applyEvents(ex, doc){
+  ex.events = doc;
+  ex.eventsStatus = "loaded";
+  if (ex.inst){
+    ex.inst.events = doc;
+    NavsimOverlay.drawStage(ex.inst);   // no-op until the video has decoded
+  }
+  renderFailNote(ex);
+}
+
+// The caption: what the scorer says went wrong, in words, for THIS example's
+// one method (a reveal panel is always reached from a single method's own
+// chart). Hidden when nothing failed, when the Failures layer is off, or
+// when the events doc never arrived.
+function renderFailNote(ex){
+  var note = ex.note;
+  if (!note) return;
+  note.innerHTML = "";
+  var evd = ex.events;
+  if (!evd || !evd.methods || !evTicks.failures){ note.hidden = true; return; }
+  var e = evd.methods[ex.methodKey];
+  if (!e || !e.captions || !e.captions.length){ note.hidden = true; return; }
+  var pal = NavsimOverlay.EVENT_PALETTE;
+  e.captions.forEach(function(c){
+    var chip = document.createElement("div"); chip.className = "failchip";
+    var dot = document.createElement("span"); dot.className = "fdot";
+    dot.style.background = pal[c.kind] || "var(--ink-3)";
+    var tx = document.createElement("span"); tx.className = "ft"; tx.textContent = c.text;
+    chip.appendChild(dot); chip.appendChild(tx);
+    note.appendChild(chip);
+  });
+  note.hidden = false;
+}
+
+// One tick row per reveal panel, driving the page-global evTicks. Swatch
+// colours come from NavsimOverlay.EVENT_PALETTE itself so there is no second
+// copy of the palette to drift -- same construction as the Scenes tab's
+// renderLayerList().
+function buildLayerRow(){
+  var row = document.createElement("div"); row.className = "rv-layers";
+  var title = document.createElement("span"); title.className = "rv-lltitle";
+  title.textContent = "Layers"; row.appendChild(title);
+  var pal = NavsimOverlay.EVENT_PALETTE;
+  var swatchFor = { agents: pal.agents, drivable: pal.drivable, failures: pal.nc };
+  NavsimOverlay.EVENT_LAYERS.forEach(function(k){
+    var lab = document.createElement("label");
+    var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!evTicks[k];
+    cb.addEventListener("change", function(){ evTicks[k] = cb.checked; refreshLayers(); });
+    var sw = document.createElement("span"); sw.className = "rv-sw";
+    sw.style.background = swatchFor[k] || pal.agents;
+    var nm = document.createElement("span");
+    nm.textContent = NavsimOverlay.EVENT_LAYER_LABEL[k] || k;
+    lab.appendChild(cb); lab.appendChild(sw); lab.appendChild(nm);
+    row.appendChild(lab);
+  });
+  var note = document.createElement("span"); note.className = "rv-lnote";
+  note.textContent = "scorer\u2019s own failure geometry \u2014 navtest scenes only";
+  row.appendChild(note);
+  return row;
+}
+function refreshLayers(){
+  liveExamples.forEach(function(ex){
+    renderFailNote(ex);
+    if (ex.inst) NavsimOverlay.drawStage(ex.inst);
+  });
+}
+
 // Fixed aspect ratio for every reveal-panel stage box, derived once from the
 // embedded panel dims -- same anti-layout-shift trick as the Scenes tab
 // (build_scene_viewer.py's setStageAspect): the CSS box reserves its final
@@ -803,6 +954,10 @@ function setupOverlay(stage, video, camCanvas, bevCanvas, traj, methodKey){
     bevCtx: bevCanvas.getContext("2d"), bevCanvas: bevCanvas,
     panels: panels, methods: [methodKey], ticks: ticks,
     traj: traj, palette: DATA.palette || {}, fps: traj.fps || DATA.fps || 2,
+    // scenes/events/<token>.json + its layer ticks: drawStage() reads both
+    // straight off the instance and skips the whole failure layer while
+    // `events` is still null (never fetched, in flight, or 404).
+    events: null, evTicks: evTicks,
     dims: { camCssW: 0, camCssH: 0, bevCssW: 0, bevCssH: 0, dpr: window.devicePixelRatio || 1 },
   };
   function layout(){
@@ -849,6 +1004,8 @@ function setupOverlay(stage, video, camCanvas, bevCanvas, traj, methodKey){
   NavsimOverlay.setupFullscreen(stage, video, layout);
 
   return {
+    inst: inst,   // the caller registers this in liveExamples so a layer tick
+                  // can redraw exactly the stages currently on screen
     destroy: function(){
       loop.stop();
       ro.disconnect();
@@ -866,6 +1023,7 @@ var activeReveal = [];
 function stopAllRevealPlayback(){
   activeReveal.forEach(function(fn){ fn(); });
   activeReveal = [];
+  liveExamples = [];   // the rows these belonged to are about to leave the DOM
 }
 
 // Full subscore breakdown for ONE example, in a panel to the right of its
@@ -1021,10 +1179,19 @@ function buildReveal(metric, unitName, methodKey, d, binIdx){
   // events, so controlling play()/pause() here is enough to start/stop that
   // loop too -- no second lazy-loop mechanism. One observer per reveal box,
   // disconnected by stopAllRevealPlayback() same as every per-example handle.
+  //
+  // The same first-intersection moment is also when this example's
+  // scenes/events/<token>.json is fetched (ensureEvents, cached per token,
+  // idempotent) -- lazily, exactly like the clip itself, and independent of
+  // it: a 404 or a network failure leaves the clip playing with its
+  // trajectory overlay intact and no failure layers.
+  var exByVideo = new Map();
   var lazyObserver = new IntersectionObserver(function(entries){
     entries.forEach(function(entry){
       var v = entry.target;
       if (entry.isIntersecting){
+        var ex = exByVideo.get(v);
+        if (ex) ensureEvents(ex);
         if (!v.src){ v.src = v.dataset.clipSrc; v.load(); }
         var p = v.play();
         if (p && p.catch) p.catch(function(){});
@@ -1034,6 +1201,9 @@ function buildReveal(metric, unitName, methodKey, d, binIdx){
     });
   }, { root: null, rootMargin: "200px 0px", threshold: 0.01 });
   activeReveal.push(function(){ lazyObserver.disconnect(); });
+
+  // Layer ticks for the whole panel, above the clips they control.
+  box.appendChild(buildLayerRow());
 
   examples.forEach(function(ex){
     var row = document.createElement("div"); row.className = "ex";
@@ -1057,9 +1227,20 @@ function buildReveal(metric, unitName, methodKey, d, binIdx){
     // Score breakdown, to the RIGHT of the clip (row is display:flex).
     var scores = buildScorePanel(ex.token, methodKey, DATA.traj && DATA.traj[ex.token]);
 
+    // Caption for whatever the scorer says went wrong on this scene, filled
+    // in by renderFailNote() once the events doc lands (and re-run whenever
+    // the Failures tick changes). Starts hidden -- most scenes fail nothing.
+    var note = document.createElement("div");
+    note.className = "ex-fail"; note.hidden = true;
+
     var traj = DATA.traj && DATA.traj[ex.token];
+    var live = { token: ex.token, methodKey: methodKey, inst: null, note: note,
+                 events: null, eventsStatus: "idle" };
+    liveExamples.push(live);
+    exByVideo.set(v, live);
     if (traj){
       var handle = setupOverlay(stage, v, camCanvas, bevCanvas, traj, methodKey);
+      live.inst = handle.inst;
       activeReveal.push(handle.destroy);
     } else {
       // Never silently show a wrong or missing trajectory -- say so, right
@@ -1073,7 +1254,7 @@ function buildReveal(metric, unitName, methodKey, d, binIdx){
     // visibility-driven from here on -- see lazyObserver above.
     lazyObserver.observe(v);
 
-    row.appendChild(stage); row.appendChild(scores);
+    row.appendChild(stage); row.appendChild(scores); row.appendChild(note);
     box.appendChild(row);
   });
   return box;
