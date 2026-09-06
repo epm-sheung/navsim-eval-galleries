@@ -245,9 +245,49 @@ function colourFor(palette, key){
 function labelFor(label, key){ return (label && label[key]) || key; }
 
 function currentFrameIndex(video, fps, nFrames){
+  // nFrames MUST be passed by the caller (derived from the traj doc's own
+  // cam/bev array length -- see frameCountFor below); the `|| 4` here is
+  // only a last-ditch fallback if a caller somehow omits it, not something
+  // to rely on -- the clip's true frame count varies (history frames only
+  // vs. history + dwell copies of the last frame, see render_and_export.py).
   nFrames = nFrames || 4;
   var idx = Math.floor((video.currentTime || 0) * (fps || 2));
   return Math.max(0, Math.min(nFrames - 1, idx));
+}
+
+// Derives the clip's actual frame count from the traj doc itself, instead of
+// assuming a fixed number: the exporter appends DWELL_FRAMES extra copies of
+// the last history frame (see render_and_export.py's DWELL docstring), so
+// the array length is NOT always 4. Reads the first ticked-and-present
+// method's bev (always present) or cam array length; `methods` is the full
+// ordered list of method keys the caller knows about, `ticks` optionally
+// narrows to only the ones currently drawn (checked first so an untracked
+// method with different data shape never wins), falling back to ANY method
+// present in traj.methods if none of `methods` match.
+function frameCountFor(traj, methods, ticks){
+  function lenOf(m){
+    var e = traj.methods[m];
+    if (!e) return 0;
+    if (e.bev && e.bev.length) return e.bev.length;
+    if (e.cam && e.cam.length) return e.cam.length;
+    return 0;
+  }
+  var list = methods || [];
+  for (var pass = 0; pass < 2; pass++){
+    for (var i = 0; i < list.length; i++){
+      var m = list[i];
+      if (pass === 0 && ticks && !ticks[m]) continue;
+      var n = lenOf(m);
+      if (n) return n;
+    }
+  }
+  for (var k in traj.methods){
+    if (traj.methods.hasOwnProperty(k)){
+      var n2 = lenOf(k);
+      if (n2) return n2;
+    }
+  }
+  return 4;
 }
 
 // Sizes/positions camCanvas over the left (cam) fraction of stageEl and
@@ -335,7 +375,7 @@ function drawPanel(ctx, canvas, cssW, cssH, dpr, panelDims, methods, ticks, traj
 // methods:[...], ticks:{...}, traj, palette, fps }.
 function drawStage(inst){
   if (!inst.traj) return;
-  var idx = currentFrameIndex(inst.video, inst.fps, 4);
+  var idx = currentFrameIndex(inst.video, inst.fps, frameCountFor(inst.traj, inst.methods, inst.ticks));
   drawPanel(inst.camCtx, inst.camCanvas, inst.dims.camCssW, inst.dims.camCssH, inst.dims.dpr,
     inst.panels.cam, inst.methods, inst.ticks, inst.traj, inst.palette, "cam", idx);
   drawPanel(inst.bevCtx, inst.bevCanvas, inst.dims.bevCssW, inst.dims.bevCssH, inst.dims.dpr,
@@ -465,6 +505,7 @@ function setupFullscreen(stage, video, relayout){
 return {
   LINE_W: LINE_W, MARKER_R: MARKER_R, HUMAN_DASH: HUMAN_DASH, HUMAN_OUTLINE_W: HUMAN_OUTLINE_W,
   colourFor: colourFor, labelFor: labelFor, currentFrameIndex: currentFrameIndex,
+  frameCountFor: frameCountFor,
   layoutCanvases: layoutCanvases, drawPanel: drawPanel, drawStage: drawStage, makeLoop: makeLoop,
   setupFullscreen: setupFullscreen
 };
