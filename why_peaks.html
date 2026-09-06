@@ -58,9 +58,29 @@
   .clips{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));}
   .clip{background:var(--panel);border:1px solid var(--rule);border-radius:5px;
     padding:9px;display:flex;flex-direction:column;gap:6px;}
-  .clip video{width:100%;border-radius:3px;background:#000;}
+  /* Stage wraps the base clip + its two trajectory-overlay canvases (cam
+     left, BEV right) -- same shape every page in this package uses, see
+     traj_overlay.py's module docstring. aspect-ratio is fixed (not computed
+     from a data blob, this page has none) from the known panel dims,
+     960+540 wide over 540 tall, so the box reserves its final size before
+     the preload=none video has ever loaded metadata -- no layout shift when
+     a clip lazily loads in. object-fit:fill then keeps canvas and video
+     exactly co-extensive at any box size. */
+  .clip .stage{position:relative;width:100%;aspect-ratio:2.77778;background:#000;
+    border-radius:3px;overflow:hidden;line-height:0;}
+  .clip .stage video{width:100%;height:100%;display:block;object-fit:fill;}
+  .clip .stage canvas{position:absolute;top:0;height:100%;pointer-events:none;}
+  .clip .stage:fullscreen,.clip .stage:-webkit-full-screen{width:100vw;height:100vh;background:#000;}
+  .ov-fs-btn{position:absolute;top:6px;right:6px;z-index:5;width:24px;height:24px;
+    border-radius:5px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.55);
+    color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;padding:0;}
+  .ov-fs-btn:hover{background:rgba(0,0,0,.78);}
   .clip .meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
     display:flex;justify-content:space-between;gap:8px;}
+  .ovlegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:-2px 0 2px;}
+  .ovlegend .sw{display:inline-block;width:11px;height:11px;border-radius:2px;
+    vertical-align:-1px;margin-right:6px;}
   a{color:var(--accent);}
 </style>
 <style id="navsim-tabbar-css">
@@ -189,8 +209,9 @@
 <section>
   <h2>What it looks like</h2>
   <p class="measure">Example scenes from each mode, drawn from the rendered gallery. Camera view
-  left, bird's-eye right; trajectories are drawn per method in the
-  <a href="scenes/index.html">Scenes</a> tab.</p>
+  left, bird's-eye right; each clip overlays the human log and Variant 1 (patch tokens) trajectories
+  directly. Every method is available in the <a href="scenes/index.html">Scenes</a> tab.</p>
+  <div class="ovlegend" id="ovlegend"></div>
   <div id="clips"></div>
 </section>
 
@@ -216,6 +237,254 @@
 </footer>
 </div>
 <script>
+window.NavsimOverlay = (function(){
+"use strict";
+
+// Every method drawn the same thin weight so up to 9 overlaid lines stay
+// separable instead of merging into a band. Human (log) is distinguished by
+// a dash pattern and a thin (not thick/glowing) contrast halo -- never by
+// extra line weight or an oversized marker.
+var LINE_W = 1.6;
+var MARKER_R = 2.2;
+var HUMAN_DASH = [5, 3];
+var HUMAN_OUTLINE_W = LINE_W + 1.0;
+var HAS_RVFC = ("requestVideoFrameCallback" in HTMLVideoElement.prototype);
+
+function colourFor(palette, key){
+  if (palette && palette[key]) return palette[key];
+  var h = 0;
+  for (var i = 0; i < key.length; i++){ h = (h * 31 + key.charCodeAt(i)) >>> 0; }
+  return "hsl(" + (h % 360) + " 55% 50%)";
+}
+function labelFor(label, key){ return (label && label[key]) || key; }
+
+function currentFrameIndex(video, fps, nFrames){
+  nFrames = nFrames || 4;
+  var idx = Math.floor((video.currentTime || 0) * (fps || 2));
+  return Math.max(0, Math.min(nFrames - 1, idx));
+}
+
+// Sizes/positions camCanvas over the left (cam) fraction of stageEl and
+// bevCanvas over the right (bev) fraction, backing store scaled by
+// devicePixelRatio so lines are crisp on HiDPI screens instead of
+// upscaled-blurry. Mutates the two canvases' style/width/height; returns the
+// CSS-pixel dims each now has, for the caller to keep alongside its own
+// per-instance state (this module holds no per-instance state of its own).
+function layoutCanvases(stageEl, camCanvas, bevCanvas, panels){
+  var r = stageEl.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  if (!r.width || !r.height){
+    return { camCssW: 0, camCssH: 0, bevCssW: 0, bevCssH: 0, dpr: dpr };
+  }
+  var camW = panels.cam.w, bevW = panels.bev.w, totalW = camW + bevW;
+  var camFrac = camW / totalW, bevFrac = bevW / totalW;
+
+  var camCssW = r.width * camFrac, cssH = r.height;
+  camCanvas.style.left = "0%";
+  camCanvas.style.width = (camFrac * 100) + "%";
+  camCanvas.width = Math.round(camCssW * dpr);
+  camCanvas.height = Math.round(cssH * dpr);
+
+  var bevCssW = r.width * bevFrac;
+  bevCanvas.style.left = (camFrac * 100) + "%";
+  bevCanvas.style.width = (bevFrac * 100) + "%";
+  bevCanvas.width = Math.round(bevCssW * dpr);
+  bevCanvas.height = Math.round(cssH * dpr);
+
+  return { camCssW: camCssW, camCssH: cssH, bevCssW: bevCssW, bevCssH: cssH, dpr: dpr };
+}
+
+// Draws ONE panel's trajectories at frame `idx`. Coordinates are panel-local
+// (0..panelDims.w x 0..panelDims.h) -- NEVER offset by the other panel's
+// width, confirmed against the exporter's own bev_to_px(), which does not
+// add the cam panel's width. `ticks` maps method key -> bool (drawn or not).
+function drawPanel(ctx, canvas, cssW, cssH, dpr, panelDims, methods, ticks, traj, palette, panelKey, idx){
+  if (!canvas.width || !canvas.height) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var sx = cssW / panelDims.w, sy = cssH / panelDims.h;
+  methods.forEach(function(m){
+    if (!ticks[m]) return;
+    var series = traj.methods[m] && traj.methods[m][panelKey];
+    var pts = series && series[idx];
+    if (!pts || pts.length < 2) return;
+    var isHumanLog = (m === "human");
+    if (isHumanLog){
+      ctx.save();
+      ctx.lineWidth = HUMAN_OUTLINE_W; ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(255,255,255,0.65)";
+      ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.beginPath();
+      pts.forEach(function(p, i){ var x = p[0]*sx, y = p[1]*sy; if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.lineWidth = LINE_W;
+    ctx.setLineDash(isHumanLog ? HUMAN_DASH : []);
+    ctx.strokeStyle = colourFor(palette, m);
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    pts.forEach(function(p, i){
+      var x = p[0]*sx, y = p[1]*sy;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    pts.forEach(function(p){
+      var x = p[0]*sx, y = p[1]*sy;
+      ctx.beginPath();
+      ctx.fillStyle = colourFor(palette, m);
+      ctx.arc(x, y, MARKER_R, 0, Math.PI*2);
+      ctx.fill();
+    });
+  });
+}
+
+// Draws both panels of one "stage" instance for its current frame in one
+// call -- the shape every card/tile in this package shares: one video, one
+// cam canvas, one bev canvas, one traj document, one tick map. `inst` is a
+// plain object the caller owns: { video, camCtx, camCanvas, bevCtx,
+// bevCanvas, dims:{camCssW,camCssH,bevCssW,bevCssH,dpr}, panels:{cam,bev},
+// methods:[...], ticks:{...}, traj, palette, fps }.
+function drawStage(inst){
+  if (!inst.traj) return;
+  var idx = currentFrameIndex(inst.video, inst.fps, 4);
+  drawPanel(inst.camCtx, inst.camCanvas, inst.dims.camCssW, inst.dims.camCssH, inst.dims.dpr,
+    inst.panels.cam, inst.methods, inst.ticks, inst.traj, inst.palette, "cam", idx);
+  drawPanel(inst.bevCtx, inst.bevCanvas, inst.dims.bevCssW, inst.dims.bevCssH, inst.dims.dpr,
+    inst.panels.bev, inst.methods, inst.ticks, inst.traj, inst.palette, "bev", idx);
+}
+
+// requestVideoFrameCallback where available (frame-accurate redraw), rAF
+// fallback otherwise. Returns {start, stop}; stop() is always safe to call
+// even if start() was never called or already stopped.
+function makeLoop(video, drawFn){
+  var looping = false, raf = null, rvfcId = null;
+  function start(){
+    if (looping) return;
+    looping = true;
+    if (HAS_RVFC){
+      var step = function(){
+        if (!looping) return;
+        drawFn();
+        rvfcId = video.requestVideoFrameCallback(step);
+      };
+      rvfcId = video.requestVideoFrameCallback(step);
+    } else {
+      var loop = function(){
+        if (!looping) return;
+        drawFn();
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    }
+  }
+  function stop(){
+    looping = false;
+    if (raf != null){ cancelAnimationFrame(raf); raf = null; }
+    if (rvfcId != null && video.cancelVideoFrameCallback){ video.cancelVideoFrameCallback(rvfcId); rvfcId = null; }
+  }
+  return { start: start, stop: stop };
+}
+
+// ---------------------------------------------------------------------
+// Fullscreen -- see the module docstring's FULLSCREEN paragraph for why the
+// target is always the "stage" (video+canvases parent), never the <video>.
+// ---------------------------------------------------------------------
+var FS_CLASS = "ov-fullscreen";
+var videoToStage = new WeakMap();   // <video> -> its stage, for the redirect
+var stageToRelayout = new WeakMap(); // stage -> caller's relayout callback
+var lastFsStage = null;             // the stage currently fullscreen, if any
+var fsRedirectInstalled = false;
+
+function fsElement(){
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+function requestStageFullscreen(stage){
+  var req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+  if (req) req.call(stage);
+}
+function exitFullscreen(){
+  var ext = document.exitFullscreen || document.webkitExitFullscreen;
+  if (ext) ext.call(document);
+}
+
+function onFsChange(){
+  var el = fsElement();
+  if (el && el.tagName === "VIDEO" && videoToStage.has(el)){
+    // Native fullscreen grabbed the <video> itself -- redirect to its
+    // stage, which is the only element that actually carries the canvases.
+    // exitFullscreen() then requestStageFullscreen() in the SAME turn is
+    // rejected by some browsers ("fullscreen request already pending" /
+    // transition in progress), so the re-request is deferred one tick.
+    var stage = videoToStage.get(el);
+    exitFullscreen();
+    setTimeout(function(){ requestStageFullscreen(stage); }, 0);
+    return;
+  }
+  if (el && stageToRelayout.has(el)){
+    lastFsStage = el;
+    el.classList.add(FS_CLASS);
+    stageToRelayout.get(el)();
+    return;
+  }
+  if (!el && lastFsStage){
+    // Left fullscreen (Esc, our own button, browser chrome) -- the stage
+    // snaps back to its normal in-page box size, which is exactly the kind
+    // of size jump layoutCanvases must re-run for: its backing store was
+    // sized for the fullscreen box and is now stale (too big/misplaced).
+    lastFsStage.classList.remove(FS_CLASS);
+    var fn = stageToRelayout.get(lastFsStage);
+    if (fn) fn();
+    lastFsStage = null;
+  }
+}
+function installFullscreenRedirect(){
+  if (fsRedirectInstalled) return;
+  fsRedirectInstalled = true;
+  document.addEventListener("fullscreenchange", onFsChange);
+  document.addEventListener("webkitfullscreenchange", onFsChange);
+}
+
+// Wires ONE stage for safe fullscreen: adds a small custom toggle button
+// (fullscreens `stage`, never `video`), registers `video` for the
+// grabbed-the-video redirect above, and re-runs `relayout` (the caller's own
+// layoutCanvases-then-redraw closure) on every fullscreenchange -- entering
+// OR leaving. The caller's own ResizeObserver already watching `stage` (every
+// call site in this package has one) keeps tracking size continuously after
+// that; this guarantees the FIRST fullscreen frame is correctly sized too,
+// rather than one stale frame while waiting for that observer's next tick.
+function setupFullscreen(stage, video, relayout){
+  installFullscreenRedirect();
+  videoToStage.set(video, stage);
+  stageToRelayout.set(stage, relayout);
+
+  var supported = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "ov-fs-btn";
+  btn.setAttribute("aria-label", "Toggle fullscreen");
+  btn.textContent = "⤢";
+  if (!supported) btn.style.display = "none";
+  btn.addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation();
+    if (fsElement() === stage) exitFullscreen();
+    else requestStageFullscreen(stage);
+  });
+  stage.appendChild(btn);
+  return btn;
+}
+
+return {
+  LINE_W: LINE_W, MARKER_R: MARKER_R, HUMAN_DASH: HUMAN_DASH, HUMAN_OUTLINE_W: HUMAN_OUTLINE_W,
+  colourFor: colourFor, labelFor: labelFor, currentFrameIndex: currentFrameIndex,
+  layoutCanvases: layoutCanvases, drawPanel: drawPanel, drawStage: drawStage, makeLoop: makeLoop,
+  setupFullscreen: setupFullscreen
+};
+})();
+</script>
+<script>
 var D={"hist": {"gate": [1216, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "nottc": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 3, 4, 11, 18, 22, 36, 37, 30, 340, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "half": [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 9, 0, 2, 1, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "nocomf": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0], "full": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 2, 3, 6, 24, 84, 166, 318, 424, 644, 944, 1019, 1048, 1051, 761, 3905]}, "examples": {"full": [["53f8bc4012fe5f29", 0.663], ["e9a71ddab0055f99", 0.795], ["b8ca1857a0f75fb4", 0.813], ["dcff89b03b925c41", 0.83], ["1db7c81f96855ce9", 0.842], ["a669b18e5ecd575d", 0.857], ["48b6d9fdf22d5a23", 0.871], ["b8554777b68750e7", 0.883], ["95bd905e3f685a28", 0.894], ["bf3ea6a284d85269", 0.903], ["4bc95052d6d8547e", 0.915], ["631ef1b9ceeb5d0d", 0.926], ["1ad237fbbbcf51ab", 0.935], ["674ebcb39a4d528f", 0.945], ["6ae88d39556d57ec", 0.958], ["2692d8b89688506f", 0.975], ["38aff0f1a2f357f6", 0.998], ["25b5cecdb3b75e7c", 1.0], ["a9359dafbcdd5af6", 1.0], ["9157afe90f035621", 1.0]], "gate": [["0eeeee655d415970", 0.0], ["4dd9d92ade255f95", 0.0], ["d7cc45e58d175329", 0.0], ["d743862c9c555961", 0.0], ["d3afcd1be60851a9", 0.0], ["47e64379df6b55b2", 0.0], ["1ec58e13fee45a30", 0.0], ["abbfc957d5545f53", 0.0], ["d849d3813e3052d0", 0.0], ["847432a116d35db0", 0.0], ["aef8ab04144650cd", 0.0], ["5c084920ee285003", 0.0], ["33ee6f1f594d50ca", 0.0], ["cc63d140e4285f30", 0.0], ["7fc551e4e0375d00", 0.0], ["cc9afc95afab5758", 0.0], ["a460a03aab635f35", 0.0], ["e393bc5cafe95872", 0.0], ["f4495a91b9fb505d", 0.0], ["84136b2623ef5618", 0.0]], "nottc": [["e2ae05340dba502d", 0.326], ["e698c7da1faf53f5", 0.456], ["668835640c6057e0", 0.479], ["efb87bb3ff675f08", 0.489], ["592f9e4317dd52e2", 0.511], ["ed534c3b8d86515e", 0.522], ["07a6f60eb9795462", 0.529], ["7631ace833c857ba", 0.539], ["1e92a7ac3d645cdd", 0.544], ["e4f34d35c8fd5fd2", 0.559], ["6adef8f2b0795473", 0.571], ["a2c3aa64478d533b", 0.583], ["bdaa773585685d09", 0.583], ["f1bd1724d07957cc", 0.583], ["fb5265ab37085422", 0.583], ["cf1b346426bd5fce", 0.583], ["889aac2576295c91", 0.583], ["f3512ae175b45844", 0.583], ["ee545028f8a85e6f", 0.583], ["81aa7cde0f3f5b68", 0.583]], "half": [["72cccfbb9c6f5e9e", 0.177], ["d90cd23a434f5c55", 0.196], ["59504d2ffda35a72", 0.197], ["b5668089b793502b", 0.201], ["936c2cf5b8345663", 0.204], ["152679f2edce5c73", 0.207], ["dc39ce9c251551bb", 0.208], ["7df960d73e50560b", 0.21], ["c887e4bc08f85aa5", 0.211], ["7e647d942b9f57ed", 0.212], ["e90d6c211deb5f05", 0.213], ["c1019bca7cd95123", 0.218], ["6162cfa976a1521f", 0.245], ["4c771d89311d548a", 0.245], ["14b839d065b358d0", 0.279], ["455f894b6e3b58ab", 0.292], ["0ee2bbd11d4451c3", 0.292], ["a28e9a19b6a05733", 0.292], ["06836a56443a572c", 0.292], ["e3ee34ba4c0c59fd", 0.292]]}, "counts": {"gate": 1216, "nottc": 504, "half": 20, "nocomf": 2, "full": 10404}};
 var NS="http://www.w3.org/2000/svg";
 function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
@@ -226,6 +495,110 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
            ["nocomf","Comfort = 0","var(--ink-3)"],
            ["full","All pass","var(--accent)"]];
 (function(){
+  // ---------------------------------------------------------------------
+  // Trajectory overlay wiring -- draws human (log) and Variant 1 (patch
+  // tokens) on every example clip below, using the SAME NavsimOverlay
+  // renderer (traj_overlay.py, inlined verbatim as the script block right
+  // before this one) the Scenes and Distributions tabs call. Colours are
+  // copied from that module's shared PALETTE (the source of truth) -- this
+  // page has no Python build step to import them from, so keep these two
+  // values in sync by hand if traj_overlay.py's PALETTE ever changes them.
+  // ---------------------------------------------------------------------
+  var OV_PANELS = { cam: { w: 960, h: 540 }, bev: { w: 540, h: 540 } };
+  var OV_FPS = 2;
+  var OV_METHODS = ["variant1_patch_tokens_film", "human"];
+  var OV_PALETTE = { variant1_patch_tokens_film: "#eb6834", human: "#3fae3f" };
+  var OV_LABEL = { variant1_patch_tokens_film: "Variant 1 (patch)", human: "Human (log)" };
+  var OV_TICKS = { variant1_patch_tokens_film: true, human: true };
+
+  (function buildLegend(){
+    var lg = document.getElementById("ovlegend");
+    if (!lg) return;
+    OV_METHODS.forEach(function(m){
+      var s = document.createElement("span");
+      var dashNote = (m === "human") ? " — dashed" : "";
+      s.innerHTML = '<span class="sw" style="background:' + OV_PALETTE[m] + '"></span>'
+        + OV_LABEL[m] + dashNote;
+      lg.appendChild(s);
+    });
+  })();
+
+  // token -> {status:"loading"} | {status:"loaded", data} | {status:"error"}
+  var trajCache = {};
+  // token -> the overlay `inst` object for that clip, so a fetch that
+  // resolves later can push its doc into the right (and only the right)
+  // stage's draw state.
+  var instByToken = {};
+
+  // Fetches traj/<token>.json exactly once per token, lazily -- called from
+  // the IntersectionObserver below the first time a clip's card scrolls into
+  // view, never up front for all 80 examples. Cached in trajCache so
+  // scrolling a clip out and back in never re-fetches it. A failed fetch
+  // never throws past here: the clip's overlay just stays blank (drawStage
+  // no-ops with inst.traj == null) instead of breaking the page.
+  function ensureTraj(token){
+    var inst = instByToken[token];
+    if (!inst || inst.traj) return;
+    var cached = trajCache[token];
+    if (cached){
+      if (cached.status === "loaded" && !inst.traj){
+        inst.traj = cached.data; inst.fps = cached.data.fps || OV_FPS;
+        NavsimOverlay.drawStage(inst);
+      }
+      return;
+    }
+    trajCache[token] = { status: "loading" };
+    fetch("scenes/traj/" + encodeURIComponent(token) + ".json")
+      .then(function(resp){
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      })
+      .then(function(doc){
+        trajCache[token] = { status: "loaded", data: doc };
+        var inst2 = instByToken[token];
+        if (inst2){
+          inst2.traj = doc; inst2.fps = doc.fps || OV_FPS;
+          NavsimOverlay.drawStage(inst2);
+        }
+      })
+      .catch(function(err){
+        trajCache[token] = { status: "error" };
+        console.warn("[why_peaks] traj fetch failed for " + token + ":", err);
+      });
+  }
+
+  // Wires one example clip's <video> + its two overlay canvases to
+  // NavsimOverlay -- same shape as every other page's per-clip setup
+  // (see distributions/scripts/build_distributions_page.py's setupOverlay,
+  // copied here rather than reinvented). traj starts null; ensureTraj()
+  // fills it in later, lazily.
+  function setupClipOverlay(stage, video, camCanvas, bevCanvas, token){
+    var inst = {
+      video: video, camCtx: camCanvas.getContext("2d"), camCanvas: camCanvas,
+      bevCtx: bevCanvas.getContext("2d"), bevCanvas: bevCanvas,
+      panels: OV_PANELS, methods: OV_METHODS, ticks: OV_TICKS,
+      traj: null, palette: OV_PALETTE, fps: OV_FPS,
+      dims: { camCssW: 0, camCssH: 0, bevCssW: 0, bevCssH: 0, dpr: window.devicePixelRatio || 1 },
+    };
+    instByToken[token] = inst;
+    function layout(){
+      inst.dims = NavsimOverlay.layoutCanvases(stage, camCanvas, bevCanvas, OV_PANELS);
+      NavsimOverlay.drawStage(inst);
+    }
+    var ro = new ResizeObserver(layout);
+    ro.observe(stage);
+    video.addEventListener("loadedmetadata", layout);
+    var loop = NavsimOverlay.makeLoop(video, function(){ NavsimOverlay.drawStage(inst); });
+    video.addEventListener("play", loop.start);
+    video.addEventListener("pause", loop.stop);
+    video.addEventListener("ended", loop.stop);
+    layout();   // reserve canvas backing store immediately -- the CSS
+                // aspect-ratio box already has real dims even before metadata.
+    // Fullscreen target is `stage` (video+canvases parent), never `video` --
+    // see traj_overlay.py's module docstring.
+    NavsimOverlay.setupFullscreen(stage, video, layout);
+  }
+
   var lg=document.getElementById("lg");
   MODES.forEach(function(m){
     if(!D.counts[m[0]]) return;
@@ -279,12 +652,19 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
     var g=document.createElement("div"); g.className="clips";
     ex.forEach(function(t){
       var c=document.createElement("div"); c.className="clip";
+      var stage=document.createElement("div"); stage.className="stage";
       var v=document.createElement("video");
       v.src="scenes/clips/"+t[0]+".mp4"; v.muted=true; v.loop=true;
       v.playsInline=true; v.preload="none"; v.controls=true;
+      v.setAttribute("controlsList","nofullscreen");
+      v.dataset.token=t[0];
+      var camCanvas=document.createElement("canvas");
+      var bevCanvas=document.createElement("canvas");
+      stage.appendChild(v); stage.appendChild(camCanvas); stage.appendChild(bevCanvas);
+      setupClipOverlay(stage, v, camCanvas, bevCanvas, t[0]);
       var meta=document.createElement("div"); meta.className="meta";
       meta.innerHTML='<span>'+t[0].slice(0,10)+'</span><span>PDMS '+t[1]+'</span>';
-      c.appendChild(v); c.appendChild(meta); g.appendChild(c);
+      c.appendChild(stage); c.appendChild(meta); g.appendChild(c);
     });
     box.appendChild(g);
   });
@@ -292,7 +672,7 @@ var MODES=[["gate","Gate failure (NC or DAC = 0)","var(--crit)"],
     var io=new IntersectionObserver(function(es){
       es.forEach(function(e){
         var v=e.target;
-        if(e.isIntersecting){ v.play().catch(function(){}); } else { v.pause(); }
+        if(e.isIntersecting){ ensureTraj(v.dataset.token); v.play().catch(function(){}); } else { v.pause(); }
       });
     },{threshold:0.25});
     box.querySelectorAll("video").forEach(function(v){io.observe(v);});
