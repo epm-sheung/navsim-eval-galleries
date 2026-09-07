@@ -170,9 +170,10 @@
       scenes the way the metric does.</div>
     </div>
     <div class="v crit">
-      <div class="lab">Seed variance <span class="dirin">↓ better</span></div><div class="num">2.3 / 3.6</div>
-      <div class="cap">Points between two identical runs, navtest / navhard. Most scoreboard gaps
-      sit inside this.</div>
+      <div class="lab">Run-to-run spread <span class="dirin">↓ better</span></div><div class="num">≤2.3 / ≤3.6</div>
+      <div class="cap">Points between two runs, navtest / navhard. Those runs differ in seed
+      <em>and</em> loss function, so this bounds the two together — an upper bound, not a
+      seed-variance measurement.</div>
     </div>
     <div class="v warn">
       <div class="lab">Right vs straight <span class="dirin">→0 better</span></div><div class="num">−9.5</div>
@@ -351,13 +352,19 @@
 
 <!-- ───────────────────────── FINDING 2 ───────────────────────── -->
 <section>
-  <h2>2 · Seed variance is larger than most of our conclusions</h2>
+  <h2>2 · Run-to-run variation is larger than most of our conclusions</h2>
   <p class="measure">A seed fixes the randomness in training — weight initialisation, batch order,
-  nondeterministic GPU arithmetic. Same seed, same result. We retrained Variant 1 changing
-  <em>only</em> the seed, holding code, data, recipe and environment identical.</p>
+  nondeterministic GPU arithmetic. We retrained Variant 1 at a second seed intending to isolate that
+  effect. <strong>The two runs are not otherwise identical.</strong> The original trains against a
+  velocity-autoencoder latent objective (0.7·L1 in a frozen AE latent + 0.3·scaled smooth-L1);
+  the replication uses a plain L1Huber with no autoencoder. That is confirmed twice over — in both
+  Hydra configs, and in the checkpoints themselves, where the original carries 16
+  <code>traj_ae.*</code> encoder/decoder tensors that the replication simply does not have. So the
+  spread below bounds <em>seed and objective together</em>: an upper bound on seed variance, not a
+  measurement of it. A clean figure needs a rerun holding the recipe fixed.</p>
 
   <figure>
-    <div class="figtitle">Same model, same recipe, different seed <span class="dirin">narrower band = better</span></div>
+    <div class="figtitle">Same model, different seed <em>and</em> objective <span class="dirin">narrower band = better</span></div>
     <div class="chart"><div id="c-seed"></div></div>
     <figcaption>Grey bands show the spread between the two runs. Any comparison between two
     <em>different</em> models that falls inside its band cannot be distinguished from luck.</figcaption>
@@ -365,7 +372,7 @@
 
   <div class="callout warn">
     <h3>What this puts in doubt</h3>
-    <p>Against the 3.62-point navhard spread:</p>
+    <p>Against the 3.62-point navhard spread — an upper bound, since it also absorbs the objective change:</p>
     <ul>
       <li><strong>SAE B′ vs A′ — 1.82 points. Inside noise.</strong> This is the comparison the
       entire SAE arm rests on, and the ordering that reversed after the sensor-path fix. On one run
@@ -599,8 +606,8 @@
       /* spread band */
       svg.appendChild(el("rect",{x:padL+wb,y:y-3,width:wa-wb,height:45,fill:"var(--crit)",
         opacity:"0.14"}));
-      svg.appendChild(txt("original "+d.fmt(d.a),{x:padL+wa+9,y:y+13,"class":"ax"}));
-      svg.appendChild(txt("seed 43 "+d.fmt(d.b),{x:padL+wb+9,y:y+35,"class":"ax"}));
+      svg.appendChild(txt("original \u00b7 AE-latent "+d.fmt(d.a),{x:padL+wa+9,y:y+13,"class":"ax"}));
+      svg.appendChild(txt("seed 43 \u00b7 L1Huber "+d.fmt(d.b),{x:padL+wb+9,y:y+35,"class":"ax"}));
       svg.appendChild(txt("spread "+((d.a-d.b)*100).toFixed(2)+" pts",
         {x:padL+wb+(wa-wb)/2,y:y+53,"text-anchor":"middle","class":"ax",fill:"var(--crit)"}));
     });
