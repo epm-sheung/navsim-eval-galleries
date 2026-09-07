@@ -75,6 +75,37 @@
    "v2_navhard_epdms1": 0.629613085255002,
    "v2_navhard_epdms2": 0.3762055132422499
   },
+  "cmd_tokens_film_stockdino": {
+   "agent": "dino_cmd_agent",
+   "checkpoint": "/scratch/eddie96/eddie/dino-v2arch/runs/cmd_tokens_film_stockdino_lr1e4/20260906_124327/checkpoints/epoch013-best.ckpt",
+   "checkpoint_global_step": 10030,
+   "checkpoint_epoch": 13,
+   "checkpoint_provenance_note": "Same architecture as cmd_tokens_film (model.traj_fusion=tokens model.cmd_fusion=film, 15 epochs, seed 42), trained from configs/navsim_cmd_stockdino.yaml in /scratch/eddie96/eddie/dino-v2arch with pretrain_path: null, i.e. on the ORIGINAL never-fine-tuned frozen DINOv2 ViT-S/14 straight from torch.hub -- verified after training as 175/175 backbone tensors bit-identical to stock, whereas cmd_tokens_film's NAVSIM-fine-tuned warm start differs from stock in 30 of 175 tensors (blocks 10-11 + final norm). This is the ONLY intended difference vs cmd_tokens_film apart from the learning rate. TWO learning rates were trained; this entry is the lr=1e-4 run (runs/cmd_tokens_film_stockdino_lr1e4/20260906_124327). The lr=3e-5 sibling -- the config's own default, chosen as a FINE-TUNE lr for a warm-started trunk -- underfits a randomly-initialised head on a frozen trunk and is deliberately NOT the entry here; see the config's own trainer.lr comment, which anticipated exactly this.",
+   "v1_pdms_navtest": {
+    "status": "scored",
+    "score": 0.8198784775009883,
+    "csv_path": "/scratch/eddie96/eddie/navsim_v1/exp/cmd_stockdino_lr1e4_v1/2026.09.06.16.11.50/2026.09.06.16.50.36.csv",
+    "fallbacks": 0,
+    "n_scenes": 12146,
+    "note": "12146/12146 successful, 0 failed, 0 constant-velocity fallbacks. Subscores from the CSV's own 'average' row: NC 0.9705252758109666, DAC 0.9143751029145397, EP 0.7731375094312014, TTC 0.9151984192326692, C 0.9997530051045612, DDC 0.970566441626873."
+   },
+   "v2_epdms_navhard_two_stage": {
+    "status": "ok",
+    "score": 0.21623728012317278,
+    "csv_path": "/scratch/eddie96/eddie/navsim_workspace/exp/navhard_cmd_stockdino_lr1e4_r2/2026.09.06.17.10.06/2026.09.06.17.38.18.csv",
+    "fallbacks": 0,
+    "n_scenes": 5912,
+    "note": "Scored with the corrected sensor paths from the outset (original_sensor_path=navtest_sensor_blobs, synthetic_sensor_path=navhard_two_stage/sensor_blobs), i.e. born post-pathfix -- there is no superseded_score for this model because it was never scored under the pre-fix config. 5912/5912 successful, 0 failed, 0 fallbacks."
+   },
+   "nan_ec_fraction": {
+    "navhard_stage1": 0.9239,
+    "navhard_stage2": 0.0761,
+    "navtest": "n/a (v1 PDMS has no two_frame_extended_comfort metric)"
+   },
+   "v2_navhard_epdms1": 0.640842421150408,
+   "v2_navhard_epdms2": 0.3493731992391411,
+   "_derivation_note": "v2_navhard_epdms1/epdms2 are the 'score' column of this run's own CSV summary rows extended_pdm_score_stage_one / extended_pdm_score_stage_two -- the identical derivation _meta.pathfix_note records for every other model here, re-checked against cmd_tokens_film's CSV (0.629613085255002 / 0.3762055132422499, matching its manifest entry exactly) before being applied to this one. nan_ec_fraction is likewise measured from this CSV, not copied: 5462/5912 rows NaN on two_frame_extended_comfort_stage_one (0.9239) and 450/5912 on _stage_two (0.0761) -- the same structural 450 stage-one / 5462 stage-two row split every navhard CSV has, per _meta.nan_ec_fraction_field_meaning."
+  },
   "cls_tokens_film": {
    "agent": "dino_cls_tokens_film_agent",
    "checkpoint": "/scratch/eddie96/eddie/dino-cmd-fusion/runs/cls_tokens_film_navsim/20260820_225913/checkpoints/epoch013-best.ckpt",

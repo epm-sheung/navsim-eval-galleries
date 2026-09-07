@@ -2955,6 +2955,1193 @@
     "examples_note": "navhard's group-level export is keyed by (orig_token, prev_token) -- 16-char STAGE-ONE tokens. The Scenes tab's navhard cards are STAGE-TWO scenario renders (17-char tokens), a different identifier space with zero overlap (checked directly). There is no way to honestly link a group to a rendered clip with the data available here, so no bin in this chart has one -- not a coverage gap, a structural one."
    }
   },
+  "cmd_tokens_film_stockdino": {
+   "label": "cmd_tokens_film (stock DINOv2)",
+   "v1": {
+    "n": 12146,
+    "mean": 0.8198784775009883,
+    "median": 0.9347861967637356,
+    "std": 0.3059145252491011,
+    "frac_zero": 0.11007739173390417,
+    "frac_above_0_9": 0.6478676107360448,
+    "official": 0.8198784775009883,
+    "bins": [
+     {
+      "lo": 0.0,
+      "hi": 0.05,
+      "count": 1337,
+      "frac": 0.11007739173390417
+     },
+     {
+      "lo": 0.05,
+      "hi": 0.1,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.1,
+      "hi": 0.15,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.15,
+      "hi": 0.2,
+      "count": 14,
+      "frac": 0.0011526428453811955
+     },
+     {
+      "lo": 0.2,
+      "hi": 0.25,
+      "count": 12,
+      "frac": 0.0009879795817553103
+     },
+     {
+      "lo": 0.25,
+      "hi": 0.3,
+      "count": 7,
+      "frac": 0.0005763214226905978
+     },
+     {
+      "lo": 0.3,
+      "hi": 0.35,
+      "count": 1,
+      "frac": 8.233163181294254e-05
+     },
+     {
+      "lo": 0.35,
+      "hi": 0.4,
+      "count": 1,
+      "frac": 8.233163181294254e-05
+     },
+     {
+      "lo": 0.4,
+      "hi": 0.45,
+      "count": 3,
+      "frac": 0.0002469948954388276
+     },
+     {
+      "lo": 0.45,
+      "hi": 0.5,
+      "count": 35,
+      "frac": 0.0028816071134529888
+     },
+     {
+      "lo": 0.5,
+      "hi": 0.55,
+      "count": 77,
+      "frac": 0.006339535649596575
+     },
+     {
+      "lo": 0.55,
+      "hi": 0.6,
+      "count": 456,
+      "frac": 0.03754322410670179
+     },
+     {
+      "lo": 0.6,
+      "hi": 0.65,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.65,
+      "hi": 0.7,
+      "count": 3,
+      "frac": 0.0002469948954388276
+     },
+     {
+      "lo": 0.7,
+      "hi": 0.75,
+      "count": 7,
+      "frac": 0.0005763214226905978
+     },
+     {
+      "lo": 0.75,
+      "hi": 0.8,
+      "count": 106,
+      "frac": 0.008727152972171909
+     },
+     {
+      "lo": 0.8,
+      "hi": 0.85,
+      "count": 675,
+      "frac": 0.05557385147373621
+     },
+     {
+      "lo": 0.85,
+      "hi": 0.9,
+      "count": 1543,
+      "frac": 0.12703770788737032
+     },
+     {
+      "lo": 0.9,
+      "hi": 0.95,
+      "count": 2603,
+      "frac": 0.2143092376090894
+     },
+     {
+      "lo": 0.95,
+      "hi": 1.0,
+      "count": 5266,
+      "frac": 0.4335583731269554
+     }
+    ],
+    "exact_zero": {
+     "count": 1337,
+     "frac": 0.11007739173390417
+    },
+    "exact_one": {
+     "count": 3276,
+     "frac": 0.26971842581919975
+    },
+    "interior_bins": [
+     {
+      "lo": 0.0,
+      "hi": 0.05,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.05,
+      "hi": 0.1,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.1,
+      "hi": 0.15,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.15,
+      "hi": 0.2,
+      "count": 14,
+      "frac": 0.0018584893136864462
+     },
+     {
+      "lo": 0.2,
+      "hi": 0.25,
+      "count": 12,
+      "frac": 0.0015929908403026682
+     },
+     {
+      "lo": 0.25,
+      "hi": 0.3,
+      "count": 7,
+      "frac": 0.0009292446568432231
+     },
+     {
+      "lo": 0.3,
+      "hi": 0.35,
+      "count": 1,
+      "frac": 0.00013274923669188903
+     },
+     {
+      "lo": 0.35,
+      "hi": 0.4,
+      "count": 1,
+      "frac": 0.00013274923669188903
+     },
+     {
+      "lo": 0.4,
+      "hi": 0.45,
+      "count": 3,
+      "frac": 0.00039824771007566706
+     },
+     {
+      "lo": 0.45,
+      "hi": 0.5,
+      "count": 35,
+      "frac": 0.004646223284216116
+     },
+     {
+      "lo": 0.5,
+      "hi": 0.55,
+      "count": 77,
+      "frac": 0.010221691225275454
+     },
+     {
+      "lo": 0.55,
+      "hi": 0.6,
+      "count": 456,
+      "frac": 0.06053365193150139
+     },
+     {
+      "lo": 0.6,
+      "hi": 0.65,
+      "count": 0,
+      "frac": 0.0
+     },
+     {
+      "lo": 0.65,
+      "hi": 0.7,
+      "count": 3,
+      "frac": 0.00039824771007566706
+     },
+     {
+      "lo": 0.7,
+      "hi": 0.75,
+      "count": 7,
+      "frac": 0.0009292446568432231
+     },
+     {
+      "lo": 0.75,
+      "hi": 0.8,
+      "count": 106,
+      "frac": 0.014071419089340237
+     },
+     {
+      "lo": 0.8,
+      "hi": 0.85,
+      "count": 675,
+      "frac": 0.08960573476702509
+     },
+     {
+      "lo": 0.85,
+      "hi": 0.9,
+      "count": 1543,
+      "frac": 0.20483207221558475
+     },
+     {
+      "lo": 0.9,
+      "hi": 0.95,
+      "count": 2603,
+      "frac": 0.3455462631089871
+     },
+     {
+      "lo": 0.95,
+      "hi": 1.0,
+      "count": 1990,
+      "frac": 0.26417098101685915
+     }
+    ],
+    "interior_n": 7533,
+    "examples": {
+     "0": [
+      {
+       "token": "00016f8b45c25a1d",
+       "score": 0.0
+      },
+      {
+       "token": "0ee2bbd11d4451c3",
+       "score": 0.0
+      },
+      {
+       "token": "1d1dde59c417522f",
+       "score": 0.0
+      },
+      {
+       "token": "2e6e9e72249a5980",
+       "score": 0.0
+      },
+      {
+       "token": "40f09c66198258e6",
+       "score": 0.0
+      },
+      {
+       "token": "4d0df74bfb035f8a",
+       "score": 0.0
+      },
+      {
+       "token": "599e006109385ae5",
+       "score": 0.0
+      },
+      {
+       "token": "63768cbe8b2d5c65",
+       "score": 0.0
+      },
+      {
+       "token": "6ed328b05b54553e",
+       "score": 0.0
+      },
+      {
+       "token": "7682ed33c75a5116",
+       "score": 0.0
+      },
+      {
+       "token": "7feaf6410f1854a8",
+       "score": 0.0
+      },
+      {
+       "token": "87c6ef5053865368",
+       "score": 0.0
+      },
+      {
+       "token": "934c8ac938ad5dca",
+       "score": 0.0
+      },
+      {
+       "token": "aef8ab04144650cd",
+       "score": 0.0
+      },
+      {
+       "token": "bd5e1c226cca5d3e",
+       "score": 0.0
+      },
+      {
+       "token": "ca8a417f32d859ba",
+       "score": 0.0
+      },
+      {
+       "token": "d21b22d6c0405ad7",
+       "score": 0.0
+      },
+      {
+       "token": "da6bafca1d9f5b58",
+       "score": 0.0
+      },
+      {
+       "token": "e90b4ad6e7905adf",
+       "score": 0.0
+      },
+      {
+       "token": "fe9e76e6cac35fba",
+       "score": 0.0
+      }
+     ],
+     "3": [
+      {
+       "token": "0cb87152ed5e5ca1",
+       "score": 0.1611
+      },
+      {
+       "token": "20ffc5c3de7c591a",
+       "score": 0.1619
+      },
+      {
+       "token": "162436ec6cca53a4",
+       "score": 0.1642
+      },
+      {
+       "token": "173b456bbf29598f",
+       "score": 0.1673
+      },
+      {
+       "token": "8413eaf2b8e45e3b",
+       "score": 0.1684
+      },
+      {
+       "token": "dac744da64d35664",
+       "score": 0.1695
+      },
+      {
+       "token": "adccb045b1495f50",
+       "score": 0.1727
+      },
+      {
+       "token": "72cccfbb9c6f5e9e",
+       "score": 0.1764
+      },
+      {
+       "token": "fc1b6762387f5209",
+       "score": 0.19
+      },
+      {
+       "token": "b5668089b793502b",
+       "score": 0.1925
+      },
+      {
+       "token": "eae658a09ef152a9",
+       "score": 0.1944
+      },
+      {
+       "token": "59504d2ffda35a72",
+       "score": 0.197
+      }
+     ],
+     "4": [
+      {
+       "token": "936c2cf5b8345663",
+       "score": 0.2037
+      },
+      {
+       "token": "5c4f8e6a644258d3",
+       "score": 0.2038
+      },
+      {
+       "token": "4a6dd3df952b5703",
+       "score": 0.2068
+      },
+      {
+       "token": "c887e4bc08f85aa5",
+       "score": 0.2077
+      },
+      {
+       "token": "152679f2edce5c73",
+       "score": 0.208
+      },
+      {
+       "token": "e90d6c211deb5f05",
+       "score": 0.2128
+      },
+      {
+       "token": "c1019bca7cd95123",
+       "score": 0.2223
+      },
+      {
+       "token": "9bbdfa78ebc85eec",
+       "score": 0.2246
+      },
+      {
+       "token": "0eb7dda83bbe5fb2",
+       "score": 0.2269
+      },
+      {
+       "token": "6162cfa976a1521f",
+       "score": 0.2471
+      }
+     ],
+     "5": [
+      {
+       "token": "4c771d89311d548a",
+       "score": 0.2509
+      },
+      {
+       "token": "14b839d065b358d0",
+       "score": 0.2787
+      },
+      {
+       "token": "534efc35151f543d",
+       "score": 0.2889
+      },
+      {
+       "token": "06836a56443a572c",
+       "score": 0.2917
+      },
+      {
+       "token": "54a9fe6636755234",
+       "score": 0.2917
+      },
+      {
+       "token": "e3ee34ba4c0c59fd",
+       "score": 0.2917
+      }
+     ],
+     "6": [
+      {
+       "token": "e2ae05340dba502d",
+       "score": 0.3266
+      }
+     ],
+     "7": [
+      {
+       "token": "9cd4b5f3bbf85357",
+       "score": 0.3989
+      }
+     ],
+     "8": [
+      {
+       "token": "2b10974c7f7e5444",
+       "score": 0.4393
+      }
+     ],
+     "9": [
+      {
+       "token": "6ce3e4a1792651a8",
+       "score": 0.4568
+      },
+      {
+       "token": "520e72270acb562a",
+       "score": 0.4573
+      },
+      {
+       "token": "da4d89151b245e0c",
+       "score": 0.4594
+      },
+      {
+       "token": "580524859b485a1b",
+       "score": 0.471
+      },
+      {
+       "token": "deb63152bd9453e0",
+       "score": 0.4754
+      },
+      {
+       "token": "b27bb0eced055858",
+       "score": 0.4786
+      },
+      {
+       "token": "faa12c2adc7c521f",
+       "score": 0.4806
+      },
+      {
+       "token": "dd2546a068da5ffe",
+       "score": 0.4826
+      },
+      {
+       "token": "7e2dc290d51f5137",
+       "score": 0.4866
+      },
+      {
+       "token": "cf05c9f4f6e55af3",
+       "score": 0.4868
+      },
+      {
+       "token": "9b88dfaff2615c83",
+       "score": 0.4872
+      },
+      {
+       "token": "26c48df074d151c6",
+       "score": 0.4878
+      },
+      {
+       "token": "47cdeda07aeb5b19",
+       "score": 0.4949
+      },
+      {
+       "token": "789c2205e7865e94",
+       "score": 0.4952
+      },
+      {
+       "token": "efb87bb3ff675f08",
+       "score": 0.4958
+      },
+      {
+       "token": "b7c9a2a8db7d5b48",
+       "score": 0.4959
+      },
+      {
+       "token": "d1408323ef2357be",
+       "score": 0.4966
+      },
+      {
+       "token": "77ae9dba6f05550d",
+       "score": 0.498
+      },
+      {
+       "token": "87a12c9888c75e21",
+       "score": 0.498
+      },
+      {
+       "token": "578adc6dc97d510f",
+       "score": 0.4997
+      }
+     ],
+     "10": [
+      {
+       "token": "c3634ce5c5535b16",
+       "score": 0.5002
+      },
+      {
+       "token": "a479822714c6558b",
+       "score": 0.5027
+      },
+      {
+       "token": "8371ac42ba585d35",
+       "score": 0.5048
+      },
+      {
+       "token": "fae990c38c515aa9",
+       "score": 0.506
+      },
+      {
+       "token": "aba7212ffa3458b6",
+       "score": 0.5105
+      },
+      {
+       "token": "4231dc0eadd75a2d",
+       "score": 0.5113
+      },
+      {
+       "token": "d3afcd1be60851a9",
+       "score": 0.5181
+      },
+      {
+       "token": "c3ef435d900256c1",
+       "score": 0.5196
+      },
+      {
+       "token": "4d94decfbcd35ae6",
+       "score": 0.526
+      },
+      {
+       "token": "5b272b7aa3315c4f",
+       "score": 0.5271
+      },
+      {
+       "token": "4bb2fc18f5ee5dcb",
+       "score": 0.5288
+      },
+      {
+       "token": "4db50b60ca1f57f1",
+       "score": 0.53
+      },
+      {
+       "token": "bf8a9586c59551f2",
+       "score": 0.5317
+      },
+      {
+       "token": "cc3ebf79ba985643",
+       "score": 0.5332
+      },
+      {
+       "token": "a5b24b47fef85a1b",
+       "score": 0.5357
+      },
+      {
+       "token": "812464919a4f5362",
+       "score": 0.5358
+      },
+      {
+       "token": "0503cc398e2656be",
+       "score": 0.5385
+      },
+      {
+       "token": "d55aac327e4451ba",
+       "score": 0.5401
+      },
+      {
+       "token": "5c9d51dc830453c5",
+       "score": 0.5408
+      },
+      {
+       "token": "456ef599efa85659",
+       "score": 0.5455
+      }
+     ],
+     "11": [
+      {
+       "token": "a0ce26a6f335530d",
+       "score": 0.5552
+      },
+      {
+       "token": "4fc373052fb55899",
+       "score": 0.5665
+      },
+      {
+       "token": "f20518f97cb558d4",
+       "score": 0.5735
+      },
+      {
+       "token": "082988f40658562c",
+       "score": 0.5833
+      },
+      {
+       "token": "14769a8e472350cc",
+       "score": 0.5833
+      },
+      {
+       "token": "1f53a73b41095041",
+       "score": 0.5833
+      },
+      {
+       "token": "35dbc03efb3c5f00",
+       "score": 0.5833
+      },
+      {
+       "token": "4e021aea953652b9",
+       "score": 0.5833
+      },
+      {
+       "token": "61421159b240530d",
+       "score": 0.5833
+      },
+      {
+       "token": "680f4753a59c5a24",
+       "score": 0.5833
+      },
+      {
+       "token": "7df960d73e50560b",
+       "score": 0.5833
+      },
+      {
+       "token": "9191f3f8644d50cb",
+       "score": 0.5833
+      },
+      {
+       "token": "98b99d5d44c05a5b",
+       "score": 0.5833
+      },
+      {
+       "token": "a82d8d2d870a5280",
+       "score": 0.5833
+      },
+      {
+       "token": "bae8f15e2e5b5328",
+       "score": 0.5833
+      },
+      {
+       "token": "c5ff90667143574a",
+       "score": 0.5833
+      },
+      {
+       "token": "d961e40cb8185341",
+       "score": 0.5833
+      },
+      {
+       "token": "e0b92501aa5051b1",
+       "score": 0.5833
+      },
+      {
+       "token": "f2acd82c43fd5490",
+       "score": 0.5833
+      },
+      {
+       "token": "ffcbea07e13e540d",
+       "score": 0.5833
+      }
+     ],
+     "13": [
+      {
+       "token": "53f8bc4012fe5f29",
+       "score": 0.6506
+      },
+      {
+       "token": "52f7393aa83854f6",
+       "score": 0.6897
+      },
+      {
+       "token": "afa8102c20685ec5",
+       "score": 0.6939
+      }
+     ],
+     "14": [
+      {
+       "token": "58d40da0cce05d8c",
+       "score": 0.7083
+      },
+      {
+       "token": "e5d2a01ab5b0562a",
+       "score": 0.7207
+      },
+      {
+       "token": "8848228852a65400",
+       "score": 0.721
+      },
+      {
+       "token": "3e1daba01cbe5973",
+       "score": 0.7261
+      },
+      {
+       "token": "9c193ab1a07454e3",
+       "score": 0.7415
+      },
+      {
+       "token": "4023fa59fcfd5671",
+       "score": 0.7427
+      },
+      {
+       "token": "2942d4fb604d5b5f",
+       "score": 0.7495
+      }
+     ],
+     "15": [
+      {
+       "token": "673a88a4037f5b6b",
+       "score": 0.7546
+      },
+      {
+       "token": "ffe92084016a5795",
+       "score": 0.7611
+      },
+      {
+       "token": "23d647e77f2d515e",
+       "score": 0.7615
+      },
+      {
+       "token": "d0bf0c6c025c5c8c",
+       "score": 0.7733
+      },
+      {
+       "token": "d02fff0452445952",
+       "score": 0.7777
+      },
+      {
+       "token": "502fadfdde3554b2",
+       "score": 0.7792
+      },
+      {
+       "token": "56acc09e62b45e21",
+       "score": 0.7813
+      },
+      {
+       "token": "8ab73218fe4a539e",
+       "score": 0.7819
+      },
+      {
+       "token": "8959015fc1fe5791",
+       "score": 0.7845
+      },
+      {
+       "token": "208247acd8ca5e2c",
+       "score": 0.7861
+      },
+      {
+       "token": "b5b0ab149f9055db",
+       "score": 0.7872
+      },
+      {
+       "token": "a2047f9cb3865b75",
+       "score": 0.7887
+      },
+      {
+       "token": "f9c8ec6aefc05be4",
+       "score": 0.79
+      },
+      {
+       "token": "09d33cf8b87c5ae3",
+       "score": 0.7927
+      },
+      {
+       "token": "1b3ed6f1e9b8574d",
+       "score": 0.795
+      },
+      {
+       "token": "7d59e0ea1e0d524b",
+       "score": 0.7954
+      },
+      {
+       "token": "432dcd9a21c25043",
+       "score": 0.797
+      },
+      {
+       "token": "b8d2227c06a351e4",
+       "score": 0.7975
+      },
+      {
+       "token": "d6359d514f13511a",
+       "score": 0.7985
+      },
+      {
+       "token": "58c018c299d05214",
+       "score": 0.8
+      }
+     ],
+     "16": [
+      {
+       "token": "eeae24d38eb15e0a",
+       "score": 0.8002
+      },
+      {
+       "token": "592f536375e755b6",
+       "score": 0.8047
+      },
+      {
+       "token": "ed7d26ad16065f5a",
+       "score": 0.8082
+      },
+      {
+       "token": "60af77348f6257b6",
+       "score": 0.8124
+      },
+      {
+       "token": "1586603a5a6353e6",
+       "score": 0.8155
+      },
+      {
+       "token": "045cd0254b3f5ad2",
+       "score": 0.8173
+      },
+      {
+       "token": "83a9fe7e03fd5755",
+       "score": 0.8212
+      },
+      {
+       "token": "13b9787d163b5072",
+       "score": 0.8245
+      },
+      {
+       "token": "f2909a9ad9cb552e",
+       "score": 0.8267
+      },
+      {
+       "token": "9411f5b779cb5d09",
+       "score": 0.8285
+      },
+      {
+       "token": "9482776d16a6551d",
+       "score": 0.8309
+      },
+      {
+       "token": "1b10cc004b735f40",
+       "score": 0.8336
+      },
+      {
+       "token": "2a34f4d0aefc5039",
+       "score": 0.8346
+      },
+      {
+       "token": "a7fa8bccce9253cb",
+       "score": 0.8363
+      },
+      {
+       "token": "a9853ab9c01c53d2",
+       "score": 0.8395
+      },
+      {
+       "token": "ffac18af5cea540a",
+       "score": 0.8408
+      },
+      {
+       "token": "d1ef1e42fa15573d",
+       "score": 0.8431
+      },
+      {
+       "token": "68a3518b15a75c25",
+       "score": 0.8446
+      },
+      {
+       "token": "fff1abbe76e55819",
+       "score": 0.8474
+      },
+      {
+       "token": "5350c9f947cb5482",
+       "score": 0.8497
+      }
+     ],
+     "17": [
+      {
+       "token": "da56fca2caff52e4",
+       "score": 0.8501
+      },
+      {
+       "token": "43c74ea303715baf",
+       "score": 0.8521
+      },
+      {
+       "token": "d471c0c48cb05f04",
+       "score": 0.8555
+      },
+      {
+       "token": "2b4fee42169a54a8",
+       "score": 0.8584
+      },
+      {
+       "token": "f9592039b6aa5165",
+       "score": 0.8641
+      },
+      {
+       "token": "a20beaedf66b59f3",
+       "score": 0.8657
+      },
+      {
+       "token": "bbc1735031c25ff7",
+       "score": 0.868
+      },
+      {
+       "token": "0b5b1309df2f5627",
+       "score": 0.871
+      },
+      {
+       "token": "e13b89a8813159df",
+       "score": 0.8732
+      },
+      {
+       "token": "fb1d534ccf82583f",
+       "score": 0.8762
+      },
+      {
+       "token": "cfbf3f55398f5fc6",
+       "score": 0.8791
+      },
+      {
+       "token": "27244c34c9e355c2",
+       "score": 0.882
+      },
+      {
+       "token": "ad898232cb525d5f",
+       "score": 0.8851
+      },
+      {
+       "token": "701c95bcdaa65c14",
+       "score": 0.8871
+      },
+      {
+       "token": "fc4982439fef5cb2",
+       "score": 0.8895
+      },
+      {
+       "token": "780eada83bbc57b1",
+       "score": 0.892
+      },
+      {
+       "token": "db86c1d1516f557d",
+       "score": 0.8943
+      },
+      {
+       "token": "0e6a9b4fe9ec5443",
+       "score": 0.896
+      },
+      {
+       "token": "037698dae8d65558",
+       "score": 0.8984
+      },
+      {
+       "token": "28d91d7116785bf9",
+       "score": 0.8998
+      }
+     ],
+     "18": [
+      {
+       "token": "c239a3efe5df5739",
+       "score": 0.9
+      },
+      {
+       "token": "8e785a7a6df95636",
+       "score": 0.9027
+      },
+      {
+       "token": "09bf6cc1f6545219",
+       "score": 0.9048
+      },
+      {
+       "token": "ccd74f5377b85a36",
+       "score": 0.9083
+      },
+      {
+       "token": "14ee80bbba6b587a",
+       "score": 0.911
+      },
+      {
+       "token": "69d75ac905035187",
+       "score": 0.9142
+      },
+      {
+       "token": "53834451cfa75fd0",
+       "score": 0.9163
+      },
+      {
+       "token": "ff5c0e17d20351ca",
+       "score": 0.9186
+      },
+      {
+       "token": "14f16328a6c0551e",
+       "score": 0.9211
+      },
+      {
+       "token": "59b32114d8b252c8",
+       "score": 0.9236
+      },
+      {
+       "token": "cbb9f6ff18285688",
+       "score": 0.927
+      },
+      {
+       "token": "a28af989d6ea5fe8",
+       "score": 0.9303
+      },
+      {
+       "token": "87d3c1135ac85583",
+       "score": 0.9318
+      },
+      {
+       "token": "3ece2b5bbf095290",
+       "score": 0.9342
+      },
+      {
+       "token": "5005f44bd2135f3b",
+       "score": 0.9358
+      },
+      {
+       "token": "631ef1b9ceeb5d0d",
+       "score": 0.9401
+      },
+      {
+       "token": "13f771febde65a66",
+       "score": 0.942
+      },
+      {
+       "token": "5be861ae85a75b45",
+       "score": 0.9447
+      },
+      {
+       "token": "70e6f01ee485510a",
+       "score": 0.9475
+      },
+      {
+       "token": "25dbdd29ce325538",
+       "score": 0.9498
+      }
+     ],
+     "19": [
+      {
+       "token": "939be40082d9515a",
+       "score": 0.9503
+      },
+      {
+       "token": "9d8312bf37795d27",
+       "score": 0.9545
+      },
+      {
+       "token": "770c714d82535180",
+       "score": 0.9591
+      },
+      {
+       "token": "a9e622747fc45a0a",
+       "score": 0.9621
+      },
+      {
+       "token": "29770ed8cd49511e",
+       "score": 0.9666
+      },
+      {
+       "token": "d9b28b3ee70e57f2",
+       "score": 0.9708
+      },
+      {
+       "token": "cdac2937953e5398",
+       "score": 0.9779
+      },
+      {
+       "token": "00f925ab5406520f",
+       "score": 0.9857
+      },
+      {
+       "token": "26af85cbc2d15e05",
+       "score": 0.9933
+      },
+      {
+       "token": "069c47e25ca55ef5",
+       "score": 1.0
+      },
+      {
+       "token": "2335928f0e065bca",
+       "score": 1.0
+      },
+      {
+       "token": "34f4fd0a288b5199",
+       "score": 1.0
+      },
+      {
+       "token": "4a1f69f3821e5ac5",
+       "score": 1.0
+      },
+      {
+       "token": "613770d7f39051be",
+       "score": 1.0
+      },
+      {
+       "token": "7c7dc37236745d94",
+       "score": 1.0
+      },
+      {
+       "token": "9b25bbac0aac5357",
+       "score": 1.0
+      },
+      {
+       "token": "bae48b8677205cad",
+       "score": 1.0
+      },
+      {
+       "token": "d5b21176c2e1526c",
+       "score": 1.0
+      },
+      {
+       "token": "e970702e97ea50b2",
+       "score": 1.0
+      },
+      {
+       "token": "ffe87d190cd358c8",
+       "score": 1.0
+      }
+     ]
+    },
+    "examples_available": true,
+    "examples_note": "Linked to the Scenes tab's 1644 rendered navtest scenes -- the same token identifies the same scene in both places, confirmed by exact match against every method's per-scene CSV. Up to 20 examples per bin, evenly spaced by this method's own score within the bin (select_by_bin.evenly_spaced_pick) -- a bin shows fewer than that only when the bin's own count (its true population across all 12,146 navtest scenes, shown in the bin header) is itself smaller."
+   }
+  },
   "cls_tokens_film": {
    "label": "cls_tokens_film",
    "v1": {
