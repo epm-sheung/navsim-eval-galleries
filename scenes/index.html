@@ -59,7 +59,9 @@ h2.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:upperc
 .cardhead .rk{color:var(--ink-3);}
 .cardhead .tok{color:var(--ink);font-weight:600;}
 .cardhead .bandtag{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--rule);border-radius:3px;padding:1px 5px;}
-.cardhead .best{margin-left:auto;color:var(--ink-3);}
+.cardhead .best{margin-left:auto;color:var(--ink);font-weight:600;}
+.cardhead .bestany{color:var(--ink-3);font-size:10.5px;}
+.ranknav-note{font-size:10px;line-height:1.35;color:var(--ink-3);margin-top:6px;min-height:0;}
 
 .stage{position:relative;width:100%;aspect-ratio:var(--stage-ar,2.5);background:#000;border-radius:6px;overflow:hidden;line-height:0;}
 .stage video{width:100%;height:100%;display:block;object-fit:fill;}
@@ -178,25 +180,6 @@ tbody tr:last-child td{border-bottom:none;}
 </style>
 <nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="../index.html">Findings</a><a class="nt" href="../why_peaks.html">Why peaks</a><a class="nt" href="../session_scoreboard/index.html">Scoreboard</a><a class="nt" href="index.html" aria-current="page">Scenes</a><a class="nt" href="../distributions/index.html">Distributions</a></nav>
 
-
-<style id="navsim-statusbar-css">
-#navsim-statusbar{margin:0 0 10px;padding:10px 14px;
-  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.55;
-  border-bottom:1px solid #dcdedb;}
-#navsim-statusbar.partial{background:#fdf4e6;color:#4a3a1e;border-left:4px solid #c9820a;}
-#navsim-statusbar.final{background:#e9f5ec;color:#1d3d28;border-left:4px solid #2e8b57;}
-#navsim-statusbar .sb-h{font-weight:600;display:block;margin-bottom:4px;}
-#navsim-statusbar ul{margin:5px 0 0;padding-left:20px;}
-#navsim-statusbar li{margin:1px 0;}
-#navsim-statusbar code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;}
-@media (prefers-color-scheme:dark){
-  #navsim-statusbar{border-bottom-color:#2c3238;}
-  #navsim-statusbar.partial{background:#2e2616;color:#e8d9b8;border-left-color:#c9820a;}
-  #navsim-statusbar.final{background:#172c1f;color:#cfe8d7;border-left-color:#4caf7d;}
-}
-</style>
-<div id="navsim-statusbar" class="final" role="status"><span class="sb-h">Every surface in this package is final</span><ul><li><b>FINAL</b> &mdash; <code>scenes</code> &mdash; 1704 scenes (1644 navtest scored with v1 PDMS, 60 navhard with v2 EPDMS), trajectories drawn per method</li><li><b>FINAL</b> &mdash; navtest <b>v1 PDMS</b> distributions &mdash; 8 charts, one per method</li><li><b>FINAL</b> &mdash; navhard <b>v2 EPDMS</b> distributions &mdash; 6 charts, built from the group-level export and reconciled to the official aggregate</li><li><b>FINAL</b> &mdash; <code>session_scoreboard</code> &mdash; published vs ours, &mdash; where we did not evaluate</li></ul><div style="margin-top:6px;opacity:.75">This banner is derived from the files on disk at build time, not from a hand-set flag.</div></div>
-
 <div class="wrap">
   <h1>Scenes</h1>
   <p class="sub">Every scene in the split, listed top to bottom, strictly best score to worst,
@@ -247,6 +230,7 @@ tbody tr:last-child td{border-bottom:none;}
       <input type="number" id="rankNavInput" min="1" placeholder="rank #">
       <button type="button" id="rankNavGo">Go</button>
     </div>
+    <div class="ranknav-note" id="rankNavNote"></div>
   </div>
 </div>
 
@@ -789,6 +773,10 @@ return {
 "use strict";
 var DATA = JSON.parse(document.getElementById("scene-data").textContent);
 var PALETTE = DATA.palette, LABEL = DATA.label;
+// The method whose score defines rank order (scenes/README.md). Shown on every
+// card so the ordering is legible instead of looking arbitrary.
+var RANK_METHOD = "variant1_patch_tokens_film";
+var RANK_LABEL = (LABEL && LABEL[RANK_METHOD]) ? LABEL[RANK_METHOD] : "rank score";
 var PANELS = DATA.panels;          // {cam:{w,h}, bev:{w,h}}
 var SPLITS = DATA.splits;          // {navtest:{score_label, subscore_keys,...}, navhard:{...}}
 var scenesBySplit = {};
@@ -1258,10 +1246,18 @@ function buildCard(scene){
 
   var head = document.createElement("div");
   head.className = "cardhead";
-  var best = Object.keys(scene.headline_scores || {}).reduce(function(mx,k){ return Math.max(mx, scene.headline_scores[k]); }, 0);
+  // The headline number MUST be the value the list is ordered by, otherwise the
+  // page looks mis-ranked: sorting is on sceneScore() (the ranking method's own
+  // score) while `best` was max-over-all-methods, which disagreed for 84% of
+  // navtest scenes and rose going down the page 685 times. Show the sort key,
+  // labelled with the method it comes from; per-method values remain in the
+  // score table on the card.
+  var rankScore = sceneScore(scene);
+  var bestAny = Object.keys(scene.headline_scores || {}).reduce(function(mx,k){ return Math.max(mx, scene.headline_scores[k]); }, 0);
   head.innerHTML = '<span class="rk">#' + scene.rank + '</span><span class="tok">' + scene.token + '</span>'
     + (scene.band ? '<span class="bandtag">' + scene.band + '</span>' : "")
-    + '<span class="best">best ' + best.toFixed(3) + '</span>';
+    + '<span class="best" title="the score this list is ranked by">' + RANK_LABEL + ' ' + (isFinite(rankScore) ? rankScore.toFixed(3) : "n/a") + '</span>'
+    + '<span class="bestany" title="best score any method achieved on this scene">best ' + bestAny.toFixed(3) + '</span>';
   el.appendChild(head);
 
   var stage = document.createElement("div");
@@ -1339,6 +1335,15 @@ function selectSplit(sp){
                                            // observer, this just makes it explicit.
   });
   renderRankNavBands(sp);
+  // navtest and navhard have very different lengths (1644 vs 60); bound the
+  // input to whichever split is showing so the control states its own range.
+  var n = (cardsBySplit[sp] || []).length;
+  if (rankNavInput) {
+    rankNavInput.max = n || 1;
+    rankNavInput.placeholder = n ? ("rank 1-" + n) : "rank #";
+  }
+  var note0 = document.getElementById("rankNavNote");
+  if (note0) note0.textContent = "";
 }
 
 // ---------------------------------------------------------------------
@@ -1395,9 +1400,15 @@ function renderRankNavBands(sp){
 }
 
 function jumpToRankPosition(pos){
-  if (!pos || pos < 1) return;
   var list = cardsBySplit[state.split] || [];
-  scrollToCard(list[pos - 1]);   // 1-based position in the strictly-sorted, on-screen order
+  if (!list.length) return;
+  // Out-of-range used to index past the end and scrollToCard(undefined) returned
+  // silently, so a too-large rank looked like a dead button. Clamp, and say so.
+  var note = document.getElementById("rankNavNote");
+  if (!pos || isNaN(pos)) { if (note) note.textContent = "enter 1-" + list.length; return; }
+  var clamped = Math.min(Math.max(pos, 1), list.length);
+  if (note) note.textContent = (clamped !== pos) ? ("out of range - showing #" + clamped + " (max " + list.length + ")") : "";
+  scrollToCard(list[clamped - 1]);   // 1-based position in the strictly-sorted, on-screen order
 }
 rankNavGo.addEventListener("click", function(){ jumpToRankPosition(parseInt(rankNavInput.value, 10)); });
 rankNavInput.addEventListener("keydown", function(e){
