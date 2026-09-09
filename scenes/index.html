@@ -938,9 +938,10 @@ var trajCache = {};   // token -> {status:"loaded", data} | {status:"error"}
 //
 // A missing or failed events fetch is a NON-EVENT: the card keeps its
 // trajectories, keeps its score table, and simply shows no failure layers.
-// navhard scenes have no events file at all by construction (the Phase-1
-// sidecars are navtest-only), so 404s here are expected, not a fault -- they
-// are counted, not logged per scene.
+// Both splits have them: navtest from the v1 scorer, navhard from the v2
+// scorer (each navhard card is ONE stage-two synthetic scenario, scored on
+// its own, which is exactly what its EPDMS number is). A 404 is still
+// tolerated -- counted, not logged per scene.
 // ---------------------------------------------------------------------
 var evTicks = { agents: true, drivable: true, failures: true };
 var eventsCache = {};   // token -> {status:"loaded", data} | {status:"error"}

@@ -243,7 +243,9 @@ code{font-family:"IBM Plex Mono",monospace;font-size:.92em;background:var(--rule
     Each revealed panel carries the same <b>Layers</b> ticks as the Scenes tab: the tracked agents,
     the drivable-area boundary, and &mdash; where this method failed &mdash; the agent it collided
     with, the time-to-collision projection that hit, and the ego footprints that left the drivable
-    area, each captioned in words under its clip. That geometry exists for navtest scenes only.</p>
+    area, each captioned in words under its clip. That geometry now exists for navhard scenes too, but
+    only the Scenes tab can show it: as said above, the v2 bins carry no linked clips at all, so on
+    this page every revealed example is a navtest one.</p>
   
   <div class="switchbar" role="group" aria-label="Metric version">
     <button type="button" class="sw-btn v1" data-metric="v1" aria-pressed="true">v1 PDMS &middot; navtest</button>
@@ -816,9 +818,10 @@ var SVGNS = "http://www.w3.org/2000/svg";
 //
 // A missing or failed events fetch is a NON-EVENT: the clip keeps its
 // trajectory overlay and its score table and simply shows no failure
-// layers. Events exist for navtest only (1644 tokens), so navhard tokens
-// 404 by construction -- expected, warned about ONCE for the whole page,
-// never per clip.
+// layers. Sidecars now exist for both splits (1644 navtest + 60 navhard),
+// but this page only ever reveals navtest clips (v2 bins carry no examples),
+// so a 404 stays tolerated -- warned about ONCE for the whole page, never
+// per clip.
 // ---------------------------------------------------------------------
 var evTicks = { agents: true, drivable: true, failures: true };
 var eventsCache = {};   // token -> {status:"loaded", data} | {status:"error"}
@@ -854,7 +857,7 @@ function ensureEvents(ex){
       if (ex.inst) ex.inst.events = null;
       if (!eventsWarned){
         eventsWarned = true;
-        console.warn("[distributions] failure-overlay events unavailable (navtest-only sidecars); "
+        console.warn("[distributions] failure-overlay events unavailable for this clip; "
           + "clips render trajectories only:", err);
       }
       renderFailNote(ex);   // hides the caption; never throws
