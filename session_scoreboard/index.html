@@ -230,7 +230,7 @@ tr[data-v1=""] td.val, tr[data-v1=""] td.pub{opacity:.9;}
   <td class="pub" title="Not from PARA-Drive's own paper (Weng et al., CVPR 2024, targets nuScenes, no NAVSIM/PDMS eval) -- this is the standard NAVSIM-reproduction figure the field cites for it, identically 84.0/ResNet-34 in both DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2.">84.0<sup class="fn">8</sup></td><td class="dash">&mdash;</td>
   <td class="pub" title="See footnote 6.">&mdash;<sup class="fn">6</sup></td><td class="dash">&mdash;</td></tr>
 
-<tr data-v1="84.00" data-v2="24.11"><td class="rank"></td><td class="name"><span class="swatch" style="background:#1baf7a"></span>cmd_tokens_film<span class="cfg">frozen DINOv2 ViT-S + cmd-token FiLM head, camera-only</span></td>
+<tr class="ours-row" data-v1="84.00" data-v2="24.11"><td class="rank"></td><td class="name"><span class="swatch" style="background:#1baf7a"></span><b class="ourstag">OURS</b><span class="cfg">frozen DINOv2 ViT-S + cmd-token FiLM head, camera-only &middot; cmd_tokens_film</span></td>
   <td class="pub">&mdash;</td><td class="val">84.00</td>
   <td class="pub">&mdash;</td><td class="val">24.11</td></tr>
 
@@ -242,21 +242,17 @@ tr[data-v1=""] td.val, tr[data-v1=""] td.pub{opacity:.9;}
   <td class="pub" title="Transfuser (Chitta et al., TPAMI 2022); NAVSIM baseline figure, confirmed 84.0/ResNet-34 in both DiffusionDriveV2 arXiv:2512.07745 Table 1 and DriveSuprim arXiv:2506.06659 Table 2.">84.00</td><td class="val">83.39</td>
   <td class="pub">&mdash;</td><td class="dash">&mdash;<sup class="fn">3</sup></td></tr>
 
-<tr class="ours-row" data-v1="83.02" data-v2="24.69"><td class="rank"></td><td class="name"><span class="swatch" style="background:#eb6834"></span><b class="ourstag">OURS (Navtrain)</b><span class="cfg">frozen DINOv2 ViT-S + patch-token FiLM head, camera-only &middot; variant1_patch_tokens_film</span></td>
+<tr data-v1="83.02" data-v2="24.69"><td class="rank"></td><td class="name"><span class="swatch" style="background:#eb6834"></span>Variant 1 (patch tokens)<span class="cfg">frozen DINOv2 ViT-S + patch-token FiLM head, camera-only &middot; variant1_patch_tokens_film</span></td>
   <td class="pub">&mdash;</td><td class="val">83.02</td>
   <td class="pub">&mdash;</td><td class="val">24.69</td></tr>
 
-<tr data-v1="81.99" data-v2="21.62"><td class="rank"></td><td class="name"><span class="swatch" style="background:#00b8d4"></span>cmd_tokens_film (stock DINOv2)<span class="cfg">stock, never-fine-tuned frozen DINOv2 ViT-S + cmd-token FiLM head, camera-only &middot; cmd_tokens_film_stockdino</span></td>
+<tr class="ours-row" data-v1="81.99" data-v2="21.62"><td class="rank"></td><td class="name"><span class="swatch" style="background:#00b8d4"></span><b class="ourstag">OURS (original DINOv2)</b><span class="cfg">stock, never-fine-tuned frozen DINOv2 ViT-S + cmd-token FiLM head, camera-only &middot; cmd_tokens_film_stockdino</span></td>
   <td class="pub">&mdash;</td><td class="val">81.99</td>
   <td class="pub">&mdash;</td><td class="val">21.62</td></tr>
 
-<tr data-v1="81.41" data-v2="21.75"><td class="rank"></td><td class="name"><span class="swatch" style="background:#7a5cd6"></span>SAE B&prime; (static-suppress)<span class="cfg">frozen DINOv2 ViT-S + SAE static-suppress arm, camera-only &middot; sae_armBp_static</span></td>
+<tr data-v1="81.41" data-v2="21.75"><td class="rank"></td><td class="name"><span class="swatch" style="background:#7a5cd6"></span>SAE<span class="cfg">frozen DINOv2 ViT-S + SAE static-suppress arm, camera-only &middot; sae_armBp_static</span></td>
   <td class="pub">&mdash;</td><td class="val">81.41</td>
   <td class="pub">&mdash;</td><td class="val">21.75</td></tr>
-
-<tr data-v1="80.92" data-v2="19.93"><td class="rank"></td><td class="name"><span class="swatch" style="background:#eda100"></span>SAE A&prime; (control)<span class="cfg">frozen DINOv2 ViT-S + SAE control arm, camera-only &middot; sae_armAp_control</span></td>
-  <td class="pub">&mdash;</td><td class="val">80.92</td>
-  <td class="pub">&mdash;</td><td class="val">19.93</td></tr>
 
 <tr data-v1="76.90" data-v2="17.82"><td class="rank"></td><td class="name"><span class="swatch" style="background:#c23b6f"></span>cls_tokens_film<span class="cfg">frozen DINOv2 ViT-S + CLS-token (9-tok) aggregator, camera-only</span></td>
   <td class="pub">&mdash;</td><td class="val">76.90</td>
