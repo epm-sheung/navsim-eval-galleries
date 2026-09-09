@@ -427,6 +427,14 @@ var EVENT_LAYERS = ["agents", "drivable", "failures"];
 var EVENT_LAYER_LABEL = { agents: "Agents", drivable: "Drivable area", failures: "Failures" };
 var HALO = "rgba(0,0,0,0.6)";
 
+// Mean of a polygon's vertices -- used to reduce an agent's footprint at one
+// timestep to a single trail point. Adequate here because these rings are
+// convex, near-rectangular vehicle boxes with evenly spaced corners.
+function polyCentroid(ring){
+  var x = 0, y = 0, n = 0;
+  for (var i = 0; i < ring.length; i++){ x += ring[i][0]; y += ring[i][1]; n++; }
+  return n ? [x / n, y / n] : [0, 0];
+}
 function eventPath(ctx, pts, sx, sy, close){
   ctx.beginPath();
   for (var i = 0; i < pts.length; i++){
@@ -513,12 +521,26 @@ function drawEventContext(ctx, sx, sy, panelKey, camOK, events, evTicks){
       // fainter (BEV is a map, and the trajectory beside it is already the
       // whole future). A null entry is a timestep at which the replay log
       // has no box for that track: it is SKIPPED, never interpolated across.
+      // Drawing the full footprint at all ~41 timesteps put ~800 polygons on
+      // a busy BEV and buried the trajectories the panel exists to show. The
+      // motion is now a single centre-line trail per agent -- same information
+      // (where it went, how far, how fast via spacing) at ~2 strokes instead
+      // of ~41. The t0 footprint keeps its box, because that is the state the
+      // imagery actually shows. Nulls are still SKIPPED, never interpolated
+      // across: a gap in the replay log breaks the trail into segments rather
+      // than inventing a straight line through it.
       var series = objs[k].bev || [];
-      for (var t = series.length - 1; t >= 0; t--){
-        if (!series[t]) continue;
-        strokePoly(ctx, series[t], sx, sy, EVENT_PALETTE.agents,
-                   (t === 0) ? 1.3 : 1.0, null, true, (t === 0) ? 0.75 : 0.2);
+      var seg = [];
+      for (var t = 1; t < series.length; t++){
+        if (!series[t]) {                       // gap: flush what we have
+          if (seg.length > 1) strokePoly(ctx, seg, sx, sy, EVENT_PALETTE.agents, 0.9, null, false, 0.32);
+          seg = [];
+          continue;
+        }
+        seg.push(polyCentroid(series[t]));
       }
+      if (seg.length > 1) strokePoly(ctx, seg, sx, sy, EVENT_PALETTE.agents, 0.9, null, false, 0.32);
+      if (series[0]) strokePoly(ctx, series[0], sx, sy, EVENT_PALETTE.agents, 1.3, null, true, 0.75);
     } else if (camOK){
       // t0 only on the camera: the imagery under it IS t0, so a box drawn at
       // t = 2 s would sit where nothing is.
