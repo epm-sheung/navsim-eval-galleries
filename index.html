@@ -114,6 +114,11 @@
          color:var(--ink-3); display:flex; flex-direction:column; gap:5px;}
   a{color:var(--accent);}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+.update-banner{border:1px solid var(--rule,#dcdedb);border-left:3px solid #1f6f6b;
+  background:rgba(31,111,107,.05);padding:14px 16px;margin:0 0 26px;border-radius:5px;
+  font-size:14.5px;line-height:1.55;max-width:46em;}
+.supersede{display:block;margin-top:8px;padding:8px 11px;border-left:3px solid #b8860b;
+  background:rgba(184,134,11,.07);font-size:13.5px;line-height:1.5;}
 </style>
 
 <style id="navsim-tabbar-css">
@@ -161,6 +166,17 @@
   benchmark we are judged on. The short version: they are close to unrelated, and the one thing the
   loss tracks best is the one thing that cannot change the score.</p>
 </header>
+
+<div class="update-banner">
+  <strong>Update &middot; 9 Sep 2026.</strong> Two things changed since this report was written.
+  <strong>(1)</strong> The metric-distillation recommendation below now has a measured prize:
+  perfect selection over a 40-trajectory vocabulary is worth <strong>+0.170 PDMS</strong> over our
+  current model (0.9456 vs 0.7758), and best-of-K is still climbing at K=63. See
+  <a href="#selection">Selection over candidates</a>.
+  <strong>(2)</strong> The camera-only literature is far ahead of where this report's framing
+  implies &mdash; verified camera-only models reach <strong>89.9&ndash;94.6 PDMS</strong>, including
+  one on the same frozen DINOv2 ViT-S trunk we use.
+</div>
 
 <section>
   <div class="verdicts">
@@ -447,7 +463,14 @@
       aggregate score. Tempting to credit LiDAR — but the literature prices LiDAR at
       <strong>+0.2 PDMS</strong> overall (camera-only LTF 83.8 vs TransFuser 84.0, NAVSIM Table 1),
       so that explanation is not supported. The gap is real and localised to turns; its cause is
-      more likely the BEV representation than the sensor. Open question.</li>
+      more likely the BEV representation than the sensor. Open question.
+      <span class="supersede"><strong>&#9888; Context added 9 Sep 2026.</strong> The LTF-vs-TransFuser
+      pair (83.8 vs 84.0) is still the right way to price LiDAR at fixed architecture, so this
+      conclusion stands. What has changed is the frame of reference: those two are 2024 baselines,
+      and verified camera-only methods now reach 89.9&ndash;94.6 PDMS
+      (DrivoR 93.1&ndash;94.6, arXiv:2601.05083; DriveSuprim 89.9 at ResNet-34 / 93.5 at ViT-L,
+      arXiv:2506.06659; Hydra-MDP++ 86.6&ndash;91.0, arXiv:2503.12820). Modality is not what
+      separates us from the frontier.</span></li>
       <li><strong>Constant velocity is the only model that does not degrade on turns</strong> —
       marginally better, because it never attempts one. The degradation is specific to models that
       try.</li>
@@ -461,17 +484,78 @@
 </section>
 
 <section>
+  <h2 id="selection">5 &middot; Selection over candidates: the prize, measured</h2>
+  <p class="measure">This report's central finding &mdash; that the loss barely ranks scenes the way
+  the metric does &mdash; argues for optimising the metric instead of a proxy. That argument now has
+  a number attached, and it was cheap to get: score many candidate trajectories per scene offline
+  with the real NAVSIM scorer, then ask what a <em>perfect</em> chooser would have scored.</p>
+
+  <h3>The ceiling</h3>
+  <p class="measure">1,599 navtest scenes, official v1 metric cache, reproducing the manifest CSVs
+  token-for-token:</p>
+  <ul class="measure">
+    <li>random candidate from the vocabulary &mdash; <strong>0.36</strong></li>
+    <li>best single constant vocabulary entry &mdash; <strong>0.645</strong></li>
+    <li><strong>our current model (variant1) &mdash; 0.7758</strong></li>
+    <li>human / logged trajectory &mdash; 0.9204</li>
+    <li><strong>perfect selection over 40 vocabulary trajectories &mdash; 0.9456</strong></li>
+  </ul>
+  <p class="measure"><strong>Headroom: +0.170 PDMS.</strong> Best-of-K over the wider pool climbs
+  0.270 / 0.596 / 0.733 / 0.860 / 0.925 / 0.951 / 0.970 at K = 1/2/4/8/16/32/63 &mdash; <strong>it has
+  not plateaued at 64</strong>, so DrivoR's reported plateau does not reproduce on this candidate
+  distribution. Candidate quality is not the binding constraint: 40 k-means centroids plus 23
+  perturbations already reach 0.970.</p>
+
+  <h3>Where the gain is, and where it is illusory</h3>
+  <p class="measure">The oracle's improvement is concentrated exactly where this report already
+  located our failures: ego progress 0.708 &rarr; 0.927, TTC 0.861 &rarr; 1.000, drivable area
+  0.922 &rarr; 1.000. But it also <em>spends</em> driving direction compliance (0.964 &rarr; 0.863),
+  which carries weight 0 in v1 &mdash; so part of the ceiling is metric-gaming rather than better
+  driving, and it should be expected to transfer worse to v2.</p>
+
+  <h3>Two measurement traps found on the way</h3>
+  <ul class="measure">
+    <li><strong>A wider pool inflates the ceiling.</strong> Quoting best-of-63 gives +0.194, but that
+    pool contains GT-derived perturbations. The 40-entry vocabulary is the only unprivileged pool,
+    and it gives <strong>+0.170</strong>. That is the number to cite.</li>
+    <li><strong>The obvious baseline is privileged.</strong> The human trajectory sits at a fixed
+    column index in every scene, so a "best constant column" baseline over the full set is just
+    <em>always pick the human</em> (~0.95). Any ranking result must use the vocabulary-only pool.</li>
+    <li><strong>ego_progress is normalised by the batch maximum</strong> in v1's aggregation, so
+    scoring candidates in batches silently changes EP unless it is reconstructed per candidate.</li>
+  </ul>
+
+  <h3>Status</h3>
+  <p class="measure">Labels are complete and gated: 2,560,000 navtrain candidates, 0 failures, class
+  balance passing on all six sub-scores (GT-only labels would have been 99.98% single-class on
+  collisions). A learned scorer is built and smoke-tested but <strong>has not been trained</strong> &mdash;
+  the GPU queue scheduled nothing for a full session, and the CPU fallback was suspended at step 200
+  of epoch 0. <strong>Whether a scorer can actually rank better than the 0.645 constant remains
+  open.</strong> Note the bar is 0.645, not zero, and our own policy already sits above it at 0.7758.</p>
+
   <h2>What follows</h2>
   <ul class="measure">
     <li><strong>Do not read sub-4-point differences as results</strong> without multiple seeds
     behind them. That includes both SAE arms.</li>
-    <li><strong>The loss is a weak proxy and mildly anti-correlated with ego progress</strong> on
-    discriminating scenes — direct on-NAVSIM evidence for metric distillation, which optimises the
-    thing being measured rather than a velocity reconstruction that happens to correlate at −0.09.</li>
+    <li><strong>Metric distillation via candidate selection is now the highest-value direction,
+    and it is quantified.</strong> The loss is a weak proxy and mildly anti-correlated with ego
+    progress on discriminating scenes; perfect selection over a 40-trajectory vocabulary is worth
+    <strong>+0.170 PDMS</strong>. The open question is no longer whether the prize exists but whether
+    a learned scorer can capture any of it &mdash; the bar to beat is a 0.645 constant.</li>
+    <li><strong>Multi-hypothesis generation alone is not the missing piece &mdash; supervision of the
+    selector is.</strong> The earlier winner-takes-all arm already produced multiple trajectories and
+    lost, with its selector scoring below a constant while ignoring the image, even though a probe
+    recovered the signal from the same features at 75%. WTA supervises selection by
+    closeness-to-human, which this report measures at &minus;0.09 against PDMS &mdash; the wrong target,
+    faithfully optimised.</li>
     <li><strong>Right turns and tight drivable area are the specific failure mode.</strong> A far
     sharper target than "improve PDMS".</li>
     <li><strong>ADE is confirmed weak on NAVSIM directly</strong>, not by analogy — it ranks worse
     than the training loss on every model tested.</li>
+    <li><strong>Sensor modality is not what separates us from the frontier.</strong> Verified
+    camera-only methods reach 89.9&ndash;94.6 PDMS, one of them (DrivoR) on the same frozen DINOv2
+    ViT-S trunk we use, differing mainly by 4 cameras vs 1 and LoRA fine-tuning vs a frozen trunk.
+    Comparisons against TransFuser at 84.0 are comparisons against a 2024 baseline.</li>
   </ul>
 </section>
 
