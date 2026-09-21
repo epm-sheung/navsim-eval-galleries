@@ -88,6 +88,13 @@ HEAD = u"""<title>Five Figures</title>
   .meta{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
         font-size:13px;}
   .meta div{background:var(--panel-2); border-radius:4px; padding:9px 11px;}
+  .shot{width:100%; display:block; border:1px solid var(--rule); border-radius:4px;
+        background:#fff;}
+  .shotwrap{margin:0; background:var(--panel); border:1px solid var(--rule);
+            border-radius:5px; padding:14px 15px 11px;
+            display:flex; flex-direction:column; gap:9px;}
+  .kicker{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
+          letter-spacing:.12em; text-transform:uppercase; color:var(--accent);}
   .meta b{display:block; font-family:"IBM Plex Mono",monospace; font-size:10px;
           letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
           font-weight:500; margin-bottom:2px;}
@@ -121,15 +128,97 @@ BODY = u"""
 
 <header>
   <div class="eyebrow">NAVSIM · navtest 12,146 scenes · v1.1 PDMS · __STAMP__</div>
-  <h1>Five figures for the paper</h1>
-  <p class="standfirst">Worked examples of five figure types, each built from real navtest
-  numbers but deliberately kept to the smallest slice that makes the point. The BEV render and the
-  scene-clip viewer already exist; these are the <em>analysis</em> figures that go beside them.
-  Every type is paired with the published precedent it copies — or, in two cases, with a note
-  that no precedent exists.</p>
+  <h1>Figures</h1>
+  <p class="standfirst">Two sets. First, five raster renderings of NAVSIM scenes &mdash; different
+  kinds of BEV, drawn with Pillow rather than in the browser. Then five analysis figures, each
+  paired with the published precedent it copies, or with a note that no precedent exists.</p>
 </header>
 
+
 <section>
+  <h2 id="scenes">Scene visualisations</h2>
+  <p class="measure">Five renderings of NAVSIM scenes, drawn as raster images with Pillow
+  (<span class="mono">figures/bev5/render5.py</span>) rather than as browser graphics. Each is
+  generated from <span class="mono">scenes/events/*.json</span> and
+  <span class="mono">scenes/traj/*.json</span>; scene choice is deterministic, not hand-picked.</p>
+
+  <div class="callout">
+    <h3>What changed against the gallery BEV</h3>
+    <ul class="measure">
+      <li><strong>Fixed the zoom.</strong> The gallery fits its BEV window per scene, so a slow
+      scene zooms to about 16 m and the ego box fills the frame. Every coordinate here is inverted
+      back to <em>metres</em> through that scene's own <span class="mono">bev_bounds</span> and
+      re-projected with a clamped scale, and the window is fitted to the <em>driving</em> rather
+      than to the drivable polygon, which spans whole intersections.</li>
+      <li><strong>Made the map visible.</strong> Drivable area was white on white; it is now a
+      filled region with a real edge, and agents are coloured by type.</li>
+      <li><strong>Scenes are chosen to be informative.</strong> A clean scene needs at least 18 m
+      of travel or the trajectory is a few pixels long; the failure panel requires the gate to have
+      failed <em>for the method being drawn</em>; the multi-method panel is chosen by PDMS spread,
+      because on an easy scene every method overlaps and the figure says nothing.</li>
+    </ul>
+  </div>
+
+  <figure class="shotwrap">
+    <div class="kicker">1 &middot; publication BEV</div>
+    <div class="figtitle">One scene, one method, everything legible</div>
+    <img class="shot" src="bev5/1_clean.png" alt="BEV of a navtest scene with drivable area, agents, ego and two trajectories">
+    <figcaption>Drivable area, agent boxes coloured by type, ego footprint, the predicted
+    trajectory with a white halo so it reads over the road, and the human log dashed on top so the
+    reference stays visible where the two agree. Scale bar in metres, per-gate score strip along
+    the bottom. This is the default figure for &ldquo;here is a scene&rdquo;.</figcaption>
+  </figure>
+
+  <figure class="shotwrap">
+    <div class="kicker">2 &middot; motion BEV</div>
+    <div class="figtitle">Four seconds of traffic in a single frame</div>
+    <img class="shot" src="bev5/2_motion.png" alt="BEV with agents ghosted across nine timesteps and the ego path coloured by time">
+    <figcaption>Every agent drawn at all nine stored timesteps with an alpha ramp, so motion reads
+    as a trail and the turning vehicle at the top right is obvious. The ego path is coloured along
+    its length by time. This replaces a video for a static page &mdash; it is the figure to use when
+    the point is <em>what moved</em>.</figcaption>
+  </figure>
+
+  <figure class="shotwrap">
+    <div class="kicker">3 &middot; failure-diagnostic BEV</div>
+    <div class="figtitle">Not just that it failed &mdash; why</div>
+    <img class="shot" src="bev5/3_failure.png" alt="BEV highlighting a time-to-collision failure with the explanatory caption rendered in">
+    <figcaption>The gate that failed is named in the title, marked in the score strip, and
+    <em>explained</em>: the benchmark's own caption is rendered into a footer band
+    (&ldquo;TTC 0.0 &mdash; constant-velocity projection from t=3.9 s hits vehicle at
+    t=4.8 s&rdquo;). The implicated agent is circled &mdash; and labelled
+    <strong>inferred</strong>, because the data records the failure but does not name which agent
+    caused it. That label is deliberate: the nearest box to the path is a guess, and a figure
+    should not present a guess as ground truth.</figcaption>
+  </figure>
+
+  <figure class="shotwrap">
+    <div class="kicker">4 &middot; multi-method BEV</div>
+    <div class="figtitle">Where the methods actually disagree</div>
+    <img class="shot" src="bev5/4_methods.png" alt="BEV with every method's trajectory overlaid, fanning apart, with a PDMS legend">
+    <figcaption>Every method's trajectory on one canvas, human dashed, legend sorted by PDMS. The
+    scene is selected by <em>PDMS spread</em> &mdash; here a full 1.000, from methods that score
+    perfectly to one that scores zero &mdash; so the trajectories fan apart instead of overlapping.
+    Building this surfaced a real bug: a genuine score of 0.0 was rendering as
+    <span class="mono">nan</span>, because the code fell back with
+    <span class="mono">or float("nan")</span> and zero is falsy in Python.</figcaption>
+  </figure>
+
+  <figure class="shotwrap">
+    <div class="kicker">5 &middot; aggregate prior</div>
+    <div class="figtitle">The learned trajectory prior, over all 1,704 scenes</div>
+    <img class="shot" src="bev5/5_density.png" alt="Density heatmap of predicted waypoints over navtest with the human distribution overlaid">
+    <figcaption>Every predicted waypoint accumulated into a metric grid &mdash; each scene inverted
+    through its own <span class="mono">bev_bounds</span> first, so this is metres, not a pixel-space
+    assumption. The model's distribution (blue) fans far wider than the human log's tight
+    straight-ahead core (green). This is the closest thing here to DriveSuprim's anchor-vocabulary
+    figure, and it is the only panel on this page that is about the dataset rather than a
+    scene.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Analysis figures</h2>
   <div class="callout">
     <h3>What a survey of the published figures actually shows</h3>
     <p class="measure">Seven primary sources were enumerated figure-by-figure — the NAVSIM

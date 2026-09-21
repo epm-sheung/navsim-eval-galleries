@@ -1,0 +1,8 @@
+PIL 12.1.0 3.11.5
+selection: {'clean': '0436604d25145231', 'ttc': '0000548db87959c2', 'dac': '0000548db87959c2', 'low': '00016f8b45c25a1d'} {'nclean': 70, 'nttc': 1015, 'ndac': 752, 'ntot': 1644}
+1 ok 61848
+2 ok 78868
+3 ok 91355
+4 ok 79552
+5 ok 500761 scenes 1704 skipped 0
+DONE
