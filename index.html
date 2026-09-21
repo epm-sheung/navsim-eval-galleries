@@ -160,22 +160,33 @@
 
 
 <header>
-  <div class="eyebrow">NAVSIM · navtest 12,146 scenes · navhard 225 groups · 3 Sep 2026</div>
+  <div class="eyebrow">NAVSIM · navtest 12,146 scenes · navhard 225 groups · 3 Sep 2026, revised 21 Sep 2026</div>
   <h1>What our training loss actually measures</h1>
-  <p class="standfirst">Four investigations into the gap between the objective we optimise and the
-  benchmark we are judged on. The short version: they are close to unrelated, and the one thing the
-  loss tracks best is the one thing that cannot change the score.</p>
+  <p class="standfirst">Seven investigations into the gap between the objective we optimise and
+  the benchmark we are judged on. The short version: they are close to unrelated; the one thing the
+  loss tracks best is the one thing that cannot change the score; and every attempt so far to
+  replace the loss with a differentiable stand-in for the metric has made the metric worse.</p>
 </header>
 
 <div class="update-banner">
-  <strong>Update &middot; 9 Sep 2026.</strong> Two things changed since this report was written.
-  <strong>(1)</strong> The metric-distillation recommendation below now has a measured prize:
+  <strong>Update &middot; 21 Sep 2026.</strong> The question this report closed on has been
+  answered, and not in the direction it expected. A learned scorer was trained at full resolution
+  and used as a <em>training signal</em>: <strong>critic approval and true PDMS move in opposite
+  directions</strong>, monotonically, down to &minus;11.5 points. See
+  <a href="#critic">6 &middot; The scorer as a gradient</a>. Two corrections ripple back:
+  the &sect;5 <a href="#status">Status</a> paragraph is superseded, and the blanket
+  &ldquo;sub-4-point differences are noise&rdquo; rule turns out to govern only retraining from
+  scratch, <em>not</em> paired ablations &mdash; see the scope note in
+  <a href="#seeds">&sect;2</a>. Separately, a controlled 2&times;2 prices the levers this report
+  kept implying were architectural: <a href="#trunkdata">7 &middot; Data, not trunk</a>.
+  <span class="supersede"><strong>Earlier update &middot; 9 Sep 2026</strong> &mdash; both points
+  still stand. <strong>(1)</strong> The metric-distillation recommendation has a measured prize:
   perfect selection over a 40-trajectory vocabulary is worth <strong>+0.170 PDMS</strong> over our
   current model (0.9456 vs 0.7758), and best-of-K is still climbing at K=63. See
-  <a href="#selection">Selection over candidates</a>.
-  <strong>(2)</strong> The camera-only literature is far ahead of where this report's framing
-  implies &mdash; verified camera-only models reach <strong>89.9&ndash;94.6 PDMS</strong>, including
-  one on the same frozen DINOv2 ViT-S trunk we use.
+  <a href="#selection">Selection over candidates</a>. <strong>(2)</strong> Verified camera-only
+  models reach <strong>89.9&ndash;94.6 PDMS</strong>, including one on the same frozen DINOv2
+  ViT-S trunk we use &mdash; but those remain <em>paper-reported</em> figures; see the
+  reproduction caveat in <a href="#follows">What follows</a>.</span>
 </div>
 
 <section>
@@ -189,7 +200,8 @@
       <div class="lab">Run-to-run spread <span class="dirin">↓ better</span></div><div class="num">≤2.3 / ≤3.6</div>
       <div class="cap">Points between two runs, navtest / navhard. Those runs differ in seed
       <em>and</em> loss function, so this bounds the two together — an upper bound, not a
-      seed-variance measurement.</div>
+      seed-variance measurement. Applies to <em>separate training runs only</em>; paired ablations
+      resolve to ~1e−5 (<a href="#seeds">&sect;2</a>).</div>
     </div>
     <div class="v warn">
       <div class="lab">Right vs straight <span class="dirin">→0 better</span></div><div class="num">−9.5</div>
@@ -368,7 +380,7 @@
 
 <!-- ───────────────────────── FINDING 2 ───────────────────────── -->
 <section>
-  <h2>2 · Run-to-run variation is larger than most of our conclusions</h2>
+  <h2 id="seeds">2 · Run-to-run variation is larger than most of our conclusions</h2>
   <p class="measure">A seed fixes the randomness in training — weight initialisation, batch order,
   nondeterministic GPU arithmetic. We retrained Variant 1 at a second seed intending to isolate that
   effect. <strong>The two runs are not otherwise identical.</strong> The original trains against a
@@ -401,6 +413,18 @@
     <p class="note">Two runs give a <em>range</em>, not a standard deviation — this bounds nothing
     formally. Separating the sub-4-point comparisons needs 3–5 seeds per arm, roughly 10 GPU-hours
     each at 1h41 per run. Until then those rows are "not separated", not ranked.</p>
+
+    <span class="supersede"><strong>&#9888; Scope narrowed 21 Sep 2026.</strong> This floor governs
+    <em>retraining from scratch</em> &mdash; which is exactly what the two runs above differ by. It
+    does <strong>not</strong> govern <em>paired</em> comparisons, where a single frozen policy is
+    evaluated on the same scenes with only an additive delta applied. On that footing the pipeline
+    resolves far finer than 2.3 points: an identity pass reproduced the reference to all sixteen
+    digits (v1 0.8400143611791913, v2 0.2410953333687557) and a &lambda;=0 arm landed within
+    1e&minus;5 on <em>both</em> benchmarks. A &minus;0.021 paired delta is therefore some three
+    orders of magnitude above the resolution of that comparison, not luck. <strong>Apply the
+    2.3-point floor to new training runs; do not apply it to ablation deltas.</strong> The
+    open ask is unchanged &mdash; a clean seed-only figure still needs 3&ndash;5 same-recipe
+    reruns, and none has been done.</span>
   </div>
 </section>
 
@@ -525,7 +549,7 @@
     scoring candidates in batches silently changes EP unless it is reconstructed per candidate.</li>
   </ul>
 
-  <h3>Status</h3>
+  <h3 id="status">Status</h3>
   <p class="measure">Labels are complete and gated: 2,560,000 navtrain candidates, 0 failures, class
   balance passing on all six sub-scores (GT-only labels would have been 99.98% single-class on
   collisions). A learned scorer is built and smoke-tested but <strong>has not been trained</strong> &mdash;
@@ -533,29 +557,255 @@
   of epoch 0. <strong>Whether a scorer can actually rank better than the 0.645 constant remains
   open.</strong> Note the bar is 0.645, not zero, and our own policy already sits above it at 0.7758.</p>
 
-  <h2>What follows</h2>
+  <span class="supersede"><strong>&#9888; SUPERSEDED 21 Sep 2026.</strong> The scorer
+  <em>was</em> trained, at full resolution, and tested. Read the paragraph above as a record of
+  what was believed on 9 Sep, not as current status. What the test settled is narrower than the
+  question as posed here: the scorer was used as a <strong>differentiable training signal</strong>,
+  and in that role it <strong>inverts</strong> &mdash; see <a href="#critic">&sect;6</a>. Its ability
+  to <em>select</em> among far-apart candidates, which is what the 0.645 bar actually measures, was
+  never put on the scoreboard and <strong>remains open</strong>. Do not read &sect;6 as closing it;
+  read it as closing the gradient route.</span>
+
+</section>
+
+<!-- ──────────────────── FINDING 6 ──────────────────── -->
+<section>
+  <h2 id="critic">6 · The scorer as a gradient: it inverts</h2>
+  <p class="measure">&sect;5 ended by asking whether a learned scorer could capture any of the
+  +0.170 the oracle leaves on the table. The cheapest way to ask is to differentiate through it:
+  freeze the policy, bolt on a zero-initialised refiner that emits a small correction
+  <code>ΔT</code> clamped to ±0.5 m, and train it on
+  <code>L1(T&prime;, T_human) + λ·Σₖ wₖ(1−sₖ)</code>, with <code>s</code> from the
+  full-resolution scorer. 37,568 train / 2,432 val scenes, 6 epochs, four arms plus an identity
+  pass. Every arm was then scored by the <em>real</em> NAVSIM scorer on the full splits.</p>
+
+  <p class="measure"><strong>The critic is an almost perfect inverse predictor of real
+  performance.</strong> As it gets monotonically happier, true PDMS falls monotonically.</p>
+
+  <table>
+    <thead><tr><th>arm</th><th>λ</th><th>sees scene</th>
+      <th>critic penalty<br><span class="dirin">↓ = critic happier</span></th>
+      <th>v1 PDMS<br><span class="dirin">↑ better</span></th><th>Δ v1</th>
+      <th>v2 EPDMS<br><span class="dirin">↑ better</span></th></tr></thead>
+    <tbody>
+      <tr><td>identity</td><td class="n">—</td><td>—</td><td class="n">0.8621</td>
+          <td class="n">0.840014</td><td class="n">—</td><td class="n">0.241095</td></tr>
+      <tr><td>λ = 0 (control)</td><td class="n">0</td><td>yes</td><td class="n">0.8671</td>
+          <td class="n">0.840025</td><td class="n">+0.00001</td><td class="n">0.241104</td></tr>
+      <tr><td>full</td><td class="n">0.02</td><td>yes</td><td class="n">0.7178</td>
+          <td class="n">0.818931</td><td class="n">−0.02108</td><td class="n">0.240595</td></tr>
+      <tr><td>blind (control)</td><td class="n">0.02</td><td><strong>no</strong></td><td class="n">0.7620</td>
+          <td class="n">0.803206</td><td class="n">−0.03681</td><td class="n">0.232555</td></tr>
+      <tr><td>full_hi</td><td class="n">0.2</td><td>yes</td><td class="n">0.5739</td>
+          <td class="n">0.724959</td><td class="n">−0.11506</td><td class="n">0.180892</td></tr>
+    </tbody>
+  </table>
+  <p class="note">v1 n = 12,146 navtest scenes per arm; v2 n = 5,912 navhard_two_stage scenarios.
+  0 failed scenarios and 0 constant-velocity fallbacks on all eight eval jobs. <strong>No arm beat
+  baseline.</strong></p>
+
+  <div class="callout crit">
+    <h3>Two probes called it before a single arm trained</h3>
+    <p>Both were pre-registered on 512 held-out scenes, and both are the mandatory
+    GT-expert sanity gate this project adopted after the geometry-loss work.</p>
+    <ul>
+      <li><strong>The GT-expert gate failed.</strong> On the exact weighted sum used as the loss,
+      the critic scores the <em>human</em> trajectory <strong>0.0033 worse</strong> than the frozen
+      policy's own output (human 0.8237 vs policy 0.8205, lower = better). A critic that ranks the
+      expert below the learner cannot supply a descent direction.</li>
+      <li><strong>The gradient literally says &ldquo;drive further&rdquo;.</strong> Under a rigid
+      longitudinal push the weighted loss falls monotonically all the way out to +2 m
+      (−0.0037 / −0.0081 / −0.0198 / −0.0398 / <strong>−0.0712</strong> at
+      0.10 / 0.25 / 0.50 / 1.00 / 2.00 m), with no offsetting penalty from the safety gates &mdash;
+      i.e. it demands precisely what the earlier collision-penalty arm already proved is a large net
+      loss.</li>
+    </ul>
+  </div>
+
+  <h3>Pareto-worse on every weighted sub-score, and it never touched the target</h3>
+  <p class="measure">Sub-score deltas for the <code>full</code> arm against identity, from the
+  official navtest CSVs: TTC <strong>−0.0418</strong> (about three quarters of the damage, weight
+  5⁄12), NC −0.0070, ego progress −0.0060, comfort −0.0016 — and drivable-area compliance
+  <strong>+0.0004, which is to say it never moved.</strong> DAC is 59% of the headroom and the whole
+  reason for doing this. The only sub-score that improved was driving direction compliance, which
+  carries weight 0 in v1 — the same inert component &sect;1 found the loss tracks best. TTC gate
+  failures rise monotonically with λ: <strong>7.25% → 11.44% → 18.41%</strong>.</p>
+
+  <div class="callout warn">
+    <h3>Why: the refiner operates below the critic's resolution</h3>
+    <p>The scorer was trained on candidates <strong>≥ 0.75 m apart</strong>. The refiner moves
+    <strong>0.24 m</strong>. Every gradient it followed was extrapolation inside the critic's blind
+    spot, so what it descended was a systematic forward bias rather than a per-scene correction.
+    <strong>The blind control proves it:</strong> given no scene input at all, it captures
+    <strong>69%</strong> of the full arm's critic approval (0.100 of 0.144) at nearly the same
+    displacement. Most of what this critic rewards is scene-independent trajectory shape — the
+    same failure shape as the winner-takes-all selector in <a href="#follows">What follows</a>.</p>
+  </div>
+
+  <h3>What this does and does not establish</h3>
   <ul class="measure">
-    <li><strong>Do not read sub-4-point differences as results</strong> without multiple seeds
-    behind them. That includes both SAE arms.</li>
-    <li><strong>Metric distillation via candidate selection is now the highest-value direction,
-    and it is quantified.</strong> The loss is a weak proxy and mildly anti-correlated with ego
-    progress on discriminating scenes; perfect selection over a 40-trajectory vocabulary is worth
-    <strong>+0.170 PDMS</strong>. The open question is no longer whether the prize exists but whether
-    a learned scorer can capture any of it &mdash; the bar to beat is a 0.645 constant.</li>
-    <li><strong>Multi-hypothesis generation alone is not the missing piece &mdash; supervision of the
-    selector is.</strong> The earlier winner-takes-all arm already produced multiple trajectories and
-    lost, with its selector scoring below a constant while ignoring the image, even though a probe
-    recovered the signal from the same features at 75%. WTA supervises selection by
-    closeness-to-human, which this report measures at &minus;0.09 against PDMS &mdash; the wrong target,
-    faithfully optimised.</li>
+    <li><strong>Ranking is not gradient.</strong> Separating far-apart candidates and supplying a
+    local descent direction are different capabilities, and the first does not imply the second.
+    The oracle's +0.170 over a 40-entry vocabulary is untouched by this result, because those
+    candidates are far enough apart for the scorer to actually discriminate.</li>
+    <li><strong>The &lambda;-selection rule was unsatisfiable.</strong> Pre-registered as
+    &ldquo;largest &lambda; whose held-out ADE degrades &lt;2% against &lambda;=0&rdquo;. No
+    &lambda; &gt; 0 qualified — even 0.02 costs +5.2% ADE. The scorer cannot be given <em>any</em>
+    weight without a measurable imitation cost. That is a finding, not a tuning inconvenience.</li>
+    <li><strong>It resolves an earlier ambiguity.</strong> A previous refiner arm found blind
+    &ge; sighted and blamed scorer quality. With the good scorer, sighted beats blind
+    (0.8189 vs 0.8032), so scene conditioning does carry signal — the optimiser simply prefers the
+    cheap scene-independent constant anyway.</li>
+    <li><strong>It completes a family.</strong> An analytic drivable-area penalty made DAC worse; a
+    collision penalty made collisions worse; this makes everything except the weight-0 component
+    worse. Three mechanisms, three failures, all pushing the ego too far forward. The gates are step
+    functions, and every smooth surrogate tried so far has a gradient pointing somewhere the gate
+    does not. <strong>Differentiable proxies on a single-mode regression head are exhausted.</strong></li>
+  </ul>
+
+  <p class="note"><strong>Two corrections to the working notes, found while tracing these figures
+  back to the CSVs.</strong> (1) The gate-failure percentages previously circulated as
+  7.26 / 11.44 / 18.42 were computed against n = 12,147 — the CSV's own <code>average</code>
+  aggregate row was being counted as an extra failing scenario. Every one of the fifteen
+  arm × gate cells carried the same off-by-one. Recomputed from the raw per-scenario rows the TTC
+  rates are <strong>7.2534 / 11.4359 / 18.4094%</strong> — about 0.01 pp lower, which at two
+  decimals moves two of the three. Those are the figures quoted above. (2) The blind arm captures 0.100 of 0.144, i.e. 69.4%, not the 0.0995 / 68.9%
+  recorded earlier. Neither changes any conclusion; both are now traced to
+  <span class="mono">runs/*/history.json</span> and the per-scene eval CSVs.</p>
+
+  <p class="note"><strong>And one that does bear on &sect;5.</strong> The companion
+  <em>refinement</em> ceiling of +0.168 should not be read, as it once was, as
+  &ldquo;matching selection's +0.170&rdquo;. That figure is a maximum over ~40 discrete corrections
+  per radius, so it scales with how many candidates were scored, not with what a one-shot refiner
+  can emit (k=1 gives 0.7955, k=32 gives 0.8801). The honest target for a refiner is the blind
+  → informed gap: +0.020 blind, +0.076 perfectly informed at 0.50 m, so roughly
+  <strong>+0.056 of achievable separation</strong>. Selection genuinely does pick the best of 40;
+  refinement does not. &sect;5's +0.170 is a selection number and stands.</p>
+</section>
+
+<!-- ──────────────────── FINDING 7 ──────────────────── -->
+<section>
+  <h2 id="trunkdata">7 · Data, not trunk</h2>
+  <p class="measure">This report has repeatedly framed the gap to the frontier in architectural
+  terms — patch tokens versus CLS, frozen trunk versus LoRA, one camera versus four. A controlled
+  2&times;2 now prices two of those axes directly: {PAV, navtrain} training data × {stock DINOv2,
+  our PAV-fine-tuned trunk}, at fixed architecture, fixed loss, fixed seed, and an
+  <em>equal</em> 4,000-step budget, all four cells scored on full navtest.</p>
+
+  <table>
+    <thead><tr><th>v1 PDMS · navtest</th><th>stock DINOv2</th><th>fine-tuned trunk</th>
+      <th>Δ trunk</th></tr></thead>
+    <tbody>
+      <tr><td>trained on PAV</td><td class="n">0.639590</td><td class="n">0.668005</td>
+          <td class="n"><strong>+2.84</strong></td></tr>
+      <tr><td>trained on navtrain</td><td class="n">0.773516</td><td class="n">0.774984</td>
+          <td class="n"><strong>+0.15</strong></td></tr>
+      <tr><td><strong>Δ data</strong></td><td class="n"><strong>+13.39</strong></td>
+          <td class="n"><strong>+10.70</strong></td><td class="n"></td></tr>
+    </tbody>
+  </table>
+  <p class="note">n = 12,146 per cell, 0 failed scenarios, 0 constant-velocity fallbacks in all
+  four. Trunk identity was gated <em>before</em> scoring, twice and independently — at file level
+  and through the real agent loader — both reporting 0 / 30 / 0 / 30 differing tensors out of 175,
+  all at <code>global_step = 4000</code>.</p>
+
+  <ul class="measure">
+    <li><strong>The data axis dominates by an order of magnitude.</strong> navtrain beats PAV by
+    10.7–13.4 points, roughly five times the from-scratch seed floor in <a href="#seeds">&sect;2</a>.
+    Unambiguous.</li>
+    <li><strong>The trunk interacts with the data, and on the row that matters it is worth
+    nothing.</strong> A better initialisation compensates when the training data is mismatched to
+    the target domain; with in-domain data the model learns it anyway and the initialisation washes
+    out. +2.84 on a single seed each only just clears the seed floor — suggestive, not
+    established.</li>
+    <li><strong>This voids a standing +4.2.</strong> The project has been quoting the PAV-fine-tuned
+    trunk as worth <strong>+4.2 PDMS</strong>, from a matched-architecture pair (0.84001 fine-tuned
+    vs 0.79808 stock). Both of those are navtrain-trained, so the matched row here is navtrain, and
+    it reads <strong>+0.15</strong>. Same architecture family, same data, same budget, same seed,
+    trunks verified tensor-by-tensor. The +4.2 was confounded. <strong>Do not quote it as a trunk
+    effect.</strong></li>
+    <li><strong>ADE disagrees with PDMS again, on the row that matters.</strong> The fine-tuned
+    navtrain cell has <em>worse</em> ADE on navsim (1.1902 vs 1.1383, +4.6%) yet slightly better
+    PDMS. Selecting on ADE ranks these two the wrong way round — consistent with &sect;1, and one
+    more reason not to select checkpoints on displacement error.</li>
+  </ul>
+
+  <p class="measure"><strong>Read against <a href="#follows">What follows</a>:</strong> if trunk
+  initialisation is worth ~0 in-domain and data is worth 10–13 points, then the remaining distance
+  to the 89.9–94.6 camera-only frontier is very unlikely to be closed by trunk or
+  initialisation changes. That reweights the DrivoR comparison: the interesting differences are
+  four cameras versus one, and vocabulary-plus-selection versus single-mode regression — not
+  LoRA versus frozen.</p>
+</section>
+
+<section>
+  <h2 id="follows">What follows</h2>
+  <p class="note">Re-ordered 21 Sep 2026 against &sect;6 and &sect;7. Two items moved down because
+  the route they pointed at is now closed; one moved up because it was just priced.</p>
+  <ul class="measure">
+    <li><strong>Differentiable proxies for the metric are exhausted — stop building them.</strong>
+    An analytic drivable-area penalty, a collision penalty, and now a learned critic used as a
+    gradient have all made the thing they targeted <em>worse</em>. The critic case is the sharpest:
+    approval rises monotonically as true PDMS falls, to −11.5 points, and the blind control
+    captures 69% of that approval with no scene input at all. The gates are step functions; smooth
+    surrogates keep finding gradients that point where the gates do not. <a href="#critic">&sect;6</a>.</li>
+
+    <li><strong>Selection over far-apart candidates is still the highest-value direction, and it is
+    the only one of the two that survived.</strong> Perfect selection over a 40-trajectory vocabulary
+    is worth <strong>+0.170 PDMS</strong>, and best-of-K has not plateaued at 63. &sect;6 does
+    <em>not</em> touch this: it tested the scorer as a local gradient over 0.24 m moves, while its
+    training candidates were ≥ 0.75 m apart. <strong>Whether a learned scorer can rank better than
+    the 0.645 constant is still open and still unmeasured</strong> — it is the next experiment, and
+    it must be run as a selection task, not a regression target.</li>
+
+    <li><strong>Run a pre-registered GT-expert gate before training anything on a learned
+    score.</strong> It cost minutes and it predicted &sect;6's outcome exactly: the critic ranked the
+    human trajectory 0.0033 <em>below</em> the policy's own output on the very sum used as the loss.
+    A second probe showed the loss falling monotonically under a rigid +2 m push. Either one was
+    sufficient to cancel the run. Neither was expensive.</li>
+
+    <li><strong>Sub-4-point differences need multiple seeds — but only when comparing separate
+    training runs.</strong> That still includes both SAE arms. It does <em>not</em> include paired
+    ablations on a frozen policy, where this pipeline resolves to ~1e−5 and a 0.02 delta is real.
+    Applying the seed floor there would have thrown away &sect;6's entire result.
+    <a href="#seeds">&sect;2</a>.</li>
+
+    <li><strong>Data beats initialisation by an order of magnitude.</strong> At fixed architecture,
+    loss, seed and step budget, the training-data axis is worth 10.7–13.4 points and the
+    PAV-fine-tuned trunk is worth <strong>+0.15</strong> in-domain. The project's standing
+    &ldquo;+4.2 from the fine-tuned trunk&rdquo; was confounded by the data axis and should not be
+    repeated. <a href="#trunkdata">&sect;7</a>.</li>
+
+    <li><strong>Multi-hypothesis generation alone is not the missing piece — supervision of the
+    selector is.</strong> The winner-takes-all arm produced multiple trajectories and lost, its
+    selector scoring below a constant while ignoring the image, even though a probe recovered the
+    signal from the same features at 75%. WTA supervises selection by closeness-to-human, which
+    &sect;1 measures at &minus;0.09 against PDMS — the wrong target, faithfully optimised. &sect;6's
+    blind control is the same failure in a second guise: given no scene, it still captured most of
+    the reward.</li>
+
     <li><strong>Right turns and tight drivable area are the specific failure mode.</strong> A far
-    sharper target than "improve PDMS".</li>
+    sharper target than &ldquo;improve PDMS&rdquo;. Note that &sect;6's refiner moved drivable-area
+    compliance by +0.0004 — i.e. not at all — while degrading everything else, so nothing yet has
+    laid a glove on the largest single component of the headroom.</li>
+
     <li><strong>ADE is confirmed weak on NAVSIM directly</strong>, not by analogy — it ranks worse
-    than the training loss on every model tested.</li>
-    <li><strong>Sensor modality is not what separates us from the frontier.</strong> Verified
-    camera-only methods reach 89.9&ndash;94.6 PDMS, one of them (DrivoR) on the same frozen DINOv2
-    ViT-S trunk we use, differing mainly by 4 cameras vs 1 and LoRA fine-tuning vs a frozen trunk.
-    Comparisons against TransFuser at 84.0 are comparisons against a 2024 baseline.</li>
+    than the training loss on every model tested, and in &sect;7 it ranks two checkpoints in the
+    opposite order to PDMS.</li>
+
+    <li><strong>Sensor modality is not what separates us from the frontier</strong>, and neither, it
+    now appears, is the trunk. Verified camera-only methods reach 89.9&ndash;94.6 PDMS, one of them
+    (DrivoR) on the same frozen DINOv2 ViT-S we use. Comparisons against TransFuser at 84.0 are
+    comparisons against a 2024 baseline.
+    <span class="supersede"><strong>&#9888; Reproduction caveat added 21 Sep 2026.</strong> Those
+    figures are <em>paper-reported</em> and none has been reproduced in this pipeline. Two attempts
+    were made and both produced <strong>no number at all</strong>: an iPad integration, abandoned
+    after its fork's scorer was found to score the human ground-truth trajectory at 0.0000 where
+    this project's devkit gives 0.9293 on byte-identical code; and a GTRS / ZTRS reproduction,
+    cancelled mid-run after three environment faults, having produced nothing but a metric cache.
+    Both trees have since been deleted. Treat the 89.9&ndash;94.6 band as the literature's claim,
+    not as a verified bar — and budget realistically for reproduction if one of them is ever
+    adopted.</span></li>
   </ul>
 </section>
 
@@ -568,6 +818,17 @@
   <div>All six models' per-scene means reconcile to their official scores to &lt;1e−14 (max error
   2.22e−16, n = 12,146 each). Seed-43 navhard EPDMS = 0.2107, scored with zero constant-velocity
   fallbacks.</div>
+  <div>&sect;6 sources: <span class="mono">sgrefine/runs/*/history.json</span>,
+  <span class="mono">sgrefine/logs/probe_59625228.log</span>, and per-scene eval CSVs under
+  <span class="mono">navsim_v1/exp/sgr_*_v1/</span> (n = 12,146) and
+  <span class="mono">navsim_workspace/exp/sgr_*_v2/</span> (n = 5,912); 0 failed scenarios and
+  0 constant-velocity fallbacks on all eight eval jobs. &sect;7 sources: per-scene CSVs under
+  <span class="mono">navsim_v1/exp/trunk2x2_{A,B,C,D}_v1/</span> (n = 12,146 each, 0 failed,
+  0 fallbacks), ADE from the Lightning <span class="mono">metrics.csv</span> of each cell, and the
+  two independent trunk-identity gate logs in <span class="mono">trunk2x2/logs/</span>.</div>
+  <div>Every figure in &sect;6 and &sect;7 was re-read from those primary CSVs and logs for this
+  revision rather than carried over from working notes; the two discrepancies that surfaced are
+  recorded in &sect;6 rather than silently corrected.</div>
 </footer>
 
 </div>
