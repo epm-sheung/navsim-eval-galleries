@@ -32,7 +32,7 @@ HEAD = u"""<title>Five Figures</title>
   body{margin:0; background:var(--ground); color:var(--ink);
        font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
        font-size:15.5px; line-height:1.65;}
-  .wrap{max-width:980px; margin:0 auto; padding:44px 26px 90px;
+  .wrap{max-width:1180px; margin:0 auto; padding:44px 26px 90px;
         display:flex; flex-direction:column; gap:40px;}
   .measure{max-width:68ch;}
   header{display:flex; flex-direction:column; gap:10px;
@@ -88,11 +88,13 @@ HEAD = u"""<title>Five Figures</title>
   .meta{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
         font-size:13px;}
   .meta div{background:var(--panel-2); border-radius:4px; padding:9px 11px;}
-  .clipgrid{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(330px,1fr));}
+  .clipgrid{display:flex; flex-direction:column; gap:18px;}
   .clipcard{margin:0; background:var(--panel); border:1px solid var(--rule);
-            border-radius:5px; padding:10px 11px 8px; display:flex;
-            flex-direction:column; gap:7px;}
-  .clip{width:100%; display:block; border-radius:3px; background:#12161a;}
+            border-radius:5px; padding:11px 12px 9px; display:flex;
+            flex-direction:column; gap:8px;}
+  .clip{width:100%; display:block; border-radius:3px; background:#12161a;
+        aspect-ratio:16/9; max-width:100%;}
+  .wide{max-width:1280px; width:100%; margin:0 auto;}
   .shot{width:100%; display:block; border:1px solid var(--rule); border-radius:4px;
         background:#fff;}
   .shotwrap{margin:0; background:var(--panel); border:1px solid var(--rule);
@@ -223,7 +225,7 @@ BODY = u"""
 </section>
 
 
-<section>
+<section class="wide">
   <h2 id="clips">Scene clips</h2>
   <p class="measure">The same scenes as video. These are rebuilt from the gallery's own clips
   &mdash; the camera frames are decoded out of the existing MP4s, so no dataset access is needed

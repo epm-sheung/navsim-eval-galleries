@@ -16,6 +16,8 @@ echo "=== job $SLURM_JOB_ID on $(hostname) starting $(date) ==="
 
 module --force purge
 module load StdEnv/2023 python/3.11 opencv
+module load ffmpeg 2>/dev/null || true
+command -v ffmpeg && ffmpeg -version | head -1 || echo "WARNING: no ffmpeg"
 echo "--- after opencv module load ---"
 which python3
 python3 -c "import cv2, numpy, PIL; print('cv2', cv2.__version__, 'numpy', numpy.__version__, 'PIL', PIL.__version__)" \

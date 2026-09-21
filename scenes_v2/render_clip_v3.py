@@ -26,8 +26,8 @@ OUT_ROOT = "/scratch/eddie96/eddie/navsim_pages/scenes_v2"
 EVENTS_DIR = os.path.join(ROOT, "events")
 TRAJ_DIR = os.path.join(ROOT, "traj")
 CLIPS_DIR = os.path.join(ROOT, "clips")
-OUT_CLIPS = os.path.join(OUT_ROOT, "clips_v3")
-OUT_STILLS = os.path.join(OUT_ROOT, "stills_v3")
+OUT_CLIPS = os.path.join(OUT_ROOT, "clips")
+OUT_STILLS = os.path.join(OUT_ROOT, "stills")
 OUT_LOGS = os.path.join(OUT_ROOT, "logs")
 
 METHOD = "cmd_tokens_film"
@@ -114,6 +114,26 @@ def probe_env():
     except Exception as e:
         log("imageio: not available (", e, ") -- ok if cv2 mp4v works")
     log("=== END ENV PROBE ===")
+
+
+def transcode_h264(src, dst):
+    """cv2 writes mp4v (MPEG-4 Part 2); no browser decodes that in <video>.
+    Re-encode to H.264 + yuv420p with faststart so it streams and plays on the web."""
+    import subprocess, shutil
+    ff = shutil.which("ffmpeg")
+    if not ff:
+        log("  !! ffmpeg not found -- leaving mp4v file, it will NOT play in a browser")
+        shutil.move(src, dst); return False
+    cmd = [ff, "-y", "-loglevel", "error", "-i", src,
+           "-c:v", "libx264", "-preset", "slow", "-crf", "19",
+           "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.0",
+           "-movflags", "+faststart", "-an", dst]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0 or not os.path.exists(dst):
+        log("  !! ffmpeg failed rc=%s %s" % (r.returncode, (r.stderr or "")[:300]))
+        shutil.move(src, dst); return False
+    os.remove(src)
+    return True
 
 
 def selftest_video():
@@ -456,13 +476,14 @@ def render_bev_frame(scene, phase, real_t, phase1_t=None, caption_active=None):
     """Returns a PIL RGB Image of size BEV_OUT x BEV_OUT."""
     from PIL import Image, ImageDraw
     S = BEV_OUT * BEV_SS
-    T, vsc, vcx, vcy = build_bev_view(scene)
+    # Original gallery mapping: the native 540 panel scaled straight up. Keeps the
+    # trajectory geometry exactly as the shipped gallery draws it.
+    sf = bev_scale_factor()
     img = Image.new("RGB", (S, S), PALETTE["bg"])
     d = ImageDraw.Draw(img, "RGBA")
 
     def px(pt):
-        mx, my = T(pt)
-        return (S / 2.0 + (mx - vcx) * vsc, S / 2.0 - (my - vcy) * vsc)
+        return (pt[0] * sf, pt[1] * sf)
 
     def poly_px(pts):
         return [px(p) for p in pts]
@@ -820,7 +841,7 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
         d.text((24, gy + 46), msg, font=fonts["small"], fill=col)
 
     d.text((W - 300, gy + 46),
-            "scale: 1 px \u2248 %.3f m" % getattr(scene, "view_mpp", scene.mpp),
+            "scale: 1 px \u2248 %.4f m" % scene.mpp,
             font=fonts["small"], fill=PALETTE["subtext"])
 
     return canvas
@@ -837,10 +858,11 @@ def render_scene(scene, still_frame_fracs=(0.05, 0.35, 0.75)):
     fonts = load_fonts()
 
     out_path = os.path.join(OUT_CLIPS, scene.token + ".mp4")
+    raw_path = out_path + ".mp4v.tmp.mp4"        # transcoded to H.264 after writing
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    vw = cv2.VideoWriter(out_path, fourcc, FPS, (W, H))
+    vw = cv2.VideoWriter(raw_path, fourcc, FPS, (W, H))
     if not vw.isOpened():
-        raise RuntimeError("VideoWriter failed to open for %s" % out_path)
+        raise RuntimeError("VideoWriter failed to open for %s" % raw_path)
 
     total_frames = N1 + N2
     still_idcs = sorted(set(int(round(f * (total_frames - 1))) for f in still_frame_fracs))
@@ -882,6 +904,9 @@ def render_scene(scene, still_frame_fracs=(0.05, 0.35, 0.75)):
         frame_i += 1
 
     vw.release()
+    ok_h264 = transcode_h264(raw_path, out_path)
+    log("  codec: %s" % ("H.264/yuv420p (web-playable)" if ok_h264
+                         else "mp4v (NOT web-playable)"))
     return out_path, total_frames, stills_written, orig_nframes, orig_shape
 
 
