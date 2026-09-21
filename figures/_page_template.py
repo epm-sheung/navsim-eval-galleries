@@ -1,0 +1,529 @@
+# -*- coding: utf-8 -*-
+HEAD = u"""<title>Five Figures</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#f4f5f3; --panel:#fbfbfa; --panel-2:#eceeea;
+    --ink:#1b2027; --ink-2:#4a535e; --ink-3:#78828e;
+    --rule:#dcdedb; --accent:#1f6f6b; --accent-soft:#e2eeec;
+    --good:#2f7d4f; --warn:#b06a12; --crit:#a8322d; --grid:#e4e6e2;
+    --good-bg:#e7f1ea; --warn-bg:#f6eddf; --crit-bg:#f6e6e5;
+    --s1:#1f6f6b; --s2:#b06a12; --s3:#6a5acd; --s4:#a8322d;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#14181c; --panel:#1b2025; --panel-2:#242a2f;
+      --ink:#e8ebe9; --ink-2:#a8b2b8; --ink-3:#78838b;
+      --rule:#2c3238; --accent:#5fbdb5; --accent-soft:#1d3230; --grid:#252c31;
+      --good:#69c48d; --warn:#d69b44; --crit:#e08079;
+      --good-bg:#17281e; --warn-bg:#2b2415; --crit-bg:#2c1c1b;
+      --s1:#5fbdb5; --s2:#d69b44; --s3:#9b8cf0; --s4:#e08079;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#14181c; --panel:#1b2025; --panel-2:#242a2f;
+    --ink:#e8ebe9; --ink-2:#a8b2b8; --ink-3:#78838b;
+    --rule:#2c3238; --accent:#5fbdb5; --accent-soft:#1d3230; --grid:#252c31;
+    --good:#69c48d; --warn:#d69b44; --crit:#e08079;
+    --good-bg:#17281e; --warn-bg:#2b2415; --crit-bg:#2c1c1b;
+    --s1:#5fbdb5; --s2:#d69b44; --s3:#9b8cf0; --s4:#e08079;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--ground); color:var(--ink);
+       font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+       font-size:15.5px; line-height:1.65;}
+  .wrap{max-width:980px; margin:0 auto; padding:44px 26px 90px;
+        display:flex; flex-direction:column; gap:40px;}
+  .measure{max-width:68ch;}
+  header{display:flex; flex-direction:column; gap:10px;
+         border-bottom:1px solid var(--rule); padding-bottom:26px;}
+  .eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px;
+           letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3);}
+  h1{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:34px;
+     line-height:1.18; margin:0; letter-spacing:-.015em; text-wrap:balance;}
+  .standfirst{font-size:17px; color:var(--ink-2); margin:0; max-width:64ch;}
+  h2{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:23px;
+     margin:0 0 4px; letter-spacing:-.01em; text-wrap:balance;}
+  h3{font-size:15px; font-weight:600; margin:0 0 2px;}
+  section{display:flex; flex-direction:column; gap:15px;}
+  p{margin:0;}
+  .note{font-size:14px; color:var(--ink-2);}
+  figure{margin:0; background:var(--panel); border:1px solid var(--rule);
+         border-radius:5px; padding:16px 18px 12px;
+         display:flex; flex-direction:column; gap:10px;}
+  figcaption{font-size:13px; color:var(--ink-2); line-height:1.5;}
+  .figtitle{font-size:13.5px; font-weight:600;}
+  .chart{width:100%; overflow-x:auto;}
+  svg{display:block; max-width:100%;}
+  .ax{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10px; fill:var(--ink-3);}
+  .axlab{font-family:"IBM Plex Sans",sans-serif; font-size:11px; fill:var(--ink-2);}
+  .vlab{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10px;
+        fill:var(--ink-2); font-variant-numeric:tabular-nums;}
+  .legend{display:flex; gap:15px; flex-wrap:wrap; font-size:12px; color:var(--ink-2);}
+  .sw{display:inline-block; width:11px; height:11px; border-radius:2px;
+      vertical-align:-1px; margin-right:5px;}
+  table{border-collapse:collapse; width:100%; font-size:13.5px;}
+  th,td{padding:7px 11px; text-align:right; white-space:nowrap;
+        border-bottom:1px solid var(--rule);}
+  th:first-child,td:first-child{text-align:left;}
+  thead th{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
+           letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+           font-weight:500; background:var(--panel-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.n{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .dirin{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:9.5px;
+         color:var(--accent); letter-spacing:.03em;}
+  .callout{border-left:3px solid var(--accent); background:var(--panel);
+           padding:14px 17px; border-radius:0 5px 5px 0;
+           display:flex; flex-direction:column; gap:8px;}
+  .callout.crit{border-left-color:var(--crit); background:var(--crit-bg);}
+  .callout.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .callout h3{font-size:14.5px;}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.92em;}
+  code{background:var(--panel-2); padding:1px 5px; border-radius:3px;}
+  ul{margin:0; padding-left:19px; display:flex; flex-direction:column; gap:6px;}
+  footer{border-top:1px solid var(--rule); padding-top:20px; font-size:13px;
+         color:var(--ink-3); display:flex; flex-direction:column; gap:5px;}
+  a{color:var(--accent);}
+  .meta{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+        font-size:13px;}
+  .meta div{background:var(--panel-2); border-radius:4px; padding:9px 11px;}
+  .meta b{display:block; font-family:"IBM Plex Mono",monospace; font-size:10px;
+          letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+          font-weight:500; margin-bottom:2px;}
+</style>
+<style id="navsim-tabbar-css">
+#navsim-tabbar{position:sticky;top:0;z-index:99999;display:flex;gap:2px;flex-wrap:wrap;
+  align-items:center;padding:8px 14px;margin:0 0 4px;background:#fbfbfa;
+  border-bottom:1px solid #dcdedb;
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;}
+#navsim-tabbar .nt-home{font-size:12px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:#78828e;margin-right:12px;text-decoration:none;}
+#navsim-tabbar a.nt{font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;
+  padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt:focus-visible{outline:2px solid #1f6f6b;outline-offset:-2px;}
+#navsim-tabbar a.nt[aria-current="page"]{background:#e2eeec;border-color:#1f6f6b;
+  color:#1f6f6b;font-weight:600;}
+@media (prefers-color-scheme:dark){
+  #navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}
+  #navsim-tabbar a.nt{color:#a8b2b8;}
+  #navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}
+  #navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}
+  #navsim-tabbar .nt-home{color:#78838b;}
+}
+</style>
+<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="../index.html">Findings</a><a class="nt" href="../why_peaks.html">Why peaks</a><a class="nt" href="../session_scoreboard/index.html">Scoreboard</a><a class="nt" href="../scenes/index.html">Scenes</a><a class="nt" href="../distributions/index.html">Distributions</a><a class="nt" href="index.html" aria-current="page">Figures</a></nav>
+"""
+
+BODY = u"""
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">NAVSIM · navtest 12,146 scenes · v1.1 PDMS · __STAMP__</div>
+  <h1>Five figures for the paper</h1>
+  <p class="standfirst">Worked examples of five figure types, each built from real navtest
+  numbers but deliberately kept to the smallest slice that makes the point. The BEV render and the
+  scene-clip viewer already exist; these are the <em>analysis</em> figures that go beside them.
+  Every type is paired with the published precedent it copies — or, in two cases, with a note
+  that no precedent exists.</p>
+</header>
+
+<section>
+  <div class="callout">
+    <h3>What a survey of the published figures actually shows</h3>
+    <p class="measure">Seven primary sources were enumerated figure-by-figure — the NAVSIM
+    benchmark paper (arXiv:2406.15349), Hydra-MDP (2406.06978), DiffusionDrive (2411.15139),
+    DriveSuprim (2506.06659), GTRS (2506.06664), TransFuser (2205.15997) and Bench2Drive
+    (2406.03877). Three results shaped the choices below.</p>
+    <ul class="measure">
+      <li><strong>The multi-component score is never charted.</strong> Sub-score decomposition
+      (NC / DAC / EP / TTC / Comfort) appears only as table columns, in all seven. No stacked bars,
+      no radar plots, no parallel coordinates anywhere. The figure slot is open, not forbidden
+      — the absence is plausibly page-limit economics.</li>
+      <li><strong>Seed variance is reported, but never plotted.</strong> NAVSIM quotes
+      &plusmn;0.56 PDMS over three seeds in ablation prose; TransFuser gives Table VI to a
+      3-seed &times; 3-run study. Always a table or an inline &plusmn;. A figure that draws the
+      noise band would be a departure from convention, and arguably an improvement.</li>
+      <li><strong>The correlation figure already has a canonical form.</strong> NAVSIM's own
+      Fig. 3(a) is a per-planner scatter of open-loop against closed-loop score with fitted
+      trendlines, and Fig. 4(a) is a grouped bar chart of Spearman and Pearson coefficients by
+      planner type. A loss-versus-metric figure should look like those.</li>
+    </ul>
+  </div>
+
+  <div class="callout crit">
+    <h3>One hard constraint: never stack PDMS</h3>
+    <p class="measure">PDMS is a gated composite, not a sum. From the benchmark paper's Eq. 1:</p>
+    <p class="measure mono" style="font-size:14px">PDMS = NC &times; DAC &times;
+    (5·EP + 5·TTC + 2·C) / 12</p>
+    <p class="measure">NC and DAC enter <em>multiplicatively</em> as hard gates; the rest is a
+    weighted average normalised by 12. No assignment of the five sub-scores to stacked segments
+    sums to PDMS, so a stacked bar is not merely unconventional here — it is wrong, and a
+    reviewer who knows the metric will see it immediately. Grouped bars and small multiples are
+    unaffected. The same gated structure holds for v2 EPDMS, so the argument survives the metric
+    change.</p>
+  </div>
+</section>
+
+<!-- ============================ FIGURE 1 ============================ -->
+<section>
+  <h2>1 &middot; Rank-correlation bars</h2>
+  <p class="measure">Does the quantity we optimise rank scenes the way the benchmark does? One bar
+  per model per predictor, on a diverging axis so the sign is unmissable.</p>
+  <figure>
+    <div class="figtitle">Training loss and ADE as rank predictors of PDMS
+      <span class="dirin">further left = better</span></div>
+    <div class="chart"><div id="f1"></div></div>
+    <div class="legend"><span><span class="sw" style="background:var(--s1)"></span>training loss</span>
+      <span><span class="sw" style="background:var(--s2)"></span>ADE</span></div>
+    <figcaption>Spearman &rho; against per-scene PDMS, <strong>interior scenes only</strong>
+    (0 &lt; score &lt; 1). A bar at &minus;1 would mean the predictor ranks scenes exactly as the
+    metric does; zero means no relationship. Everything sits between &minus;0.15 and 0.
+    Constant-velocity is excluded: it scores exactly zero on 8,130 of 12,146 scenes, so its
+    interior is 4,016 unrepresentative scenes and its &rho; of +0.378 would dominate the axis
+    without meaning much.</figcaption>
+  </figure>
+  <div class="meta">
+    <div><b>Precedent</b>NAVSIM Fig. 4(a) — grouped Spearman/Pearson bars by planner type</div>
+    <div><b>Answers</b>Is the objective aligned with the metric?</div>
+    <div><b>Needs</b>Per-scene predictor + per-scene score. Our CSVs suffice.</div>
+    <div><b>Trap</b>Quoting one pooled &rho; over all scenes — the 26.8% of scenes tied at
+      exactly 1.000 inflate it. Report full and interior separately.</div>
+  </div>
+</section>
+
+<!-- ============================ FIGURE 2 ============================ -->
+<section>
+  <h2>2 &middot; Ablation deltas against a seed-noise band</h2>
+  <p class="measure">The figure that kills over-reading. Each model's distance from the reference,
+  with the measured run-to-run spread drawn behind it: anything inside the band is not separated
+  from luck.</p>
+  <figure>
+    <div class="figtitle">PDMS points relative to <span class="mono">cmd_tokens_film</span>
+      <span class="dirin">grey band = run-to-run spread</span></div>
+    <div class="chart"><div id="f2"></div></div>
+    <figcaption>The band is &plusmn;2.33 PDMS points, the spread between our model and its
+    seed-43 replication. That pair differs in seed <em>and</em> objective, so it is an upper bound
+    on seed variance, not a measurement of it — which makes it the conservative choice for this
+    figure. Three of five deltas fall inside it. Only <span class="mono">cls_tokens_film</span>
+    clears it decisively.</figcaption>
+  </figure>
+  <div class="callout warn">
+    <h3>State the scope, or this figure overclaims</h3>
+    <p>This band governs <strong>separate training runs</strong>. It does not govern paired
+    ablations evaluated on a frozen policy over the same scenes, where the pipeline reproduces to
+    ~1e&minus;5 and a 0.02 delta is real. A figure like this without that caption invites the
+    reader to dismiss every paired result in the paper.</p>
+  </div>
+  <div class="meta">
+    <div><b>Precedent</b>None as a figure. NAVSIM and TransFuser both report seed spread as a
+      table or inline &plusmn;.</div>
+    <div><b>Answers</b>Which of these differences are real?</div>
+    <div><b>Needs</b>At least two runs of one config. Three to five would let you draw a real
+      interval instead of a range.</div>
+    <div><b>Trap</b>Drawing a range from two runs and calling it a standard deviation. It bounds
+      nothing formally; say so.</div>
+  </div>
+</section>
+
+<!-- ============================ FIGURE 3 ============================ -->
+<section>
+  <h2>3 &middot; Per-bin failure profile</h2>
+  <p class="measure">Where the score is lost, and what those scenes look like. Scenes binned by
+  score, then characterised by scene properties rather than by model.</p>
+  <figure>
+    <div class="figtitle">Scene properties across the score range
+      <span class="dirin">bins run worst &rarr; best</span></div>
+    <div class="chart"><div id="f3"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--s1)"></span>drivable-area margin (m)</span>
+      <span><span class="sw" style="background:var(--s2)"></span>agents in scene</span>
+      <span><span class="sw" style="background:var(--ink-3);opacity:.35"></span>scenes per bin</span></div>
+    <figcaption>Margin rises almost monotonically with score, 2.84 m in the failure bin against
+    4.69 m at the top — scenes fail where the road is tight. Agent count rises
+    <em>too</em>, which is the opposite of the intuition that traffic makes scenes hard; plausibly
+    dense traffic implies wide multi-lane roads. Bin counts are drawn behind because the extremes
+    are thin: 180 scenes in the failure bin against 3,839 at the top.</figcaption>
+  </figure>
+  <div class="meta">
+    <div><b>Precedent</b>BEV-Planner's command-conditioned straight-vs-turning split — the
+      analysis is established, but published as a table.</div>
+    <div><b>Answers</b>What kind of scene do we fail on?</div>
+    <div><b>Needs</b>Per-scene metadata joined to per-scene scores. We have speed, command, agent
+      count, margin and curvature.</div>
+    <div><b>Trap</b>Omitting bin counts. A dramatic trend across bins holding 180 scenes and 3,839
+      scenes reads very differently once the reader can see the n.</div>
+  </div>
+</section>
+
+<!-- ============================ FIGURE 4 ============================ -->
+<section>
+  <h2>4 &middot; Oracle-versus-K curve</h2>
+  <p class="measure">How much of the headroom is reachable by <em>choosing</em> rather than by
+  regressing better. Plotted as a curve, which is the part nobody publishes.</p>
+  <figure>
+    <div class="figtitle">Best-of-K over the candidate pool
+      <span class="dirin">&uarr; better</span></div>
+    <div class="chart"><div id="f4"></div></div>
+    <figcaption>Best-of-K has <strong>not plateaued at K=63</strong>. The reference lines are what
+    make the curve legible: a perfect chooser over the 40-entry vocabulary reaches 0.9456 against
+    our 0.7758, so the prize is +0.170 PDMS — but the honest floor is the best single constant
+    vocabulary entry at 0.645, not zero, and our policy already sits above it.</figcaption>
+  </figure>
+  <div class="callout warn">
+    <h3>The privileged-pool trap</h3>
+    <p>The wider pool behind this curve contains ground-truth-derived perturbations, and quoting
+    best-of-63 from it gives +0.194. The 40-entry vocabulary is the only unprivileged pool and it
+    gives <strong>+0.170</strong>. Worse, the human trajectory sits at a fixed column index in
+    every scene, so a naive &ldquo;best constant column&rdquo; baseline is just <em>always pick the
+    human</em>. Any figure like this must say which pool it used.</p>
+  </div>
+  <div class="meta">
+    <div><b>Precedent</b>DriveSuprim Table 1 gives PDMS at K = 1, 4, 16, 256 — as a table. The
+      curve is an unclaimed slot.</div>
+    <div><b>Answers</b>Is candidate quality or candidate selection the binding constraint?</div>
+    <div><b>Needs</b>Every candidate scored by the real scorer, not a proxy.</div>
+    <div><b>Trap</b>A linear K axis. The interesting structure is all at small K; use log.</div>
+  </div>
+</section>
+
+<!-- ============================ FIGURE 5 ============================ -->
+<section>
+  <h2>5 &middot; Sub-score small multiples, and the gates behind them</h2>
+  <p class="measure">The decomposition figure the field does not print. Six small panels, one per
+  component, on a shared axis — never stacked, and never a radar.</p>
+  <figure>
+    <div class="figtitle">PDMS components by model
+      <span class="dirin">shared axis per panel · &uarr; better</span></div>
+    <div class="chart"><div id="f5"></div></div>
+    <figcaption>Two components are saturated — comfort sits at 0.999&ndash;1.000 for every model
+    and DDC above 0.96 — which is exactly why a radar plot misleads here: it would spend two of
+    six axes on components that never move, and its enclosed area has no meaning under a
+    multiplicative metric. Ego progress is where the models actually differ, and where the human
+    reference is furthest from 1.0.</figcaption>
+  </figure>
+  <figure>
+    <div class="figtitle">The same models by hard-gate failure rate
+      <span class="dirin">&darr; better</span></div>
+    <div class="chart"><div id="f6"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--s4)"></span>at-fault collision</span>
+      <span><span class="sw" style="background:var(--s2)"></span>off drivable area</span>
+      <span><span class="sw" style="background:var(--s3)"></span>time-to-collision</span></div>
+    <figcaption>Percentage of the 12,146 scenes failing each gate. This separates the models far
+    better than the means above: drivable-area failures span 7.0% to 13.1% here, while the
+    corresponding sub-score means compress into 0.93&ndash;0.87. If a paper prints only one of
+    these two panels, print this one. Note the collision gate is three-valued
+    (1.0 / 0.5 / 0.0), so &ldquo;failure&rdquo; means <span class="mono">&lt; 1.0</span>, not
+    <span class="mono">= 0</span>.</figcaption>
+  </figure>
+  <div class="meta">
+    <div><b>Precedent</b>None. Zero sub-score charts across seven papers — tables only.</div>
+    <div><b>Answers</b>Which component is the headroom actually in?</div>
+    <div><b>Needs</b>Per-scene sub-score columns, already in the eval CSVs.</div>
+    <div><b>Trap</b>Stacking (invalid — see above), or a radar plot whose area is meaningless
+      and whose saturated axes waste half the figure.</div>
+  </div>
+</section>
+
+<footer>
+  <div>All numbers generated by <span class="mono">figures/build_figures.py</span> from
+  <span class="mono">figures/figdata.json</span>, which is derived from the official per-scene
+  NAVSIM v1.1 eval CSVs (8 models, n = 12,146 each, aggregate <span class="mono">average</span>
+  row dropped). Each model's recomputed mean reconciles to its published score to within
+  2.2e&minus;16.</div>
+  <div>These are <strong>format examples</strong> on a deliberately small data slice, not the
+  paper's results. Figure precedents were verified against the papers' own published figures;
+  where no precedent was found, the panel says so rather than inventing one.</div>
+</footer>
+
+</div>
+"""
+
+SCRIPT = u"""
+<script>window.FIG=__DATA__;</script>
+<script>
+(function(){
+  var NS="http://www.w3.org/2000/svg", F=window.FIG;
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  function txt(s,a){var e=el("text",a);e.textContent=s;return e;}
+  function mk(host,w,h){var s=el("svg",{viewBox:"0 0 "+w+" "+h,width:w,height:h,role:"img"});
+    document.getElementById(host).appendChild(s);return s;}
+
+  /* ---------- 1. diverging grouped horizontal bars ---------- */
+  (function(){
+    var rows=F.corr, W=700, labW=168, padT=20, padB=28, rowH=40, barH=13,
+        H=padT+rows.length*rowH+padB, plotL=labW, plotR=W-58, plotW=plotR-plotL,
+        lo=-0.20, hi=0.02, x=function(v){return plotL+plotW*((v-lo)/(hi-lo));};
+    var svg=mk("f1",W,H);
+    [-0.20,-0.15,-0.10,-0.05,0].forEach(function(t){
+      svg.appendChild(el("line",{x1:x(t),y1:padT-8,x2:x(t),y2:H-padB+2,
+        stroke:t===0?"var(--ink-3)":"var(--grid)","stroke-width":t===0?1.2:1}));
+      svg.appendChild(txt(t.toFixed(2),{x:x(t),y:H-padB+15,"text-anchor":"middle","class":"ax"}));
+    });
+    rows.forEach(function(r,i){
+      var y0=padT+i*rowH;
+      svg.appendChild(txt(r.m,{x:labW-12,y:y0+rowH/2+4,"text-anchor":"end","class":"axlab"}));
+      [["loss_i","var(--s1)"],["ade_i","var(--s2)"]].forEach(function(sr,j){
+        var v=r[sr[0]], y=y0+7+j*(barH+3);
+        svg.appendChild(el("rect",{x:Math.min(x(v),x(0)),y:y,
+          width:Math.abs(x(v)-x(0)),height:barH,fill:sr[1],rx:2}));
+        svg.appendChild(txt(v.toFixed(3),{x:x(0)+7,y:y+barH-2,"class":"vlab"}));
+      });
+    });
+  })();
+
+  /* ---------- 2. delta dots against a noise band ---------- */
+  (function(){
+    var d=F.delta, rows=d.rows, W=700, labW=168, padT=26, padB=30, rowH=32,
+        H=padT+rows.length*rowH+padB, plotL=labW, plotR=W-60, plotW=plotR-plotL,
+        lo=-8.5, hi=1.5, x=function(v){return plotL+plotW*((v-lo)/(hi-lo));};
+    var svg=mk("f2",W,H);
+    svg.appendChild(el("rect",{x:x(-d.band),y:padT-10,width:x(d.band)-x(-d.band),
+      height:H-padT-padB+12,fill:"var(--ink-3)",opacity:".13"}));
+    svg.appendChild(txt("\\u00b1"+d.band.toFixed(2)+" pts",{x:x(0),y:padT-14,
+      "text-anchor":"middle","class":"ax"}));
+    [-8,-6,-4,-2,0].forEach(function(t){
+      svg.appendChild(el("line",{x1:x(t),y1:padT-10,x2:x(t),y2:H-padB+2,
+        stroke:t===0?"var(--ink-3)":"var(--grid)","stroke-width":t===0?1.2:1}));
+      svg.appendChild(txt(t,{x:x(t),y:H-padB+15,"text-anchor":"middle","class":"ax"}));
+    });
+    rows.forEach(function(r,i){
+      var cy=padT+i*rowH+rowH/2, inside=Math.abs(r.d)<=d.band,
+          col=inside?"var(--ink-3)":"var(--crit)";
+      svg.appendChild(txt(r.m,{x:labW-12,y:cy+4,"text-anchor":"end","class":"axlab"}));
+      svg.appendChild(el("line",{x1:x(0),y1:cy,x2:x(r.d),y2:cy,stroke:col,
+        "stroke-width":1.5,opacity:".55"}));
+      svg.appendChild(el("circle",{cx:x(r.d),cy:cy,r:5,fill:col}));
+      svg.appendChild(txt(r.d.toFixed(2)+(inside?"  (inside noise)":""),
+        {x:x(r.d)-10,y:cy+4,"text-anchor":"end","class":"vlab"}));
+    });
+    svg.appendChild(txt("reference: "+d.ref+" = "+d.ref_score.toFixed(4),
+      {x:plotR,y:H-padB+15,"text-anchor":"end","class":"ax"}));
+  })();
+
+  /* ---------- 3. bin profile: counts + two series ---------- */
+  (function(){
+    var b=F.bins, W=700, padT=22, padB=34, padL=46, padR=46, H=250,
+        plotW=W-padL-padR, plotH=H-padT-padB, n=b.length,
+        bw=plotW/n, maxN=Math.max.apply(null,b.map(function(r){return r.n;})),
+        mLo=2.5, mHi=5.0, aLo=28, aHi=54,
+        X=function(i){return padL+bw*(i+0.5);},
+        Ym=function(v){return padT+plotH*(1-(v-mLo)/(mHi-mLo));},
+        Ya=function(v){return padT+plotH*(1-(v-aLo)/(aHi-aLo));};
+    var svg=mk("f3",W,H);
+    b.forEach(function(r,i){
+      var h=plotH*(r.n/maxN);
+      svg.appendChild(el("rect",{x:padL+bw*i+1.5,y:padT+plotH-h,width:bw-3,height:h,
+        fill:"var(--ink-3)",opacity:".16"}));
+    });
+    [[Ym,"margin","var(--s1)"],[Ya,"agents","var(--s2)"]].forEach(function(s){
+      var pts=b.map(function(r,i){return X(i)+","+s[0](r[s[1]]);}).join(" ");
+      svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:s[2],"stroke-width":2,
+        "stroke-linejoin":"round"}));
+      b.forEach(function(r,i){svg.appendChild(el("circle",{cx:X(i),cy:s[0](r[s[1]]),r:2.4,
+        fill:s[2]}));});
+    });
+    [2.5,3,3.5,4,4.5,5].forEach(function(t){
+      svg.appendChild(txt(t.toFixed(1),{x:padL-7,y:Ym(t)+3,"text-anchor":"end","class":"ax"}));});
+    [30,38,46,54].forEach(function(t){
+      svg.appendChild(txt(t,{x:W-padR+7,y:Ya(t)+3,"class":"ax"}));});
+    svg.appendChild(el("line",{x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH,
+      stroke:"var(--ink-3)","stroke-width":1}));
+    [0,4,9,14,19].forEach(function(i){
+      svg.appendChild(txt(b[i].lo.toFixed(2),{x:X(i),y:H-padB+15,"text-anchor":"middle","class":"ax"}));});
+    svg.appendChild(txt("PDMS bin (lower edge)",{x:padL+plotW/2,y:H-6,"text-anchor":"middle","class":"ax"}));
+    svg.appendChild(txt("margin (m)",{x:padL-7,y:padT-8,"text-anchor":"end","class":"ax"}));
+    svg.appendChild(txt("agents",{x:W-padR+7,y:padT-8,"class":"ax"}));
+  })();
+
+  /* ---------- 4. oracle vs K ---------- */
+  (function(){
+    var o=F.oracle, W=700, padT=20, padB=36, padL=52, padR=150, H=270,
+        plotW=W-padL-padR, plotH=H-padT-padB,
+        lk=function(k){return Math.log(k)/Math.log(2);}, kmax=lk(64),
+        X=function(k){return padL+plotW*(lk(k)/kmax);},
+        Y=function(v){return padT+plotH*(1-v);};
+    var svg=mk("f4",W,H);
+    [0,0.2,0.4,0.6,0.8,1.0].forEach(function(t){
+      svg.appendChild(el("line",{x1:padL,y1:Y(t),x2:padL+plotW,y2:Y(t),stroke:"var(--grid)"}));
+      svg.appendChild(txt(t.toFixed(1),{x:padL-8,y:Y(t)+3,"text-anchor":"end","class":"ax"}));});
+    var R=o.ref, refs=[["oracle, 40-entry vocab",R.oracle40,"var(--s1)"],
+      ["human log",R.human,"var(--good)"],["our model",R.model,"var(--s3)"],
+      ["best constant entry",R.best_constant,"var(--s2)"],
+      ["random candidate",R.random,"var(--ink-3)"]];
+    refs.forEach(function(r){
+      svg.appendChild(el("line",{x1:padL,y1:Y(r[1]),x2:padL+plotW,y2:Y(r[1]),
+        stroke:r[2],"stroke-width":1,"stroke-dasharray":"3 3",opacity:".75"}));
+      svg.appendChild(txt(r[0]+"  "+r[1].toFixed(4),{x:padL+plotW+8,y:Y(r[1])+3,"class":"ax"}));});
+    var pts=o.k.map(function(k,i){return X(k)+","+Y(o.score[i]);}).join(" ");
+    svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:"var(--ink)","stroke-width":2.2,
+      "stroke-linejoin":"round"}));
+    o.k.forEach(function(k,i){
+      svg.appendChild(el("circle",{cx:X(k),cy:Y(o.score[i]),r:3.4,fill:"var(--ink)"}));
+      svg.appendChild(txt(o.score[i].toFixed(3),{x:X(k),y:Y(o.score[i])-9,
+        "text-anchor":"middle","class":"vlab"}));
+      svg.appendChild(txt("K="+k,{x:X(k),y:H-padB+15,"text-anchor":"middle","class":"ax"}));});
+    svg.appendChild(txt("candidates scored (log scale)",{x:padL+plotW/2,y:H-6,
+      "text-anchor":"middle","class":"ax"}));
+  })();
+
+  /* ---------- 5. sub-score small multiples ---------- */
+  (function(){
+    var rows=F.sub, keys=[["ep","ego progress"],["dac","drivable area"],
+      ["ttc","time to collision"],["nc","no at-fault collision"],
+      ["ddc","driving direction"],["comfort","comfort"]];
+    var W=700, cols=3, pw=W/cols, ph=132, H=ph*2+26;
+    var svg=mk("f5",W,H);
+    keys.forEach(function(kk,idx){
+      var cx=(idx%cols)*pw, cy=Math.floor(idx/cols)*ph+20,
+          vals=rows.map(function(r){return r[kk[0]];}),
+          lo=Math.min.apply(null,vals), hi=1.0;
+      lo=Math.max(0,Math.min(lo-0.02,0.98));
+      var iw=pw-34, ih=ph-50, bw=iw/rows.length,
+          Y=function(v){return cy+ih*(1-(v-lo)/(hi-lo));};
+      svg.appendChild(txt(kk[1],{x:cx+26,y:cy-6,"class":"axlab"}));
+      svg.appendChild(el("line",{x1:cx+26,y1:cy+ih,x2:cx+26+iw,y2:cy+ih,
+        stroke:"var(--ink-3)","stroke-width":1}));
+      svg.appendChild(txt(lo.toFixed(2),{x:cx+22,y:cy+ih+3,"text-anchor":"end","class":"ax"}));
+      svg.appendChild(txt("1.00",{x:cx+22,y:cy+4,"text-anchor":"end","class":"ax"}));
+      rows.forEach(function(r,i){
+        var v=r[kk[0]], y=Y(v),
+            col=/\\u2605/.test(r.m)?"var(--s1)":(r.m==="human"?"var(--good)":"var(--ink-3)");
+        svg.appendChild(el("rect",{x:cx+26+bw*i+2,y:y,width:bw-4,height:Math.max(1,cy+ih-y),
+          fill:col,opacity:/\\u2605/.test(r.m)||r.m==="human"?".95":".45",rx:1.5}));
+      });
+    });
+    svg.appendChild(txt("\\u2605 ours   \\u25a0 other models   \\u25a0 human reference (green)",
+      {x:26,y:H-4,"class":"ax"}));
+  })();
+
+  /* ---------- 6. gate failure grouped bars ---------- */
+  (function(){
+    var rows=F.gate, W=700, padT=22, padB=54, padL=44, padR=14, H=230,
+        plotW=W-padL-padR, plotH=H-padT-padB, g=plotW/rows.length,
+        hi=14, Y=function(v){return padT+plotH*(1-v/hi);},
+        series=[["nc_lt1","var(--s4)"],["dac_lt1","var(--s2)"],["ttc_lt1","var(--s3)"]];
+    var svg=mk("f6",W,H);
+    [0,3,6,9,12].forEach(function(t){
+      svg.appendChild(el("line",{x1:padL,y1:Y(t),x2:padL+plotW,y2:Y(t),stroke:"var(--grid)"}));
+      svg.appendChild(txt(t+"%",{x:padL-7,y:Y(t)+3,"text-anchor":"end","class":"ax"}));});
+    rows.forEach(function(r,i){
+      var x0=padL+g*i+8, bw=(g-22)/3;
+      series.forEach(function(s,j){
+        var v=r[s[0]], y=Y(v);
+        svg.appendChild(el("rect",{x:x0+bw*j,y:y,width:bw-2.5,height:padT+plotH-y,
+          fill:s[1],rx:1.5}));
+        svg.appendChild(txt(v.toFixed(1),{x:x0+bw*j+(bw-2.5)/2,y:y-4,
+          "text-anchor":"middle","class":"vlab"}));
+      });
+      svg.appendChild(txt(r.m,{x:x0+(g-22)/2,y:padT+plotH+16,"text-anchor":"end","class":"axlab",
+        transform:"rotate(-28,"+(x0+(g-22)/2)+","+(padT+plotH+16)+")"}));
+    });
+    svg.appendChild(el("line",{x1:padL,y1:padT+plotH,x2:padL+plotW,y2:padT+plotH,
+      stroke:"var(--ink-3)","stroke-width":1}));
+  })();
+})();
+</script>
+"""
