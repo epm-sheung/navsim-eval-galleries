@@ -8,6 +8,9 @@
 #SBATCH --output=/scratch/eddie96/eddie/navsim_pages/scenes_v2/logs/render_%j.out
 #SBATCH --error=/scratch/eddie96/eddie/navsim_pages/scenes_v2/logs/render_%j.err
 #SBATCH --exclude=fc10917,fc30532
+# NODE_FAIL jobs are auto-requeued by SLURM and can silently re-run hours
+# later, overwriting committed outputs. Job 60872871 did exactly that.
+#SBATCH --no-requeue
 
 set -e
 set -x
