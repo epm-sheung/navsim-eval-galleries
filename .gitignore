@@ -2,3 +2,6 @@
 __pycache__/
 _preds/
 _sel/
+
+figures/logs/
+figures/_figdata_inline.js

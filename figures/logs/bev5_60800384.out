@@ -1,8 +1,0 @@
-PIL 12.1.0 3.11.5
-selection: {'clean': '3ef30aa787de56fa', 'ttc': 'be861669f7ff5de4', 'dac': '58d75e229a0e52bc', 'low': '00016f8b45c25a1d'} {'nclean': 20, 'nttc': 772, 'ndac': 673, 'ntot': 1255, 'span_clean': 28.314698627288266}
-1 ok 66533
-2 ok 97179
-3 ok 62063
-4 ok 82955
-5 ok 500761 scenes 1704 skipped 0
-DONE
