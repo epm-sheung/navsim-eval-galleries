@@ -87,6 +87,11 @@
   .meta{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
         font-size:13px;}
   .meta div{background:var(--panel-2); border-radius:4px; padding:9px 11px;}
+  .clipgrid{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(330px,1fr));}
+  .clipcard{margin:0; background:var(--panel); border:1px solid var(--rule);
+            border-radius:5px; padding:10px 11px 8px; display:flex;
+            flex-direction:column; gap:7px;}
+  .clip{width:100%; display:block; border-radius:3px; background:#12161a;}
   .shot{width:100%; display:block; border:1px solid var(--rule); border-radius:4px;
         background:#fff;}
   .shotwrap{margin:0; background:var(--panel); border:1px solid var(--rule);
@@ -212,6 +217,89 @@
     figure, and it is the only panel on this page that is about the dataset rather than a
     scene.</figcaption>
   </figure>
+</section>
+
+
+<section>
+  <h2 id="clips">Scene clips</h2>
+  <p class="measure">The same scenes as video. These are rebuilt from the gallery's own clips
+  &mdash; the camera frames are decoded out of the existing MP4s, so no dataset access is needed
+  &mdash; then re-composited against the corrected BEV.
+  <strong>1920&times;1080 at 20&nbsp;fps, ~8.6&nbsp;s</strong>, against the gallery's
+  1500&times;540 at 2&nbsp;fps for 3.5&nbsp;s.</p>
+  <div class="callout">
+    <h3>What the clip adds over the gallery version</h3>
+    <ul class="measure">
+      <li><strong>The trajectory is in the video.</strong> The gallery clips contain no
+      trajectory lines at all &mdash; the viewer draws them in the browser, so the MP4 alone is
+      nearly empty. Here the prediction is baked in, and projected into the camera image too.</li>
+      <li><strong>Two phases.</strong> ~2&nbsp;s of history, cross-faded to 20&nbsp;fps instead of
+      stuttering at 2, then a 4&nbsp;s future rollout where the camera holds and the BEV animates
+      at 10&nbsp;Hz, with agent boxes interpolated between the nine stored timesteps.</li>
+      <li><strong>Live state.</strong> Per-gate chips, a running clock, a scale bar, and the
+      failure caption surfaced when it applies.</li>
+    </ul>
+  </div>
+  <div class="clipgrid">
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/00016f8b45c25a1d_t60.png">
+        <source src="../scenes_v2/clips/00016f8b45c25a1d.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">00016f8b45c25a1d</span> &middot; PDMS 0.000 &middot; fails DAC, DDC</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/000bf168dd5159af_t60.png">
+        <source src="../scenes_v2/clips/000bf168dd5159af.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">000bf168dd5159af</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/037b976caae85af5_t60.png">
+        <source src="../scenes_v2/clips/037b976caae85af5.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">037b976caae85af5</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/04f548a98d695310_t60.png">
+        <source src="../scenes_v2/clips/04f548a98d695310.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">04f548a98d695310</span> &middot; PDMS 0.000 &middot; fails NC, TTC</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/00f925ab5406520f_t60.png">
+        <source src="../scenes_v2/clips/00f925ab5406520f.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">00f925ab5406520f</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/011376b151f2526c_t60.png">
+        <source src="../scenes_v2/clips/011376b151f2526c.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">011376b151f2526c</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/0436604d25145231_t60.png">
+        <source src="../scenes_v2/clips/0436604d25145231.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">0436604d25145231</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
+    </figure>
+    <figure class="clipcard">
+      <video class="clip" controls preload="none" playsinline
+             poster="../scenes_v2/stills/0dd23f4ea286544f_t60.png">
+        <source src="../scenes_v2/clips/0dd23f4ea286544f.mp4" type="video/mp4">
+      </video>
+      <figcaption><span class="mono">0dd23f4ea286544f</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
+    </figure>
+  </div>
+  <p class="note">Ordered worst PDMS first. Posters are the t&nbsp;=&nbsp;+0.6&nbsp;s frame; nothing
+  autoplays and nothing loads until you press play.</p>
 </section>
 
 <section>
