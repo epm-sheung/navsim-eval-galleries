@@ -1,0 +1,39 @@
+++ hostname
+++ date
++ echo '=== job 60918209 on fc30609 starting Mon Sep 21 23:03:20 PDT 2026 ==='
++ module --force purge
++ '[' -z '' ']'
++ case "$-" in
++ __lmod_sh_dbg=x
++ '[' -n x ']'
++ set +x
+Shell debugging temporarily silenced: export LMOD_SH_DBG_ON=1 for Lmod's output
+Shell debugging restarted
++ unset __lmod_sh_dbg
++ return 0
++ module load StdEnv/2023 python/3.11 opencv
++ '[' -z '' ']'
++ case "$-" in
++ __lmod_sh_dbg=x
++ '[' -n x ']'
++ set +x
+Shell debugging temporarily silenced: export LMOD_SH_DBG_ON=1 for Lmod's output
+Shell debugging restarted
++ unset __lmod_sh_dbg
++ return 0
++ module load ffmpeg
++ command -v ffmpeg
++ ffmpeg -version
++ head -1
++ echo '--- after opencv module load ---'
++ which python3
++ alias
++ eval declare -f
++ /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot python3
+++ declare -f
++ python3 -c 'import cv2, numpy, PIL; print('\''cv2'\'', cv2.__version__, '\''numpy'\'', numpy.__version__, '\''PIL'\'', PIL.__version__)'
++ '[' -n '' ']'
++ echo '=== running render_clip_v3.py ==='
++ python3 /scratch/eddie96/eddie/navsim_pages/scenes_v2/render_clip_v3.py
+++ date
++ echo '=== job finished Mon Sep 21 23:06:35 PDT 2026 ==='

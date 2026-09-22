@@ -1,0 +1,94 @@
+=== job 60918209 on fc30609 starting Mon Sep 21 23:03:20 PDT 2026 ===
+/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/ffmpeg/7.1.1/bin/ffmpeg
+ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers
+--- after opencv module load ---
+/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/python/3.11.5/bin/python3
+cv2 4.14.0 numpy 2.4.2 PIL 12.1.0
+=== running render_clip_v3.py ===
+=== ENV PROBE ===
+python: /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/python/3.11.5/bin/python3 3.11.5 (main, Sep 19 2023, 16:07:22) [GCC 12.3.1 20230526]
+numpy: 2.4.2
+PIL/Pillow: 12.1.0
+cv2: 4.14.0
+imageio: not available ( No module named 'imageio' ) -- ok if cv2 mp4v works
+=== END ENV PROBE ===
+SELFTEST: wrote 1121 bytes, read back 5 frames
+SELFTEST OK
+=== SCENE SELECTION (8 tokens) ===
+  0436604d25145231  clean     pdms(cmd_tokens_film)=1.0000
+  0dd23f4ea286544f  clean     pdms(cmd_tokens_film)=1.0000
+  00f925ab5406520f  ttc       pdms(cmd_tokens_film)=0.5833
+  011376b151f2526c  ttc       pdms(cmd_tokens_film)=0.5833
+  00016f8b45c25a1d  dac       pdms(cmd_tokens_film)=0.0000
+  000bf168dd5159af  dac       pdms(cmd_tokens_film)=0.0000
+  037b976caae85af5  lowest(backfill)  pdms(cmd_tokens_film)=0.0000
+  04f548a98d695310  lowest(backfill)  pdms(cmd_tokens_film)=0.0000
+
+### rendering 0436604d25145231 (clean) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/0436604d25145231.mp4  (801955 bytes, 172 frames, 22.3s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0436604d25145231_t09.png  (history, real_t=-1.15, 1061425 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0436604d25145231_t60.png  (future, real_t=0.61, 1104991 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0436604d25145231_t128.png  (future, real_t=2.69, 1095728 bytes)
+
+### rendering 0dd23f4ea286544f (clean) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/0dd23f4ea286544f.mp4  (1137978 bytes, 172 frames, 27.5s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0dd23f4ea286544f_t09.png  (history, real_t=-1.15, 1286769 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0dd23f4ea286544f_t60.png  (future, real_t=0.61, 1378904 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0dd23f4ea286544f_t128.png  (future, real_t=2.69, 1376584 bytes)
+
+### rendering 00f925ab5406520f (ttc) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/00f925ab5406520f.mp4  (1572342 bytes, 172 frames, 26.6s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00f925ab5406520f_t09.png  (history, real_t=-1.15, 1268143 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00f925ab5406520f_t60.png  (future, real_t=0.61, 1376081 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00f925ab5406520f_t128.png  (future, real_t=2.69, 1382343 bytes)
+
+### rendering 011376b151f2526c (ttc) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/011376b151f2526c.mp4  (1190606 bytes, 172 frames, 23.6s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/011376b151f2526c_t09.png  (history, real_t=-1.15, 1073675 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/011376b151f2526c_t60.png  (future, real_t=0.61, 1215277 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/011376b151f2526c_t128.png  (future, real_t=2.69, 1219231 bytes)
+
+### rendering 00016f8b45c25a1d (dac) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/00016f8b45c25a1d.mp4  (1632386 bytes, 172 frames, 21.9s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00016f8b45c25a1d_t09.png  (history, real_t=-1.15, 1326343 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00016f8b45c25a1d_t60.png  (future, real_t=0.61, 1403826 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00016f8b45c25a1d_t128.png  (future, real_t=2.69, 1407853 bytes)
+
+### rendering 000bf168dd5159af (dac) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/000bf168dd5159af.mp4  (2053599 bytes, 172 frames, 21.7s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/000bf168dd5159af_t09.png  (history, real_t=-1.15, 1554814 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/000bf168dd5159af_t60.png  (future, real_t=0.61, 1670120 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/000bf168dd5159af_t128.png  (future, real_t=2.69, 1704881 bytes)
+
+### rendering 037b976caae85af5 (lowest(backfill)) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/037b976caae85af5.mp4  (1691874 bytes, 172 frames, 21.5s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/037b976caae85af5_t09.png  (history, real_t=-1.15, 1371463 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/037b976caae85af5_t60.png  (future, real_t=0.61, 1482602 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/037b976caae85af5_t128.png  (future, real_t=2.69, 1484816 bytes)
+
+### rendering 04f548a98d695310 (lowest(backfill)) ###
+  codec: H.264/yuv420p (web-playable)
+  wrote /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/04f548a98d695310.mp4  (1554661 bytes, 172 frames, 21.1s render time)
+  decoded 7 frames from original clip, shape (540, 1500, 3)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/04f548a98d695310_t09.png  (history, real_t=-1.15, 1332476 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/04f548a98d695310_t60.png  (future, real_t=0.61, 1421169 bytes)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/04f548a98d695310_t128.png  (future, real_t=2.69, 1422527 bytes)
+clip_meta.json written to /scratch/eddie96/eddie/navsim_pages/scenes_v2/clip_meta.json (panels={'cam': [0, 152, 1280, 720], 'bev': [1290, 120, 620, 620]})
+
+MANIFEST written to /scratch/eddie96/eddie/navsim_pages/scenes_v2/MANIFEST.txt
+DONE: 8/8 scenes rendered successfully
+=== job finished Mon Sep 21 23:06:35 PDT 2026 ===

@@ -102,6 +102,9 @@ HEAD = u"""<title>Five Figures</title>
           letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
           margin-right:2px;}
   .sep{width:1px; height:20px; background:var(--rule); margin:0 3px;}
+  .scrub{display:flex; gap:11px; align-items:center; padding:2px 2px 0;}
+  .slider{flex:1; min-width:180px; accent-color:var(--accent); height:22px; cursor:pointer;}
+  .scrub .tstamp{white-space:nowrap;}
   .btn{font:500 12.5px/1 "IBM Plex Sans",system-ui,sans-serif; cursor:pointer;
        background:var(--accent-soft); color:var(--accent);
        border:1px solid var(--accent); border-radius:4px; padding:7px 12px;}
@@ -273,10 +276,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">00016f8b45c25a1d</span> &middot; PDMS 0.000 &middot; fails DAC, DDC</figcaption>
     </figure>
@@ -291,10 +295,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">000bf168dd5159af</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
     </figure>
@@ -309,10 +314,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">037b976caae85af5</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
     </figure>
@@ -327,10 +333,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">04f548a98d695310</span> &middot; PDMS 0.000 &middot; fails NC, TTC</figcaption>
     </figure>
@@ -345,10 +352,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">00f925ab5406520f</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
     </figure>
@@ -363,10 +371,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">011376b151f2526c</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
     </figure>
@@ -381,10 +390,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">0436604d25145231</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
     </figure>
@@ -399,10 +409,11 @@ BODY = u"""
         <button class="btn" data-dl="bev">&#11015; BEV (right)</button>
         <button class="btn" data-dl="full">&#11015; Full frame</button>
         <button class="btn" data-dl="meta">&#11015; Metadata (JSON)</button>
-        <span class="sep"></span>
-        <button class="btn ghost" data-step="-1">&#9664;</button>
-        <button class="btn ghost" data-step="1">&#9654;</button>
-        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
+      <div class="scrub">
+        <input class="slider" type="range" min="0" max="171" step="1" value="0"
+               data-scrub aria-label="frame">
+        <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
       <figcaption><span class="mono">0dd23f4ea286544f</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
     </figure>
@@ -418,6 +429,10 @@ BODY = u"""
       from <span class="mono">scenes_v2/clip_meta.json</span>, written by the render job, so they
       cannot drift out of sync with the layout.</li>
       <li><strong>Full frame</strong> saves the whole 1920&times;1080 composite.</li>
+      <li>Each clip is <strong>172 frames</strong> &mdash; 40 of replayed history
+      (t&nbsp;=&nbsp;&minus;1.5&hellip;0.0&nbsp;s) then 132 of future rollout
+      (t&nbsp;=&nbsp;0.0&hellip;4.0&nbsp;s), at 20&nbsp;fps for 8.6&nbsp;s. The slider steps one
+      frame at a time.</li>
       <li><strong>Metadata (JSON)</strong> saves everything known about that scene: all per-gate
       sub-scores, PDMS for every method evaluated on it, ego speed, driving command, heading
       change and curvature, agent count, the failure captions, the BEV bounds, and the timestamp
@@ -680,23 +695,43 @@ SCRIPT = u"""
     var ts = card.querySelector("[data-t]");
     var src = (v.querySelector("source") || {}).src || "";
     var tok = src.split("/").pop().replace(/\.mp4$/, "") || "frame";
-    function show(){
-      if (!ts) return;
-      var t = v.currentTime || 0;
-      ts.textContent = "t = " + t.toFixed(2) + " s · frame " + Math.round(t * FPS);
-    }
-    v.addEventListener("timeupdate", show);
-    v.addEventListener("seeked", show);
-    v.addEventListener("loadedmetadata", show);
+    var scrub = card.querySelector("[data-scrub]");
+    var NFRAMES = null, dragging = false;
 
-    Array.prototype.forEach.call(card.querySelectorAll("[data-step]"), function(b){
-      b.addEventListener("click", function(){
+    function nframes(){
+      if (NFRAMES) return NFRAMES;
+      var d = v.duration;
+      if (d && isFinite(d)){
+        NFRAMES = Math.max(1, Math.round(d * FPS));
+        if (scrub) scrub.max = String(NFRAMES - 1);
+      }
+      return NFRAMES;
+    }
+    function show(){
+      var t = v.currentTime || 0;
+      var f = Math.round(t * FPS);
+      var n = nframes();
+      if (ts) ts.textContent = "frame " + f + (n ? " / " + (n - 1) : "")
+                             + " \u00b7 t = " + t.toFixed(2) + " s";
+      if (scrub && !dragging) scrub.value = String(f);
+    }
+    v.addEventListener("timeupdate", function(){ show(); });
+    v.addEventListener("seeked", function(){ show(); });
+    v.addEventListener("loadedmetadata", function(){ nframes(); show(); });
+
+    if (scrub){
+      var seek = function(){
+        dragging = true;
         v.pause();
-        var d = parseInt(b.getAttribute("data-step"), 10) / FPS;
-        v.currentTime = Math.min(Math.max((v.currentTime||0) + d, 0),
-                                 (v.duration || 1e9) - 1e-3);
-      });
-    });
+        var f = parseInt(scrub.value, 10) || 0;
+        var d = v.duration || (172 / FPS);
+        v.currentTime = Math.min(f / FPS, d - 1e-3);
+      };
+      scrub.addEventListener("input", seek);
+      scrub.addEventListener("change", function(){ seek(); dragging = false; });
+      scrub.addEventListener("pointerup", function(){ dragging = false; });
+      scrub.addEventListener("keyup", function(){ dragging = false; });
+    }
 
     Array.prototype.forEach.call(card.querySelectorAll("[data-dl]"), function(b){
       b.addEventListener("click", function(){

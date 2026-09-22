@@ -695,6 +695,52 @@ def active_caption(scene, real_t, phase):
 PANEL_RECTS = {}          # filled by compose_frame; [x, y, w, h] in the 1920x1080 frame
 
 
+def clip_segment(p0, p1, rect):
+    """Liang-Barsky. render_and_export.py keeps projected points that land OUTSIDE the
+    camera image on purpose ('the viewer is expected to clip them'), so without this the
+    trajectory runs off the panel and into the surrounding background."""
+    x0, y0 = p0; x1, y1 = p1
+    xmin, ymin, xmax, ymax = rect
+    dx = x1 - x0; dy = y1 - y0
+    t0, t1 = 0.0, 1.0
+    for pp, qq in ((-dx, x0 - xmin), (dx, xmax - x0),
+                   (-dy, y0 - ymin), (dy, ymax - y0)):
+        if pp == 0:
+            if qq < 0:
+                return None
+            continue
+        r = qq / pp
+        if pp < 0:
+            if r > t1: return None
+            if r > t0: t0 = r
+        else:
+            if r < t0: return None
+            if r < t1: t1 = r
+    return ((x0 + t0 * dx, y0 + t0 * dy), (x0 + t1 * dx, y0 + t1 * dy))
+
+
+def clip_polyline(pts, rect):
+    """-> list of runs, each a polyline fully inside rect."""
+    runs = []; cur = []
+    for a, b in zip(pts[:-1], pts[1:]):
+        seg = clip_segment(a, b, rect)
+        if seg is None:
+            if len(cur) >= 2: runs.append(cur)
+            cur = []
+            continue
+        c, d_ = seg
+        if not cur:
+            cur = [c, d_]
+        else:
+            if abs(cur[-1][0] - c[0]) > 0.5 or abs(cur[-1][1] - c[1]) > 0.5:
+                if len(cur) >= 2: runs.append(cur)
+                cur = [c, d_]
+            else:
+                cur.append(d_)
+    if len(cur) >= 2: runs.append(cur)
+    return runs
+
+
 def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
     from PIL import Image, ImageDraw
     canvas = Image.new("RGB", (W, H), (16, 18, 23))
@@ -744,10 +790,15 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
             reveal_t = max(0.0, min(4.0, real_t))
             n_show = max(1, int(round((reveal_t / 4.0) * len(cam_pts))))
             pts = [(cx0 + p[0] * cam_sf_x, cy0 + p[1] * cam_sf_y) for p in cam_pts[:n_show]]
-            if len(pts) >= 2:
-                d.line(pts, fill=PALETTE["pred"] + (235,), width=4, joint="curve")
+            cam_rect = (cx0, cy0, cx0 + cam_disp_w, cy0 + cam_disp_h)
+            for run in clip_polyline(pts, cam_rect):
+                d.line(run, fill=PALETTE["pred"] + (235,), width=4, joint="curve")
             for p in pts:
-                d.ellipse([p[0] - 4, p[1] - 4, p[0] + 4, p[1] + 4], fill=PALETTE["pred"] + (255,))
+                if not (cam_rect[0] <= p[0] <= cam_rect[2]
+                        and cam_rect[1] <= p[1] <= cam_rect[3]):
+                    continue
+                d.ellipse([p[0] - 4, p[1] - 4, p[0] + 4, p[1] + 4],
+                          fill=PALETTE["pred"] + (255,))
 
     PANEL_RECTS["cam"] = [cx0, cy0, cam_disp_w, cam_disp_h]
 
