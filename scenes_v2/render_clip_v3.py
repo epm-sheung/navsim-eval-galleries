@@ -16,6 +16,7 @@ import os
 import sys
 import io
 import json
+import datetime
 import glob
 import math
 import time
@@ -420,7 +421,7 @@ def decode_history_frames(token):
 # --------------------------------------------------------------------- #
 # BEV rendering (supersampled)
 # --------------------------------------------------------------------- #
-BEV_OUT = 812          # final square size in the composite (fits the right half)
+BEV_OUT = 620          # final square size in the composite
 BEV_SS = 3             # supersample factor
 BEV_SRC = 540.0        # native panel is 540x540 pixel-space
 
@@ -691,6 +692,9 @@ def active_caption(scene, real_t, phase):
     return best
 
 
+PANEL_RECTS = {}          # filled by compose_frame; [x, y, w, h] in the 1920x1080 frame
+
+
 def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
     from PIL import Image, ImageDraw
     canvas = Image.new("RGB", (W, H), (16, 18, 23))
@@ -717,10 +721,10 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
     content_h = content_bot - content_top
 
     # ---- camera panel ----------------------------------------------------
-    cam_w_area = W // 2                       # equal halves: 960 | 960
-    cam_disp_w, cam_disp_h = 960, 540
-    cx0 = (cam_w_area - cam_disp_w) // 2
-    cy0 = content_top + (content_h - (cam_disp_h + 84)) // 2
+    cam_w_area = 1280
+    cam_disp_w, cam_disp_h = 1280, 720
+    cx0 = 0
+    cy0 = content_top + (content_h - cam_disp_h) // 2
     from PIL import Image as PILImage
     cam_pil = PILImage.fromarray(cam_img_rgb).resize((cam_disp_w, cam_disp_h), PILImage.LANCZOS)
     canvas.paste(cam_pil, (cx0, cy0))
@@ -745,24 +749,27 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
             for p in pts:
                 d.ellipse([p[0] - 4, p[1] - 4, p[0] + 4, p[1] + 4], fill=PALETTE["pred"] + (255,))
 
+    PANEL_RECTS["cam"] = [cx0, cy0, cam_disp_w, cam_disp_h]
+
     # ---- BEV panel --------------------------------------------------------
     caption = active_caption(scene, real_t, phase)
     cap_for_bev = (caption[0], caption[1]) if caption else None
     bev_img = render_bev_frame(scene, phase, real_t, phase1_t=phase1_t, caption_active=cap_for_bev)
     bx0 = cam_w_area + (W - cam_w_area - BEV_OUT) // 2
-    by0 = content_top + (content_h - BEV_OUT) // 2 + 14
+    by0 = content_top + 46
+    PANEL_RECTS["bev"] = [bx0, by0, BEV_OUT, BEV_OUT]
     canvas.paste(bev_img, (bx0, by0))
     d.rectangle([bx0, by0, bx0 + BEV_OUT, by0 + BEV_OUT], outline=(200, 205, 210), width=2)
-    d.text((bx0, by0 - 22), "BIRD'S-EYE VIEW  (ego-centric)", font=fonts["small"],
+    d.text((bx0, content_top + 8), "BIRD'S-EYE VIEW  (ego-centric)", font=fonts["small"],
            fill=PALETTE["on_dark_dim"])
 
     # scale bar (bottom-left inside the BEV panel)
     out_px_per_native = BEV_OUT / BEV_SRC
     draw_scale_bar(d, bx0 + 14, by0 + BEV_OUT - 30, scene.mpp, out_px_per_native)
 
-    # legend: under the camera panel (the BEV now fills its half to y=932)
-    leg_x = cx0 + 4
-    leg_y = cy0 + cam_disp_h + 18
+    # legend (right of BEV, below panel)
+    leg_x = bx0
+    leg_y = by0 + BEV_OUT + 12
     legend_items = [
         (PALETTE["pred"], "predicted (%s)" % METHOD),
         (PALETTE["human"], "human (dashed, reference)"),
@@ -772,7 +779,7 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
         (PALETTE["cone"], "cone / generic"),
     ]
     lx, ly = leg_x, leg_y
-    col_w = cam_disp_w // 2
+    col_w = BEV_OUT // 2
     for i, (col, label) in enumerate(legend_items):
         row = i % 3
         colu = i // 3
@@ -932,6 +939,7 @@ def main():
     manifest_lines.append("")
 
     n_ok = 0
+    scenes_done = []
     for tok, label in chosen:
         try:
             log("\n### rendering %s (%s) ###" % (tok, label))
@@ -943,6 +951,7 @@ def main():
             log("  wrote %s  (%d bytes, %d frames, %.1fs render time)" %
                 (out_path, size, total_frames, dt))
             log("  decoded %d frames from original clip, shape %s" % (orig_nf, orig_shape))
+            scenes_done.append(scene)
             for sp, rt, ph in stills:
                 ssize = os.path.getsize(sp) if os.path.exists(sp) else -1
                 log("  still: %s  (%s, real_t=%.2f, %d bytes)" % (sp, ph, rt, ssize))
@@ -970,6 +979,54 @@ def main():
     manifest_path = os.path.join(OUT_ROOT, "MANIFEST.txt")
     with open(manifest_path, "w") as f:
         f.write("\n".join(manifest_lines))
+    # ---- machine-readable sidecar: panel rects + every scene's metadata -----
+    # The page crops the camera / BEV halves out of a grabbed frame using these
+    # rects, so the layout is never duplicated in JavaScript.
+    ego_path = ("/scratch/eddie96/eddie/dino-cmd-fusion/eval_test/bin_hardness/"
+                "ego_curvature_navtest.json")
+    ego = {}
+    try:
+        ego = json.load(open(ego_path))
+    except Exception as e:
+        log("WARNING: ego sidecar unreadable (%s); speed/command will be omitted" % e)
+    CMD = ["left", "straight", "right", "unknown"]
+    clipmeta = {"_meta": {"generated": datetime.datetime.utcnow().isoformat() + "Z",
+                      "frame": [W, H], "fps": FPS, "method_shown": METHOD,
+                      "phase1_s": [-1.5, 0.0], "phase2_s": [0.0, 4.0],
+                      "panel_rects_note": "[x, y, w, h] in the 1920x1080 composite",
+                      "panels": dict(PANEL_RECTS),
+                      "source": "navsim_pages/scenes/{events,traj}/<token>.json + "
+                                "eval_test/bin_hardness/ego_curvature_navtest.json"},
+            "scenes": {}}
+    for sc_ in scenes_done:
+        tok = sc_.token
+        tj = sc_.traj
+        e = ego.get(tok, {}) or {}
+        oh = e.get("driving_command") or []
+        cmd = CMD[oh.index(1.0)] if (oh and 1.0 in oh) else None
+        clipmeta["scenes"][tok] = {
+            "token": tok, "split": sc_.split, "selection_reason": sc_.reason,
+            "clip": {"file": "clips/%s.mp4" % tok, "fps": FPS,
+                     "resolution": [W, H], "codec": "h264/yuv420p"},
+            "scores_shown_method": sc_.scores,
+            "pdms_all_methods": {m: (v or {}).get("pdms")
+                                 for m, v in (tj.get("scores") or {}).items()},
+            "ego": {"speed_mps": e.get("speed_mps"),
+                    "driving_command": cmd,
+                    "driving_command_onehot": oh or None,
+                    "heading_change_deg": e.get("heading_change_deg"),
+                    "mean_abs_curvature": e.get("mean_abs_curvature")},
+            "scene": {"n_agents": len(sc_.events.get("agents", {}).get("objects", [])),
+                      "any_failure": sc_.events.get("any_failure"),
+                      "captions": sc_.captions},
+            "bev_bounds": tj.get("bev_bounds"),
+            "metres_per_output_px": (sc_.mpp * BEV_SRC / float(BEV_OUT)) if sc_.mpp else None,
+        }
+    meta_path = os.path.join(OUT_ROOT, "clip_meta.json")
+    with open(meta_path, "w") as fh:
+        json.dump(clipmeta, fh, indent=1, sort_keys=False)
+    log("clip_meta.json written to %s (panels=%s)" % (meta_path, PANEL_RECTS))
+
     log("\nMANIFEST written to %s" % manifest_path)
     log("DONE: %d/%d scenes rendered successfully" % (n_ok, len(chosen)))
 
