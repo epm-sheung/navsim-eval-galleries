@@ -420,7 +420,7 @@ def decode_history_frames(token):
 # --------------------------------------------------------------------- #
 # BEV rendering (supersampled)
 # --------------------------------------------------------------------- #
-BEV_OUT = 620          # final square size in the composite
+BEV_OUT = 812          # final square size in the composite (fits the right half)
 BEV_SS = 3             # supersample factor
 BEV_SRC = 540.0        # native panel is 540x540 pixel-space
 
@@ -717,10 +717,10 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
     content_h = content_bot - content_top
 
     # ---- camera panel ----------------------------------------------------
-    cam_w_area = 1280
-    cam_disp_w, cam_disp_h = 1280, 720
-    cx0 = 0
-    cy0 = content_top + (content_h - cam_disp_h) // 2
+    cam_w_area = W // 2                       # equal halves: 960 | 960
+    cam_disp_w, cam_disp_h = 960, 540
+    cx0 = (cam_w_area - cam_disp_w) // 2
+    cy0 = content_top + (content_h - (cam_disp_h + 84)) // 2
     from PIL import Image as PILImage
     cam_pil = PILImage.fromarray(cam_img_rgb).resize((cam_disp_w, cam_disp_h), PILImage.LANCZOS)
     canvas.paste(cam_pil, (cx0, cy0))
@@ -750,19 +750,19 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
     cap_for_bev = (caption[0], caption[1]) if caption else None
     bev_img = render_bev_frame(scene, phase, real_t, phase1_t=phase1_t, caption_active=cap_for_bev)
     bx0 = cam_w_area + (W - cam_w_area - BEV_OUT) // 2
-    by0 = content_top + 46
+    by0 = content_top + (content_h - BEV_OUT) // 2 + 14
     canvas.paste(bev_img, (bx0, by0))
     d.rectangle([bx0, by0, bx0 + BEV_OUT, by0 + BEV_OUT], outline=(200, 205, 210), width=2)
-    d.text((bx0, content_top + 8), "BIRD'S-EYE VIEW  (ego-centric)", font=fonts["small"],
+    d.text((bx0, by0 - 22), "BIRD'S-EYE VIEW  (ego-centric)", font=fonts["small"],
            fill=PALETTE["on_dark_dim"])
 
     # scale bar (bottom-left inside the BEV panel)
     out_px_per_native = BEV_OUT / BEV_SRC
     draw_scale_bar(d, bx0 + 14, by0 + BEV_OUT - 30, scene.mpp, out_px_per_native)
 
-    # legend (right of BEV, below panel)
-    leg_x = bx0
-    leg_y = by0 + BEV_OUT + 12
+    # legend: under the camera panel (the BEV now fills its half to y=932)
+    leg_x = cx0 + 4
+    leg_y = cy0 + cam_disp_h + 18
     legend_items = [
         (PALETTE["pred"], "predicted (%s)" % METHOD),
         (PALETTE["human"], "human (dashed, reference)"),
@@ -772,7 +772,7 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
         (PALETTE["cone"], "cone / generic"),
     ]
     lx, ly = leg_x, leg_y
-    col_w = BEV_OUT // 2
+    col_w = cam_disp_w // 2
     for i, (col, label) in enumerate(legend_items):
         row = i % 3
         colu = i // 3
@@ -841,7 +841,7 @@ def compose_frame(scene, cam_img_rgb, fonts, phase, real_t, phase1_t=None):
         d.text((24, gy + 46), msg, font=fonts["small"], fill=col)
 
     d.text((W - 300, gy + 46),
-            "scale: 1 px \u2248 %.4f m" % scene.mpp,
+            "scale: 1 px \u2248 %.4f m" % (scene.mpp * BEV_SRC / float(BEV_OUT)),
             font=fonts["small"], fill=PALETTE["subtext"])
 
     return canvas

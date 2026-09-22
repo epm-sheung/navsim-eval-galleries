@@ -93,6 +93,16 @@
             flex-direction:column; gap:8px;}
   .clip{width:100%; display:block; border-radius:3px; background:#12161a;
         aspect-ratio:16/9; max-width:100%;}
+  .cliptools{display:flex; gap:9px; align-items:center; flex-wrap:wrap;
+             font-size:12.5px; color:var(--ink-2);}
+  .btn{font:500 12.5px/1 "IBM Plex Sans",system-ui,sans-serif; cursor:pointer;
+       background:var(--accent-soft); color:var(--accent);
+       border:1px solid var(--accent); border-radius:4px; padding:7px 12px;}
+  .btn:hover{background:var(--accent); color:var(--panel);}
+  .btn.ghost{background:transparent; color:var(--ink-2); border-color:var(--rule);}
+  .btn.ghost:hover{background:var(--panel-2); color:var(--ink);}
+  .tstamp{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px;
+          color:var(--ink-3); font-variant-numeric:tabular-nums;}
   .wide{max-width:1280px; width:100%; margin:0 auto;}
   .shot{width:100%; display:block; border:1px solid var(--rule); border-radius:4px;
         background:#fff;}
@@ -248,6 +258,12 @@
              poster="../scenes_v2/stills/00016f8b45c25a1d_t60.png">
         <source src="../scenes_v2/clips/00016f8b45c25a1d.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">00016f8b45c25a1d</span> &middot; PDMS 0.000 &middot; fails DAC, DDC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -255,6 +271,12 @@
              poster="../scenes_v2/stills/000bf168dd5159af_t60.png">
         <source src="../scenes_v2/clips/000bf168dd5159af.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">000bf168dd5159af</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -262,6 +284,12 @@
              poster="../scenes_v2/stills/037b976caae85af5_t60.png">
         <source src="../scenes_v2/clips/037b976caae85af5.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">037b976caae85af5</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -269,6 +297,12 @@
              poster="../scenes_v2/stills/04f548a98d695310_t60.png">
         <source src="../scenes_v2/clips/04f548a98d695310.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">04f548a98d695310</span> &middot; PDMS 0.000 &middot; fails NC, TTC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -276,6 +310,12 @@
              poster="../scenes_v2/stills/00f925ab5406520f_t60.png">
         <source src="../scenes_v2/clips/00f925ab5406520f.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">00f925ab5406520f</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -283,6 +323,12 @@
              poster="../scenes_v2/stills/011376b151f2526c_t60.png">
         <source src="../scenes_v2/clips/011376b151f2526c.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">011376b151f2526c</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -290,6 +336,12 @@
              poster="../scenes_v2/stills/0436604d25145231_t60.png">
         <source src="../scenes_v2/clips/0436604d25145231.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">0436604d25145231</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
     </figure>
     <figure class="clipcard">
@@ -297,11 +349,20 @@
              poster="../scenes_v2/stills/0dd23f4ea286544f_t60.png">
         <source src="../scenes_v2/clips/0dd23f4ea286544f.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">0dd23f4ea286544f</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
     </figure>
   </div>
   <p class="note">Ordered worst PDMS first. Posters are the t&nbsp;=&nbsp;+0.6&nbsp;s frame; nothing
-  autoplays and nothing loads until you press play.</p>
+  autoplays and nothing loads until you press play. <strong>Pause anywhere and press
+  &ldquo;Download this frame&rdquo;</strong> to save that exact composite at full
+  1920&times;1080 &mdash; the arrows step one frame (1/20&nbsp;s) at a time so you can land on
+  the moment you want.</p>
 </section>
 
 <section>
@@ -516,6 +577,69 @@
 
 </div>
 
+<script>
+/* Frame grabber for the scene clips. The MP4s are same-origin, so the canvas is not
+   tainted and toBlob() works. Stepping is 1/20 s to match the clips' frame rate. */
+(function(){
+  var FPS = 20;
+  function init(card){
+    var v = card.querySelector("video");
+    var dl = card.querySelector("[data-dl]");
+    var ts = card.querySelector("[data-t]");
+    var src = (v.querySelector("source") || {}).src || "";
+    var name = src.split("/").pop().replace(/\.mp4$/, "") || "frame";
+    function show(){
+      if (!ts) return;
+      var t = v.currentTime || 0;
+      ts.textContent = "t = " + t.toFixed(2) + " s · frame " + Math.round(t * FPS);
+    }
+    v.addEventListener("timeupdate", show);
+    v.addEventListener("seeked", show);
+    v.addEventListener("loadedmetadata", show);
+    Array.prototype.forEach.call(card.querySelectorAll("[data-step]"), function(b){
+      b.addEventListener("click", function(){
+        v.pause();
+        var d = parseInt(b.getAttribute("data-step"), 10) / FPS;
+        var t = Math.min(Math.max((v.currentTime || 0) + d, 0), (v.duration || 1e9) - 1e-3);
+        v.currentTime = t;
+      });
+    });
+    if (dl) dl.addEventListener("click", function(){
+      if (!v.videoWidth){
+        dl.textContent = "press play first";
+        setTimeout(function(){ dl.textContent = "Download this frame (PNG)"; }, 1600);
+        return;
+      }
+      v.pause();
+      var c = document.createElement("canvas");
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+      var stamp = (v.currentTime || 0).toFixed(2).replace(".", "p");
+      function save(url, revoke){
+        var a = document.createElement("a");
+        a.href = url; a.download = name + "_t" + stamp + "s.png";
+        document.body.appendChild(a); a.click(); a.remove();
+        if (revoke) setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      }
+      try {
+        if (c.toBlob) c.toBlob(function(b){
+          if (b) save(URL.createObjectURL(b), true); else save(c.toDataURL("image/png"));
+        }, "image/png");
+        else save(c.toDataURL("image/png"));
+      } catch (e) {
+        dl.textContent = "download blocked";
+        setTimeout(function(){ dl.textContent = "Download this frame (PNG)"; }, 2200);
+      }
+    });
+  }
+  function boot(){
+    Array.prototype.forEach.call(document.querySelectorAll(".clipcard"), init);
+  }
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
 <script>window.FIG={"corr":[{"m":"cmd_tokens_film \u2605","loss_i":-0.1395,"ade_i":-0.1161,"loss_f":-0.213,"ade_f":-0.171},{"m":"variant1 (patch)","loss_i":-0.0924,"ade_i":-0.0835,"loss_f":-0.2317,"ade_f":-0.173},{"m":"SAE B\u2032","loss_i":-0.1139,"ade_i":-0.0752,"loss_f":-0.2209,"ade_f":-0.1687},{"m":"SAE A\u2032","loss_i":-0.1443,"ade_i":-0.1025,"loss_f":-0.2579,"ade_f":-0.1868},{"m":"cls_tokens_film","loss_i":-0.1422,"ade_i":-0.1187,"loss_f":-0.3099,"ade_f":-0.2502}],"delta":{"ref":"cmd_tokens_film \u2605","ref_score":0.84,"band":2.33,"rows":[{"m":"TransFuser","d":-0.61,"s":0.8339},{"m":"variant1 (patch)","d":-0.98,"s":0.8302},{"m":"SAE B\u2032","d":-2.59,"s":0.8141},{"m":"SAE A\u2032","d":-3.08,"s":0.8092},{"m":"cls_tokens_film","d":-7.1,"s":0.769}]},"bins":[{"lo":0.0,"n":180,"margin":2.842,"agents":30.9451},{"lo":0.05,"n":53,"margin":4.1258,"agents":46.6132},{"lo":0.1,"n":43,"margin":2.4637,"agents":27.3837},{"lo":0.15,"n":190,"margin":3.6697,"agents":37.1553},{"lo":0.2,"n":17,"margin":3.5048,"agents":41.1912},{"lo":0.25,"n":150,"margin":3.2118,"agents":35.185},{"lo":0.3,"n":204,"margin":3.2056,"agents":30.538},{"lo":0.35,"n":47,"margin":3.8092,"agents":42.6888},{"lo":0.4,"n":148,"margin":3.17,"agents":28.7213},{"lo":0.45,"n":274,"margin":3.2747,"agents":35.3727},{"lo":0.5,"n":143,"margin":3.4938,"agents":37.6198},{"lo":0.55,"n":314,"margin":3.3663,"agents":32.4061},{"lo":0.6,"n":346,"margin":3.0353,"agents":31.2579},{"lo":0.65,"n":386,"margin":3.2707,"agents":34.7607},{"lo":0.7,"n":415,"margin":3.336,"agents":33.3907},{"lo":0.75,"n":752,"margin":3.4563,"agents":35.8713},{"lo":0.8,"n":979,"margin":3.5699,"agents":37.5317},{"lo":0.85,"n":1439,"margin":3.9902,"agents":41.1793},{"lo":0.9,"n":2227,"margin":4.2372,"agents":42.7874},{"lo":0.95,"n":3839,"margin":4.6904,"agents":50.327}],"oracle":{"k":[1,2,4,8,16,32,63],"score":[0.27,0.596,0.733,0.86,0.925,0.951,0.97],"ref":{"model":0.7758,"oracle40":0.9456,"human":0.9204,"best_constant":0.645,"random":0.36}},"sub":[{"m":"cmd_tokens_film \u2605","nc":0.9752,"dac":0.9303,"ep":0.7872,"ttc":0.9275,"comfort":0.9996,"ddc":0.9708},{"m":"TransFuser","nc":0.9778,"dac":0.9207,"ep":0.7858,"ttc":0.9275,"comfort":0.9997,"ddc":0.9793},{"m":"variant1 (patch)","nc":0.9735,"dac":0.9226,"ep":0.7768,"ttc":0.9261,"comfort":0.9998,"ddc":0.9737},{"m":"SAE B\u2032","nc":0.9646,"dac":0.9154,"ep":0.7763,"ttc":0.8962,"comfort":0.9998,"ddc":0.9702},{"m":"SAE A\u2032","nc":0.9662,"dac":0.9071,"ep":0.7663,"ttc":0.9038,"comfort":0.9994,"ddc":0.9714},{"m":"cls_tokens_film","nc":0.9623,"dac":0.8686,"ep":0.7308,"ttc":0.8949,"comfort":0.999,"ddc":0.9588},{"m":"human","nc":1.0,"dac":1.0,"ep":0.8696,"ttc":1.0,"comfort":0.999,"ddc":0.9883}],"gate":[{"m":"cmd_tokens_film \u2605","nc_lt1":2.62,"dac_lt1":6.97,"ttc_lt1":7.25},{"m":"TransFuser","nc_lt1":2.45,"dac_lt1":7.93,"ttc_lt1":7.25},{"m":"variant1 (patch)","nc_lt1":2.82,"dac_lt1":7.74,"ttc_lt1":7.39},{"m":"SAE B\u2032","nc_lt1":3.78,"dac_lt1":8.46,"ttc_lt1":10.38},{"m":"SAE A\u2032","nc_lt1":3.68,"dac_lt1":9.29,"ttc_lt1":9.62},{"m":"cls_tokens_film","nc_lt1":4.12,"dac_lt1":13.14,"ttc_lt1":10.51}]};</script>
 <script>
 (function(){

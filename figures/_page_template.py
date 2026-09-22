@@ -94,6 +94,16 @@ HEAD = u"""<title>Five Figures</title>
             flex-direction:column; gap:8px;}
   .clip{width:100%; display:block; border-radius:3px; background:#12161a;
         aspect-ratio:16/9; max-width:100%;}
+  .cliptools{display:flex; gap:9px; align-items:center; flex-wrap:wrap;
+             font-size:12.5px; color:var(--ink-2);}
+  .btn{font:500 12.5px/1 "IBM Plex Sans",system-ui,sans-serif; cursor:pointer;
+       background:var(--accent-soft); color:var(--accent);
+       border:1px solid var(--accent); border-radius:4px; padding:7px 12px;}
+  .btn:hover{background:var(--accent); color:var(--panel);}
+  .btn.ghost{background:transparent; color:var(--ink-2); border-color:var(--rule);}
+  .btn.ghost:hover{background:var(--panel-2); color:var(--ink);}
+  .tstamp{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px;
+          color:var(--ink-3); font-variant-numeric:tabular-nums;}
   .wide{max-width:1280px; width:100%; margin:0 auto;}
   .shot{width:100%; display:block; border:1px solid var(--rule); border-radius:4px;
         background:#fff;}
@@ -251,6 +261,12 @@ BODY = u"""
              poster="../scenes_v2/stills/00016f8b45c25a1d_t60.png">
         <source src="../scenes_v2/clips/00016f8b45c25a1d.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">00016f8b45c25a1d</span> &middot; PDMS 0.000 &middot; fails DAC, DDC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -258,6 +274,12 @@ BODY = u"""
              poster="../scenes_v2/stills/000bf168dd5159af_t60.png">
         <source src="../scenes_v2/clips/000bf168dd5159af.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">000bf168dd5159af</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -265,6 +287,12 @@ BODY = u"""
              poster="../scenes_v2/stills/037b976caae85af5_t60.png">
         <source src="../scenes_v2/clips/037b976caae85af5.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">037b976caae85af5</span> &middot; PDMS 0.000 &middot; fails DAC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -272,6 +300,12 @@ BODY = u"""
              poster="../scenes_v2/stills/04f548a98d695310_t60.png">
         <source src="../scenes_v2/clips/04f548a98d695310.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">04f548a98d695310</span> &middot; PDMS 0.000 &middot; fails NC, TTC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -279,6 +313,12 @@ BODY = u"""
              poster="../scenes_v2/stills/00f925ab5406520f_t60.png">
         <source src="../scenes_v2/clips/00f925ab5406520f.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">00f925ab5406520f</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -286,6 +326,12 @@ BODY = u"""
              poster="../scenes_v2/stills/011376b151f2526c_t60.png">
         <source src="../scenes_v2/clips/011376b151f2526c.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">011376b151f2526c</span> &middot; PDMS 0.583 &middot; fails TTC</figcaption>
     </figure>
     <figure class="clipcard">
@@ -293,6 +339,12 @@ BODY = u"""
              poster="../scenes_v2/stills/0436604d25145231_t60.png">
         <source src="../scenes_v2/clips/0436604d25145231.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">0436604d25145231</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
     </figure>
     <figure class="clipcard">
@@ -300,11 +352,20 @@ BODY = u"""
              poster="../scenes_v2/stills/0dd23f4ea286544f_t60.png">
         <source src="../scenes_v2/clips/0dd23f4ea286544f.mp4" type="video/mp4">
       </video>
+      <div class="cliptools">
+        <button class="btn" data-dl>Download this frame (PNG)</button>
+        <button class="btn ghost" data-step="-1">&#9664; prev frame</button>
+        <button class="btn ghost" data-step="1">next frame &#9654;</button>
+        <span class="tstamp" data-t>t = 0.00 s &middot; frame 0</span>
+      </div>
       <figcaption><span class="mono">0dd23f4ea286544f</span> &middot; PDMS 1.000 &middot; all gates pass</figcaption>
     </figure>
   </div>
   <p class="note">Ordered worst PDMS first. Posters are the t&nbsp;=&nbsp;+0.6&nbsp;s frame; nothing
-  autoplays and nothing loads until you press play.</p>
+  autoplays and nothing loads until you press play. <strong>Pause anywhere and press
+  &ldquo;Download this frame&rdquo;</strong> to save that exact composite at full
+  1920&times;1080 &mdash; the arrows step one frame (1/20&nbsp;s) at a time so you can land on
+  the moment you want.</p>
 </section>
 
 <section>
@@ -521,6 +582,69 @@ BODY = u"""
 """
 
 SCRIPT = u"""
+<script>
+/* Frame grabber for the scene clips. The MP4s are same-origin, so the canvas is not
+   tainted and toBlob() works. Stepping is 1/20 s to match the clips' frame rate. */
+(function(){
+  var FPS = 20;
+  function init(card){
+    var v = card.querySelector("video");
+    var dl = card.querySelector("[data-dl]");
+    var ts = card.querySelector("[data-t]");
+    var src = (v.querySelector("source") || {}).src || "";
+    var name = src.split("/").pop().replace(/\.mp4$/, "") || "frame";
+    function show(){
+      if (!ts) return;
+      var t = v.currentTime || 0;
+      ts.textContent = "t = " + t.toFixed(2) + " s \u00b7 frame " + Math.round(t * FPS);
+    }
+    v.addEventListener("timeupdate", show);
+    v.addEventListener("seeked", show);
+    v.addEventListener("loadedmetadata", show);
+    Array.prototype.forEach.call(card.querySelectorAll("[data-step]"), function(b){
+      b.addEventListener("click", function(){
+        v.pause();
+        var d = parseInt(b.getAttribute("data-step"), 10) / FPS;
+        var t = Math.min(Math.max((v.currentTime || 0) + d, 0), (v.duration || 1e9) - 1e-3);
+        v.currentTime = t;
+      });
+    });
+    if (dl) dl.addEventListener("click", function(){
+      if (!v.videoWidth){
+        dl.textContent = "press play first";
+        setTimeout(function(){ dl.textContent = "Download this frame (PNG)"; }, 1600);
+        return;
+      }
+      v.pause();
+      var c = document.createElement("canvas");
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+      var stamp = (v.currentTime || 0).toFixed(2).replace(".", "p");
+      function save(url, revoke){
+        var a = document.createElement("a");
+        a.href = url; a.download = name + "_t" + stamp + "s.png";
+        document.body.appendChild(a); a.click(); a.remove();
+        if (revoke) setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      }
+      try {
+        if (c.toBlob) c.toBlob(function(b){
+          if (b) save(URL.createObjectURL(b), true); else save(c.toDataURL("image/png"));
+        }, "image/png");
+        else save(c.toDataURL("image/png"));
+      } catch (e) {
+        dl.textContent = "download blocked";
+        setTimeout(function(){ dl.textContent = "Download this frame (PNG)"; }, 2200);
+      }
+    });
+  }
+  function boot(){
+    Array.prototype.forEach.call(document.querySelectorAll(".clipcard"), init);
+  }
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
 <script>window.FIG=__DATA__;</script>
 <script>
 (function(){

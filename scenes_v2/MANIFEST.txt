@@ -1,5 +1,5 @@
 NAVSIM scenes_v2 render manifest
-generated: 2026-09-21T21:47:56Z
+generated: 2026-09-22T05:40:27Z
 method shown: cmd_tokens_film   fps: 20   resolution: 1920x1080
 phase1 (history, cross-faded real cam frames): 2.0s, real t=-1.5..0.0s
 phase2 (future rollout, held cam + drawn overlay): 6.6s, real t=0.0..4.0s
@@ -11,10 +11,10 @@ token: 0436604d25145231
   cmd_tokens_film pdms: 1.0000
   mpp (1/bev_bounds.scale): 0.02949 m/px  (bev_bounds.scale=33.905)
   captions: []
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/0436604d25145231.mp4  (802470 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/0436604d25145231_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/0436604d25145231_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/0436604d25145231_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/0436604d25145231.mp4  (663543 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0436604d25145231_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0436604d25145231_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0436604d25145231_t128.png  (future phase, real_t=2.69s)
 
 token: 0dd23f4ea286544f
   selection reason: clean
@@ -23,10 +23,10 @@ token: 0dd23f4ea286544f
   cmd_tokens_film pdms: 1.0000
   mpp (1/bev_bounds.scale): 0.02248 m/px  (bev_bounds.scale=44.477)
   captions: []
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/0dd23f4ea286544f.mp4  (1138489 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/0dd23f4ea286544f_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/0dd23f4ea286544f_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/0dd23f4ea286544f_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/0dd23f4ea286544f.mp4  (877587 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0dd23f4ea286544f_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0dd23f4ea286544f_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/0dd23f4ea286544f_t128.png  (future phase, real_t=2.69s)
 
 token: 00f925ab5406520f
   selection reason: ttc
@@ -35,10 +35,10 @@ token: 00f925ab5406520f
   cmd_tokens_film pdms: 0.5833
   mpp (1/bev_bounds.scale): 0.08281 m/px  (bev_bounds.scale=12.075)
   captions: ["TTC 0.0 - constant-velocity projection from t=3.9 s hits vehicle at t=4.8 s"]
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/00f925ab5406520f.mp4  (1573258 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/00f925ab5406520f_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/00f925ab5406520f_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/00f925ab5406520f_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/00f925ab5406520f.mp4  (1193532 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00f925ab5406520f_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00f925ab5406520f_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00f925ab5406520f_t128.png  (future phase, real_t=2.69s)
 
 token: 011376b151f2526c
   selection reason: ttc
@@ -47,10 +47,10 @@ token: 011376b151f2526c
   cmd_tokens_film pdms: 0.5833
   mpp (1/bev_bounds.scale): 0.13398 m/px  (bev_bounds.scale=7.464)
   captions: ["TTC 0.0 - constant-velocity projection from t=3.0 s hits traffic cone at t=3.9 s"]
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/011376b151f2526c.mp4  (1191296 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/011376b151f2526c_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/011376b151f2526c_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/011376b151f2526c_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/011376b151f2526c.mp4  (913532 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/011376b151f2526c_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/011376b151f2526c_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/011376b151f2526c_t128.png  (future phase, real_t=2.69s)
 
 token: 00016f8b45c25a1d
   selection reason: dac
@@ -59,10 +59,10 @@ token: 00016f8b45c25a1d
   cmd_tokens_film pdms: 0.0000
   mpp (1/bev_bounds.scale): 0.07797 m/px  (bev_bounds.scale=12.826)
   captions: ["DAC 0.0 - off drivable area from t=3.4 s, 1 of 41 steps, max depth 0.11 m"]
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/00016f8b45c25a1d.mp4  (1633865 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/00016f8b45c25a1d_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/00016f8b45c25a1d_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/00016f8b45c25a1d_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/00016f8b45c25a1d.mp4  (1249737 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00016f8b45c25a1d_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00016f8b45c25a1d_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/00016f8b45c25a1d_t128.png  (future phase, real_t=2.69s)
 
 token: 000bf168dd5159af
   selection reason: dac
@@ -71,10 +71,10 @@ token: 000bf168dd5159af
   cmd_tokens_film pdms: 0.0000
   mpp (1/bev_bounds.scale): 0.11332 m/px  (bev_bounds.scale=8.825)
   captions: ["DAC 0.0 - off drivable area from t=1.3 s, 25 of 41 steps, max depth 0.20 m"]
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/000bf168dd5159af.mp4  (2053829 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/000bf168dd5159af_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/000bf168dd5159af_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/000bf168dd5159af_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/000bf168dd5159af.mp4  (1521666 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/000bf168dd5159af_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/000bf168dd5159af_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/000bf168dd5159af_t128.png  (future phase, real_t=2.69s)
 
 token: 037b976caae85af5
   selection reason: lowest(backfill)
@@ -83,10 +83,10 @@ token: 037b976caae85af5
   cmd_tokens_film pdms: 0.0000
   mpp (1/bev_bounds.scale): 0.08428 m/px  (bev_bounds.scale=11.865)
   captions: ["DAC 0.0 - off drivable area from t=3.9 s, 2 of 41 steps, max depth 0.010 m (10 mm - too shallow to see; below the outline's 0.05 m simplification)"]
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/037b976caae85af5.mp4  (1693602 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/037b976caae85af5_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/037b976caae85af5_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/037b976caae85af5_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/037b976caae85af5.mp4  (1286196 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/037b976caae85af5_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/037b976caae85af5_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/037b976caae85af5_t128.png  (future phase, real_t=2.69s)
 
 token: 04f548a98d695310
   selection reason: lowest(backfill)
@@ -95,7 +95,7 @@ token: 04f548a98d695310
   cmd_tokens_film pdms: 0.0000
   mpp (1/bev_bounds.scale): 0.10028 m/px  (bev_bounds.scale=9.972)
   captions: ["NC 0.0 - at-fault collision with vehicle at t=3.8 s (ACTIVE FRONT)", "TTC 0.0 - constant-velocity projection from t=2.8 s hits vehicle at t=3.7 s"]
-  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips_v3/04f548a98d695310.mp4  (1554763 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/04f548a98d695310_t09.png  (history phase, real_t=-1.15s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/04f548a98d695310_t60.png  (future phase, real_t=0.61s)
-  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills_v3/04f548a98d695310_t128.png  (future phase, real_t=2.69s)
+  clip: /scratch/eddie96/eddie/navsim_pages/scenes_v2/clips/04f548a98d695310.mp4  (1167891 bytes, 172 frames @ 20 fps = 8.60s, 1920x1080)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/04f548a98d695310_t09.png  (history phase, real_t=-1.15s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/04f548a98d695310_t60.png  (future phase, real_t=0.61s)
+  still: /scratch/eddie96/eddie/navsim_pages/scenes_v2/stills/04f548a98d695310_t128.png  (future phase, real_t=2.69s)
