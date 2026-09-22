@@ -5,3 +5,5 @@ _sel/
 
 figures/logs/
 figures/_figdata_inline.js
+figures/bev5/*.png
+figures/bev5/MANIFEST.txt
