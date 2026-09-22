@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "generated": "2026-09-22T06:06:35.598049Z",
+  "generated": "2026-09-22T06:24:38.899753Z",
   "frame": [
    1920,
    1080
@@ -28,6 +28,67 @@
     120,
     620,
     620
+   ]
+  },
+  "markers": [
+   {
+    "label": "-1.5s",
+    "t": -1.5,
+    "frame": 0,
+    "phase": 1
+   },
+   {
+    "label": "-1.0s",
+    "t": -1.0,
+    "frame": 13,
+    "phase": 1
+   },
+   {
+    "label": "-0.5s",
+    "t": -0.5,
+    "frame": 26,
+    "phase": 1
+   },
+   {
+    "label": "0",
+    "t": 0.0,
+    "frame": 40,
+    "phase": 2
+   },
+   {
+    "label": "+1s",
+    "t": 1.0,
+    "frame": 73,
+    "phase": 2
+   },
+   {
+    "label": "+2s",
+    "t": 2.0,
+    "frame": 106,
+    "phase": 2
+   },
+   {
+    "label": "+3s",
+    "t": 3.0,
+    "frame": 138,
+    "phase": 2
+   },
+   {
+    "label": "+4s",
+    "t": 4.0,
+    "frame": 171,
+    "phase": 2
+   }
+  ],
+  "frames": {
+   "total": 172,
+   "history": [
+    0,
+    39
+   ],
+   "future": [
+    40,
+    171
    ]
   },
   "source": "navsim_pages/scenes/{events,traj}/<token>.json + eval_test/bin_hardness/ego_curvature_navtest.json"

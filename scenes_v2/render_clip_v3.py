@@ -692,6 +692,36 @@ def active_caption(scene, real_t, phase):
     return best
 
 
+def panel_rects():
+    """[x, y, w, h] of each half inside the 1920x1080 composite. Derived from the same
+    constants compose_frame draws with, so the page's crop boxes cannot drift."""
+    title_h = 74
+    content_top = title_h
+    content_bot = H - 130
+    content_h = content_bot - content_top
+    cam_w_area = 1280
+    cam_w, cam_h = 1280, 720
+    cx0 = 0
+    cy0 = content_top + (content_h - cam_h) // 2
+    bx0 = cam_w_area + (W - cam_w_area - BEV_OUT) // 2
+    by0 = content_top + 46
+    return {"cam": [cx0, cy0, cam_w, cam_h], "bev": [bx0, by0, BEV_OUT, BEV_OUT]}
+
+
+def timeline_markers():
+    """Clickable time points: (label, real seconds, video frame index).
+    Phase 1 frames 0..N1-1 cover real t=-1.5..0.0; phase 2 frames N1..N1+N2-1 cover 0..4."""
+    m = []
+    for t in (-1.5, -1.0, -0.5):
+        u = (t - (-1.5)) / 1.5
+        m.append({"label": "%.1fs" % t, "t": t,
+                  "frame": int(round(u * (N1 - 1))), "phase": 1})
+    for t in (0.0, 1.0, 2.0, 3.0, 4.0):
+        m.append({"label": ("0" if t == 0 else "+%.0fs" % t), "t": t,
+                  "frame": N1 + int(round((t / 4.0) * (N2 - 1))), "phase": 2})
+    return m
+
+
 PANEL_RECTS = {}          # filled by compose_frame; [x, y, w, h] in the 1920x1080 frame
 
 
@@ -989,12 +1019,21 @@ def main():
     manifest_lines.append("phase2 (future rollout, held cam + drawn overlay): %.1fs, real t=0.0..4.0s" % PHASE2_S)
     manifest_lines.append("")
 
+    meta_only = "--meta-only" in sys.argv
+    if meta_only:
+        log("\n*** --meta-only: rebuilding clip_meta.json, not re-encoding any clip ***")
+
     n_ok = 0
     scenes_done = []
     for tok, label in chosen:
         try:
             log("\n### rendering %s (%s) ###" % (tok, label))
             scene = Scene(tok, label, meta[tok])
+            if meta_only:
+                scenes_done.append(scene)
+                n_ok += 1
+                log("  metadata only for %s" % tok)
+                continue
             t0 = time.time()
             out_path, total_frames, stills, orig_nf, orig_shape = render_scene(scene)
             dt = time.time() - t0
@@ -1028,8 +1067,9 @@ def main():
             manifest_lines.append("")
 
     manifest_path = os.path.join(OUT_ROOT, "MANIFEST.txt")
-    with open(manifest_path, "w") as f:
-        f.write("\n".join(manifest_lines))
+    if not meta_only:      # meta-only has no per-clip records; writing would truncate it
+        with open(manifest_path, "w") as f:
+            f.write("\n".join(manifest_lines))
     # ---- machine-readable sidecar: panel rects + every scene's metadata -----
     # The page crops the camera / BEV halves out of a grabbed frame using these
     # rects, so the layout is never duplicated in JavaScript.
@@ -1045,7 +1085,10 @@ def main():
                       "frame": [W, H], "fps": FPS, "method_shown": METHOD,
                       "phase1_s": [-1.5, 0.0], "phase2_s": [0.0, 4.0],
                       "panel_rects_note": "[x, y, w, h] in the 1920x1080 composite",
-                      "panels": dict(PANEL_RECTS),
+                      "panels": (dict(PANEL_RECTS) if PANEL_RECTS else panel_rects()),
+                      "markers": timeline_markers(),
+                      "frames": {"total": N1 + N2, "history": [0, N1 - 1],
+                                 "future": [N1, N1 + N2 - 1]},
                       "source": "navsim_pages/scenes/{events,traj}/<token>.json + "
                                 "eval_test/bin_hardness/ego_curvature_navtest.json"},
             "scenes": {}}

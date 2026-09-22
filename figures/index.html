@@ -107,6 +107,16 @@
   .slider{flex:1; min-width:200px; accent-color:var(--accent); height:26px;
           cursor:pointer;}
   .scrub .tstamp{white-space:nowrap; font-size:12.5px; color:var(--ink-2);}
+  .marks{display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:0 2px;}
+  .marks .mlab{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
+               letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+               margin-right:2px;}
+  .mk{font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace; cursor:pointer;
+      background:var(--panel); color:var(--ink-2); border:1px solid var(--rule);
+      border-radius:4px; padding:6px 10px;}
+  .mk:hover{background:var(--accent-soft); color:var(--accent); border-color:var(--accent);}
+  .mk.now{background:var(--accent); color:var(--panel); border-color:var(--accent);}
+  .mk.p1{border-style:dashed;}
   .btn{font:500 12.5px/1 "IBM Plex Sans",system-ui,sans-serif; cursor:pointer;
        background:var(--accent-soft); color:var(--accent);
        border:1px solid var(--accent); border-radius:4px; padding:7px 12px;}
@@ -193,6 +203,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -212,6 +223,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -231,6 +243,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -250,6 +263,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -269,6 +283,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -288,6 +303,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -307,6 +323,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -326,6 +343,7 @@
                data-scrub aria-label="scrub to frame">
         <span class="tstamp" data-t>frame 0 / 171 &middot; t = 0.00 s</span>
       </div>
+      <div class="marks" data-marks></div>
       <div class="cliptools">
         <span class="dlabel">Download this frame</span>
         <button class="btn" data-dl="cam">&#11015; Camera (left)</button>
@@ -347,6 +365,9 @@
       from <span class="mono">scenes_v2/clip_meta.json</span>, written by the render job, so they
       cannot drift out of sync with the layout.</li>
       <li><strong>Full frame</strong> saves the whole 1920&times;1080 composite.</li>
+      <li>The chips under the slider jump straight to a time point &mdash; dashed ones are in
+      the replayed history (t&nbsp;&lt;&nbsp;0), solid ones in the future rollout. The chip for
+      the segment you are in highlights as you scrub.</li>
       <li>Each clip is <strong>172 frames</strong> &mdash; 40 of replayed history
       (t&nbsp;=&nbsp;&minus;1.5&hellip;0.0&nbsp;s) then 132 of future rollout
       (t&nbsp;=&nbsp;0.0&hellip;4.0&nbsp;s), at 20&nbsp;fps for 8.6&nbsp;s. The slider steps one
@@ -612,7 +633,8 @@
     var src = (v.querySelector("source") || {}).src || "";
     var tok = src.split("/").pop().replace(/\.mp4$/, "") || "frame";
     var scrub = card.querySelector("[data-scrub]");
-    var NFRAMES = null, dragging = false;
+    var marks = card.querySelector("[data-marks]");
+    var NFRAMES = null, dragging = false, MARKS = [];
 
     function nframes(){
       if (NFRAMES) return NFRAMES;
@@ -623,6 +645,13 @@
       }
       return NFRAMES;
     }
+    function highlight(f){
+      if (!MARKS.length) return;
+      var best = 0;
+      for (var i = 0; i < MARKS.length; i++) if (f >= MARKS[i].frame) best = i;
+      for (var j = 0; j < MARKS.length; j++)
+        MARKS[j].el.classList.toggle("now", j === best);
+    }
     function show(){
       var t = v.currentTime || 0;
       var f = Math.round(t * FPS);
@@ -630,6 +659,13 @@
       if (ts) ts.textContent = "frame " + f + (n ? " / " + (n - 1) : "")
                              + " · t = " + t.toFixed(2) + " s";
       if (scrub && !dragging) scrub.value = String(f);
+      highlight(f);
+    }
+    function goFrame(f){
+      v.pause();
+      var d = v.duration || (172 / FPS);
+      v.currentTime = Math.min(Math.max(f, 0) / FPS, d - 1e-3);
+      if (scrub) scrub.value = String(f);
     }
     v.addEventListener("timeupdate", function(){ show(); });
     v.addEventListener("seeked", function(){ show(); });
@@ -648,6 +684,28 @@
       scrub.addEventListener("pointerup", function(){ dragging = false; });
       scrub.addEventListener("keyup", function(){ dragging = false; });
     }
+
+    /* jump-to-time chips. Positions come from clip_meta.json (_meta.markers), written
+       by the render job from the same constants it draws with -- not hardcoded here. */
+    if (marks) meta().then(function(j){
+      var list = (j._meta || {}).markers || [];
+      if (!list.length) { marks.style.display = "none"; return; }
+      var lab = document.createElement("span");
+      lab.className = "mlab"; lab.textContent = "jump to";
+      marks.appendChild(lab);
+      list.forEach(function(m){
+        var b = document.createElement("button");
+        b.className = "mk" + (m.phase === 1 ? " p1" : "");
+        b.type = "button";
+        b.textContent = m.label;
+        b.title = "real t = " + m.t + " s  ·  frame " + m.frame;
+        b.addEventListener("click", function(){ goFrame(m.frame); show(); });
+        marks.appendChild(b);
+        MARKS.push({frame: m.frame, el: b});
+      });
+      MARKS.sort(function(a, b2){ return a.frame - b2.frame; });
+      show();
+    }).catch(function(){ marks.style.display = "none"; });
 
     Array.prototype.forEach.call(card.querySelectorAll("[data-dl]"), function(b){
       b.addEventListener("click", function(){
