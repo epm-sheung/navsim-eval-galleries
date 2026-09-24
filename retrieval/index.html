@@ -85,7 +85,11 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
 .nb .cap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
  line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .nb .cap b{color:var(--ink-2);font-weight:500;}
-.nb.samelog img{border-color:var(--warn);border-style:dashed;}
+/* colour encodes the command, dash encodes the log -- they are independent
+   signals, so a same-command same-log neighbour must show BOTH (green dashed).
+   Equal-specificity rules meant the later one used to win and hide the green. */
+.nb.samelog img{border-style:dashed;border-width:2px;}
+.nb.samelog:not(.match) img{border-color:var(--warn);}
 @media (max-width:1100px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}
  .strip{grid-template-columns:repeat(5,1fr);}}
 </style>
@@ -145,8 +149,8 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
   <span class="note">Neighbours:</span>
   <button class="seg" id="b-xlog" aria-pressed="true">Other logs only</button>
   <button class="seg" id="b-raw" aria-pressed="false">Raw top-10</button>
-  <span class="note" style="margin-left:auto">green border = same driving command as the query
-  &middot; amber dashed = same log</span>
+  <span class="note" style="margin-left:auto">green = same driving command as the query
+  &middot; dashed = same log (same drive, seconds apart)</span>
 </div>
 
 <section id="queries"></section>
