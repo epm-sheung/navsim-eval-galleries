@@ -159,7 +159,7 @@ HEAD = u"""<title>Five Figures</title>
   #navsim-tabbar .nt-home{color:#78838b;}
 }
 </style>
-<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="../index.html">Findings</a><a class="nt" href="../why_peaks.html">Why peaks</a><a class="nt" href="../session_scoreboard/index.html">Scoreboard</a><a class="nt" href="../scenes/index.html">Scenes</a><a class="nt" href="../distributions/index.html">Distributions</a><a class="nt" href="index.html" aria-current="page">Figures</a></nav>
+<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span><a class="nt" href="../index.html">Findings</a><a class="nt" href="../why_peaks.html">Why peaks</a><a class="nt" href="../session_scoreboard/index.html">Scoreboard</a><a class="nt" href="../scenes/index.html">Scenes</a><a class="nt" href="../distributions/index.html">Distributions</a><a class="nt" href="index.html" aria-current="page">Figures</a><a class="nt" href="../retrieval/index.html">Retrieval</a></nav>
 """
 
 BODY = u"""
