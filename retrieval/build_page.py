@@ -96,15 +96,11 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
 .strip{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
 .nb{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .nb img{width:100%;border-radius:3px;display:block;border:1px solid var(--rule);}
-.nb.match img{border-color:var(--good);}
+.nb.match img{border-style:dashed;border-width:2px;}
 .nb .cap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
  line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .nb .cap b{color:var(--ink-2);font-weight:500;}
-/* colour encodes the command, dash encodes the log -- they are independent
-   signals, so a same-command same-log neighbour must show BOTH (green dashed).
-   Equal-specificity rules meant the later one used to win and hide the green. */
-.nb.samelog img{border-style:dashed;border-width:2px;}
-.nb.samelog:not(.match) img{border-color:var(--warn);}
+
 @media (max-width:1100px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}
  .strip{grid-template-columns:repeat(5,1fr);}}
 """
@@ -244,8 +240,8 @@ def main():
   <span class="note">Neighbours:</span>
   <button class="seg" id="b-xlog" aria-pressed="true">Other logs only</button>
   <button class="seg" id="b-raw" aria-pressed="false">Raw top-10</button>
-  <span class="note" style="margin-left:auto">green = same driving command as the query
-  &middot; dashed = same log (same drive, seconds apart)</span>
+  <span class="note" style="margin-left:auto">dashed border = same driving command
+  as the query</span>
 </div>
 
 <section id="queries"></section>
@@ -262,7 +258,7 @@ let MODE = 'xlog';
 
 function strip(list, qcmd) {{
   return list.map(n => {{
-    const cls = 'nb' + (n.cmd === qcmd ? ' match' : '') + (n.same_log ? ' samelog' : '');
+    const cls = 'nb' + (n.cmd === qcmd ? ' match' : '');
     return `<div class="${{cls}}">
       <img loading="lazy" src="thumbs/${{n.token}}.jpg" alt="${{n.token}}">
       <div class="cap"><b>${{n.sim.toFixed(3)}}</b> ${{n.cmd[0]}} ${{n.speed.toFixed(1)}}m/s</div>
