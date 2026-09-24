@@ -96,7 +96,7 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
 .strip{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
 .nb{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .nb img{width:100%;border-radius:3px;display:block;border:1px solid var(--rule);}
-.nb.match img{border-style:dashed;border-width:2px;}
+.nb.match img{border-color:var(--good);border-width:2px;}
 .nb .cap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
  line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .nb .cap b{color:var(--ink-2);font-weight:500;}
@@ -159,7 +159,7 @@ def main():
 
     rows = []
     for label, key, hb, fmt in (
-            ("Driving-command match", "cmd_match", True, "%.1f%%"),
+            ("Same direction as query", "cmd_match", True, "%.1f%%"),
             ("Speed error vs query", "speed_mae", False, "%.2f m/s"),
             ("Mean cosine similarity", "sim", True, "%.3f"),
     ):
@@ -218,6 +218,8 @@ def main():
 
 <section>
   <h2>The two trunks do not agree</h2>
+  <p class="note measure">&ldquo;Direction&rdquo; here is the NAVSIM driving command at t0
+  &mdash; left, straight or right &mdash; the same field the chips on each query carry.</p>
   <table>
     <thead><tr><th>Across other logs, mean over 30 queries &times; 10 neighbours</th>
       <th>Stock DINOv2</th><th>Fine-tuned</th><th>Chance</th></tr></thead>
@@ -240,8 +242,7 @@ def main():
   <span class="note">Neighbours:</span>
   <button class="seg" id="b-xlog" aria-pressed="true">Other logs only</button>
   <button class="seg" id="b-raw" aria-pressed="false">Raw top-10</button>
-  <span class="note" style="margin-left:auto">dashed border = same driving command
-  as the query</span>
+  <span class="note" style="margin-left:auto">green border = same direction as the query</span>
 </div>
 
 <section id="queries"></section>
@@ -276,7 +277,7 @@ function render() {{
       const match = list.filter(n => n.cmd === m.cmd).length;
       return `<div class="row">
         <div class="rowlab">${{lab}}<span class="sub">mean cos ${{mean.toFixed(3)}}
-          &middot; ${{match}}/10 same command</span></div>
+          &middot; ${{match}}/10 same direction</span></div>
         <div class="strip">${{strip(list, m.cmd)}}</div></div>`;
     }}).join('');
     return `<div class="q">
