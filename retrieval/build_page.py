@@ -112,6 +112,8 @@ def esc(s):
 
 def main():
     data = json.load(open(SRC / "retrieval.json"))
+    SAE_SRC = Path("/scratch/eddie96/eddie/sae_retrieval/out/sae_retrieval.json")
+    sae = json.load(open(SAE_SRC)) if SAE_SRC.is_file() else None
     DST.mkdir(parents=True, exist_ok=True)
     tdir = DST / "thumbs"
     tdir.mkdir(exist_ok=True)
@@ -129,6 +131,8 @@ def main():
                     n["speed"] = meta[n["token"]]["speed_mps"]
                 drawn.update(n["token"] for n in mode)
 
+    if sae:
+        drawn.update(sae["need_tokens"])          # keep the SAE rows' thumbnails too
     n_copy = 0
     for tok in sorted(drawn):
         src = SRC / "thumbs" / f"{tok}.jpg"
@@ -144,6 +148,15 @@ def main():
     print(f"[thumbs] {len(drawn)} referenced, {n_copy} copied -> {tdir}")
 
     data.pop("thumbs", None)
+    if sae:
+        for q in sae.get("queries", {}).values():
+            for fam in q.values():
+                for lst in fam.values():
+                    for nb in lst:
+                        nb["cmd"] = meta[nb["token"]]["cmd"]
+                        nb["speed"] = meta[nb["token"]]["speed_mps"]
+        sae.pop("need_tokens", None)
+        data["sae"] = sae
     payload = json.dumps(data, separators=(",", ":"))
 
     s, ch = data["summary"], data["summary"]["chance"]
@@ -247,6 +260,20 @@ def main():
 
 <section id="queries"></section>
 
+<section id="sae-sec" hidden>
+  <h2>What the two trained gates actually remove</h2>
+  <p class="note measure">Two collaborators&rsquo; checkpoints add a sparse dictionary and a
+  <b>learned gate</b> on top of a driving model, trained with a teacher to keep what the policy
+  needs. Running the same retrieval through each one &mdash; before the gate and after it &mdash;
+  shows what each gate took out. The two behave nothing alike.</p>
+  <div id="sae-tables"></div>
+  <p class="note measure">Thumbnails are the same cached 504&times;280 frame used above, as a
+  scene identifier. The models themselves see the full frame: DrivoR at 1148&times;672,
+  Drive-JEPA as a two-frame 512&times;256 clip.</p>
+</section>
+
+<section id="sae-queries"></section>
+
 <p class="note">Generated {esc(data['generated_utc'])} &middot; embeddings
 {esc(em['generated_utc'])} &middot; {data['topk']} neighbours per model per query.</p>
 </div>
@@ -295,6 +322,74 @@ function render() {{
   }}).join('');
   document.getElementById('queries').innerHTML = out;
 }}
+
+function saeTables() {{
+  const S = D.sae, F = S.families;
+  const fams = Object.keys(F);
+  if (!fams.length) return;
+  const diag = `<table style="margin-bottom:14px"><thead><tr>
+      <th>Gate</th><th>dictionary</th><th>codes kept</th><th>codes dropped</th>
+      <th>magnitude in dropped codes</th><th>cos(before, after)</th>
+      <th>top-10 unchanged</th></tr></thead><tbody>` +
+    fams.map(f => {{
+      const m = F[f].meta, d = S.diag && S.diag[f] ? S.diag[f] : null;
+      return `<tr><td>${{F[f].label}}</td><td>${{m.m}}</td>
+        <td>${{m.codes_kept}}</td><td>${{m.m - m.codes_kept}}</td>
+        <td${{d && d.dropped_share > 0.05 ? ' class="win"' : ''}}>${{
+          d ? (d.dropped_share * 100).toFixed(1) + '%' : '&mdash;'}}</td>
+        <td>${{F[f].cos_pre_gated.toFixed(4)}}</td>
+        <td>${{F[f].overlap_pre_gated.toFixed(1)}}/10</td></tr>`;
+    }}).join('') + `</tbody></table>`;
+
+  const rows = fams.map(f => {{
+    const st = F[f].stats;
+    return ['pre', 'recon', 'gated'].map(v => `<tr>
+      <td>${{F[f].label.split(' (')[0]}} &mdash; ${{
+        v === 'pre' ? 'before the SAE' : v === 'recon' ? 'dictionary only' : 'after the gate'}}</td>
+      <td>${{(st[v].cmd_match * 100).toFixed(1)}}%</td>
+      <td>${{st[v].speed_mae.toFixed(2)}} m/s</td>
+      <td>${{st[v].sim.toFixed(3)}}</td></tr>`).join('');
+  }}).join('');
+  const perf = `<table><thead><tr><th>Retrieval, other logs, 30 queries &times; 10</th>
+      <th>same direction</th><th>speed error</th><th>mean cosine</th></tr></thead>
+    <tbody>${{rows}}
+    <tr><td class="mono">chance</td><td class="mono">${{(S.chance.cmd_match*100).toFixed(1)}}%</td>
+      <td class="mono">${{S.chance.speed_mae.toFixed(2)}} m/s</td><td class="mono">&mdash;</td></tr>
+    </tbody></table>`;
+  document.getElementById('sae-tables').innerHTML = diag + perf;
+  document.getElementById('sae-sec').hidden = false;
+}}
+
+function saeQueries() {{
+  const S = D.sae, F = S.families, fams = Object.keys(F);
+  if (!fams.length) return;
+  const out = D.queries.map((q, i) => {{
+    const m = q.meta, per = S.queries[q.token];
+    if (!per) return '';
+    const rows = fams.flatMap(f => (
+      [['pre', 'before the gate'], ['gated', 'after the gate']].map(([v, lab]) => {{
+        const list = per[f] && per[f][v]; if (!list) return '';
+        const match = list.filter(n => n.cmd === m.cmd).length;
+        return `<div class="row">
+          <div class="rowlab">${{F[f].label.split(' (')[0]}} &middot; ${{lab}}
+            <span class="sub">${{match}}/10 same direction</span></div>
+          <div class="strip">${{strip(list, m.cmd)}}</div></div>`;
+      }}))).join('');
+    if (!rows) return '';
+    return `<div class="q">
+      <div class="qhead"><span class="n">Q${{String(i + 1).padStart(2, '0')}}</span>
+        <span class="tok">${{q.token}}</span>
+        <span class="chip cmd">${{CMD[m.cmd] || m.cmd}}</span>
+        <span class="chip">${{m.speed_mps.toFixed(1)}} m/s</span></div>
+      <div class="body">
+        <div class="qimg"><img loading="lazy" src="thumbs/${{q.token}}.jpg" alt="query">
+          <div class="note" style="font-size:12px">query &middot; t0 frame</div></div>
+        <div class="rows">${{rows}}</div></div></div>`;
+  }}).join('');
+  document.getElementById('sae-queries').innerHTML = out;
+}}
+
+if (D.sae) {{ saeTables(); saeQueries(); }}
 
 for (const [id, mode] of [['b-xlog', 'xlog'], ['b-raw', 'raw']]) {{
   document.getElementById(id).addEventListener('click', () => {{
