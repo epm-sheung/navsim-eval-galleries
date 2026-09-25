@@ -226,9 +226,6 @@ def main():
     <thead><tr><th>descriptor</th><th>green / 10</th><th>speed error</th>
       <th>trajectory ADE</th><th>mean cosine</th></tr></thead>
     <tbody>
-      <tr class="chance"><td>chance &mdash; ten random scenes from other logs</td>
-        <td>{bch['green']:.2f}</td><td>{bch['speed']:.2f} m/s</td>
-        <td>{bch['ade']:.2f} m</td><td>&mdash;</td></tr>
       {''.join(body)}
     </tbody>
   </table>
@@ -237,11 +234,6 @@ def main():
   its neighbours actually drive the same way. <b>Compression is close to free</b> &mdash; the
   compressed and uncompressed rows differ by at most 0.02&nbsp;m of ADE, and for Drive-JEPA that
   holds while discarding 41.9% of the code magnitude.</p>
-  <p class="note measure"><b>Chance is {bch['green']:.2f}/10 here, not the 36.6% quoted further
-  down.</b> These 2,000 queries are drawn from the corpus as it is, which is 66% straight, so a
-  random neighbour matches direction &Sigma;p(c)&sup2; = {bch['green']*10:.1f}% of the time. The
-  thirty display queries are stratified to equal left / straight / right, where chance is 33.3%.
-  Both are correct for their own query set.</p>
 </section>"""
 
     ov = s["overlap_at_10"]

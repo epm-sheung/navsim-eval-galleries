@@ -164,9 +164,6 @@ tr.chance td{color:var(--ink-3);font-style:italic;}
     <thead><tr><th>descriptor</th><th>green / 10</th><th>speed error</th>
       <th>trajectory ADE</th><th>mean cosine</th></tr></thead>
     <tbody>
-      <tr class="chance"><td>chance &mdash; ten random scenes from other logs</td>
-        <td>4.99</td><td>3.76 m/s</td>
-        <td>8.31 m</td><td>&mdash;</td></tr>
       <tr class="grp"><td colspan="5">DINOv2</td></tr><tr><td>stock, CLS</td><td class="">8.02</td><td class="">2.18</td><td class="">4.65</td><td class="">0.850</td></tr><tr><td>fine-tuned (ours), CLS</td><td class="">8.56</td><td class="">1.70</td><td class="">3.63</td><td class="">0.915</td></tr><tr><td>stock, patch mean</td><td class="">8.11</td><td class="">2.13</td><td class="">4.64</td><td class="">0.927</td></tr><tr><td>fine-tuned (ours), patch mean</td><td class="">8.47</td><td class="">1.88</td><td class="">3.99</td><td class="">0.954</td></tr><tr class="grp"><td colspan="5">DrivoR</td></tr><tr><td>CLS (no SAE)</td><td class="">8.71</td><td class="">1.49</td><td class="">3.20</td><td class="">0.921</td></tr><tr><td>compressed CLS (SAE + gate)</td><td class="">8.71</td><td class="">1.49</td><td class="">3.20</td><td class="">0.924</td></tr><tr><td>compressed CLS codes</td><td class="">8.71</td><td class="">1.49</td><td class="">3.20</td><td class="">0.928</td></tr><tr><td>compressed SAE (kept codes)</td><td class="">8.76</td><td class="">1.39</td><td class="">2.97</td><td class="">0.991</td></tr><tr><td>SAE codes uncompressed</td><td class="">8.76</td><td class="">1.39</td><td class="">2.97</td><td class="">0.991</td></tr><tr><td>features before the SAE</td><td class="">8.80</td><td class="">1.38</td><td class="">2.96</td><td class="">0.902</td></tr><tr><td>features after the gate</td><td class="">8.80</td><td class="">1.38</td><td class="">2.95</td><td class="">0.902</td></tr><tr class="grp"><td colspan="5">Drive-JEPA</td></tr><tr><td>compressed SAE (kept codes)</td><td class="">8.90</td><td class="">0.98</td><td class="">2.28</td><td class="">0.987</td></tr><tr><td>SAE codes uncompressed</td><td class="">8.91</td><td class="">0.98</td><td class="">2.29</td><td class="">0.988</td></tr><tr><td>features before the SAE</td><td class="win">8.93</td><td class="">0.94</td><td class="">2.17</td><td class="">0.931</td></tr><tr><td>features after the gate</td><td class="">8.91</td><td class="win">0.94</td><td class="win">2.15</td><td class="">0.940</td></tr>
     </tbody>
   </table>
@@ -175,11 +172,6 @@ tr.chance td{color:var(--ink-3);font-style:italic;}
   its neighbours actually drive the same way. <b>Compression is close to free</b> &mdash; the
   compressed and uncompressed rows differ by at most 0.02&nbsp;m of ADE, and for Drive-JEPA that
   holds while discarding 41.9% of the code magnitude.</p>
-  <p class="note measure"><b>Chance is 4.99/10 here, not the 36.6% quoted further
-  down.</b> These 2,000 queries are drawn from the corpus as it is, which is 66% straight, so a
-  random neighbour matches direction &Sigma;p(c)&sup2; = 49.9% of the time. The
-  thirty display queries are stratified to equal left / straight / right, where chance is 33.3%.
-  Both are correct for their own query set.</p>
 </section>
 
 <nav class="jump">
