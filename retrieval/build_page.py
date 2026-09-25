@@ -330,7 +330,7 @@ function saeTables() {{
   const diag = `<table style="margin-bottom:14px"><thead><tr>
       <th>Gate</th><th>dictionary</th><th>codes kept</th><th>codes dropped</th>
       <th>magnitude in dropped codes</th><th>cos(before, after)</th>
-      <th>top-10 unchanged</th></tr></thead><tbody>` +
+      <th>top-10 unchanged</th><th>&hellip; in code space</th></tr></thead><tbody>` +
     fams.map(f => {{
       const m = F[f].meta, d = S.diag && S.diag[f] ? S.diag[f] : null;
       return `<tr><td>${{F[f].label}}</td><td>${{m.m}}</td>
@@ -338,14 +338,17 @@ function saeTables() {{
         <td${{d && d.dropped_share > 0.05 ? ' class="win"' : ''}}>${{
           d ? (d.dropped_share * 100).toFixed(1) + '%' : '&mdash;'}}</td>
         <td>${{F[f].cos_pre_gated.toFixed(4)}}</td>
-        <td>${{F[f].overlap_pre_gated.toFixed(1)}}/10</td></tr>`;
+        <td>${{F[f].overlap_pre_gated.toFixed(1)}}/10</td>
+        <td>${{S.code_overlap_mean && S.code_overlap_mean[f] != null
+              ? S.code_overlap_mean[f].toFixed(1) + '/10' : '&mdash;'}}</td></tr>`;
     }}).join('') + `</tbody></table>`;
 
   const rows = fams.map(f => {{
     const st = F[f].stats;
-    return ['pre', 'recon', 'gated'].map(v => `<tr>
-      <td>${{F[f].label.split(' (')[0]}} &mdash; ${{
-        v === 'pre' ? 'before the SAE' : v === 'recon' ? 'dictionary only' : 'after the gate'}}</td>
+    const NAME = {{pre: 'before the SAE', recon: 'dictionary only', gated: 'after the gate',
+                  codes: 'code space, all codes', codes_gated: 'code space, kept codes'}};
+    return ['pre', 'recon', 'gated', 'codes', 'codes_gated'].map(v => `<tr>
+      <td>${{F[f].label.split(' (')[0]}} &mdash; ${{NAME[v]}}</td>
       <td>${{(st[v].cmd_match * 100).toFixed(1)}}%</td>
       <td>${{st[v].speed_mae.toFixed(2)}} m/s</td>
       <td>${{st[v].sim.toFixed(3)}}</td></tr>`).join('');
@@ -367,7 +370,8 @@ function saeQueries() {{
     const m = q.meta, per = S.queries[q.token];
     if (!per) return '';
     const rows = fams.flatMap(f => (
-      [['pre', 'before the gate'], ['gated', 'after the gate']].map(([v, lab]) => {{
+      [['pre', 'before the gate'], ['gated', 'after the gate'],
+       ['codes_gated', 'SAE code space, kept codes']].map(([v, lab]) => {{
         const list = per[f] && per[f][v]; if (!list) return '';
         const match = list.filter(n => n.cmd === m.cmd).length;
         return `<div class="row">
