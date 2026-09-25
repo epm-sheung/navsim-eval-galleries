@@ -60,6 +60,11 @@ button.seg{font:inherit;font-size:13px;padding:6px 14px;border-radius:5px;cursor
  border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);}
 button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);
  color:var(--accent);font-weight:600;}
+.jump{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;
+ background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;font-size:14px;}
+.jump a{color:var(--accent);font-weight:600;text-decoration:none;padding:4px 10px;
+ border-radius:4px;border:1px solid var(--accent);background:var(--panel);}
+.jump a:hover{background:var(--accent);color:var(--panel);}
 .q{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;
  display:flex;flex-direction:column;gap:12px;}
 .qhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:13px;
@@ -143,14 +148,11 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
   depended on.</p>
 </section>
 
-<div class="controls">
-  <span class="note">Neighbours:</span>
-  <button class="seg" id="b-xlog" aria-pressed="true">Other logs only</button>
-  <button class="seg" id="b-raw" aria-pressed="false">Raw top-10</button>
-  <span class="note" style="margin-left:auto">green border = same direction as the query</span>
-</div>
-
-<section id="queries"></section>
+<nav class="jump">
+  <span class="note">Jump to:</span>
+  <a href="#sae-sec">The two SAE gates</a>
+  <a href="#dino">Stock vs fine-tuned DINOv2</a>
+</nav>
 
 <section id="sae-sec" hidden>
   <h2>What the two trained gates actually remove</h2>
@@ -159,12 +161,29 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
   needs. Running the same retrieval through each one &mdash; before the gate and after it &mdash;
   shows what each gate took out. The two behave nothing alike.</p>
   <div id="sae-tables"></div>
+  <p class="note">green border = same direction as the query &middot; neighbours are always from
+  other driving logs here</p>
   <p class="note measure">Thumbnails are the same cached 504&times;280 frame used above, as a
   scene identifier. The models themselves see the full frame: DrivoR at 1148&times;672,
   Drive-JEPA as a two-frame 512&times;256 clip.</p>
 </section>
 
 <section id="sae-queries"></section>
+
+<section>
+  <h2 id="dino">Stock vs fine-tuned DINOv2</h2>
+  <p class="note measure">The comparison the page opened with, scene by scene: the same query
+  against stock <span class="mono">dinov2_vits14</span> and against our fine-tuned trunk.</p>
+</section>
+
+<div class="controls">
+  <span class="note">Neighbours:</span>
+  <button class="seg" id="b-xlog" aria-pressed="true">Other logs only</button>
+  <button class="seg" id="b-raw" aria-pressed="false">Raw top-10</button>
+  <span class="note" style="margin-left:auto">green border = same direction as the query</span>
+</div>
+
+<section id="queries"></section>
 
 <p class="note">Generated 2026-09-24T01:43:39Z &middot; embeddings
 2026-09-24T01:41:35Z &middot; 10 neighbours per model per query.</p>
