@@ -60,6 +60,9 @@ button.seg{font:inherit;font-size:13px;padding:6px 14px;border-radius:5px;cursor
  border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);}
 button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);
  color:var(--accent);font-weight:600;}
+tr.grp td{background:var(--panel-2);font-weight:600;font-size:12px;
+ text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);}
+tr.chance td{color:var(--ink-3);font-style:italic;}
 .jump{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;
  background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;font-size:14px;}
 .jump a{color:var(--accent);font-weight:600;text-decoration:none;padding:4px 10px;
@@ -148,8 +151,40 @@ button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(-
   depended on.</p>
 </section>
 
+
+<section>
+  <h2 id="bench">How good is each descriptor, over 2,000 queries</h2>
+  <p class="note measure">The thirty queries below are for looking at. These are for counting:
+  <b>2,000 queries</b> spread evenly across the corpus, each retrieving
+  top-10 from all 12,146 scenes, neighbours restricted to other logs.
+  <b>green</b> is how many of the ten share the query&rsquo;s direction; <b>ADE</b> is the mean
+  error between the query&rsquo;s 4&nbsp;s future and each neighbour&rsquo;s, both in their own t0
+  ego frame. Best in each column is highlighted.</p>
+  <table>
+    <thead><tr><th>descriptor</th><th>green / 10</th><th>speed error</th>
+      <th>trajectory ADE</th><th>mean cosine</th></tr></thead>
+    <tbody>
+      <tr class="chance"><td>chance &mdash; ten random scenes from other logs</td>
+        <td>4.99</td><td>3.76 m/s</td>
+        <td>8.31 m</td><td>&mdash;</td></tr>
+      <tr class="grp"><td colspan="5">DINOv2</td></tr><tr><td>stock, CLS</td><td class="">8.02</td><td class="">2.18</td><td class="">4.65</td><td class="">0.850</td></tr><tr><td>fine-tuned (ours), CLS</td><td class="">8.56</td><td class="">1.70</td><td class="">3.63</td><td class="">0.915</td></tr><tr><td>stock, patch mean</td><td class="">8.11</td><td class="">2.13</td><td class="">4.64</td><td class="">0.927</td></tr><tr><td>fine-tuned (ours), patch mean</td><td class="">8.47</td><td class="">1.88</td><td class="">3.99</td><td class="">0.954</td></tr><tr class="grp"><td colspan="5">DrivoR</td></tr><tr><td>CLS (no SAE)</td><td class="">8.71</td><td class="">1.49</td><td class="">3.20</td><td class="">0.921</td></tr><tr><td>compressed CLS (SAE + gate)</td><td class="">8.71</td><td class="">1.49</td><td class="">3.20</td><td class="">0.924</td></tr><tr><td>compressed CLS codes</td><td class="">8.71</td><td class="">1.49</td><td class="">3.20</td><td class="">0.928</td></tr><tr><td>compressed SAE (kept codes)</td><td class="">8.76</td><td class="">1.39</td><td class="">2.97</td><td class="">0.991</td></tr><tr><td>SAE codes uncompressed</td><td class="">8.76</td><td class="">1.39</td><td class="">2.97</td><td class="">0.991</td></tr><tr><td>features before the SAE</td><td class="">8.80</td><td class="">1.38</td><td class="">2.96</td><td class="">0.902</td></tr><tr><td>features after the gate</td><td class="">8.80</td><td class="">1.38</td><td class="">2.95</td><td class="">0.902</td></tr><tr class="grp"><td colspan="5">Drive-JEPA</td></tr><tr><td>compressed SAE (kept codes)</td><td class="">8.90</td><td class="">0.98</td><td class="">2.28</td><td class="">0.987</td></tr><tr><td>SAE codes uncompressed</td><td class="">8.91</td><td class="">0.98</td><td class="">2.29</td><td class="">0.988</td></tr><tr><td>features before the SAE</td><td class="win">8.93</td><td class="">0.94</td><td class="">2.17</td><td class="">0.931</td></tr><tr><td>features after the gate</td><td class="">8.91</td><td class="win">0.94</td><td class="win">2.15</td><td class="">0.940</td></tr>
+    </tbody>
+  </table>
+  <p class="note measure"><b>ADE is what separates them.</b> Green saturates near 8&ndash;9 for
+  everything, but trajectory error ranks cleanly: the more driving-trained the encoder, the more
+  its neighbours actually drive the same way. <b>Compression is close to free</b> &mdash; the
+  compressed and uncompressed rows differ by at most 0.02&nbsp;m of ADE, and for Drive-JEPA that
+  holds while discarding 41.9% of the code magnitude.</p>
+  <p class="note measure"><b>Chance is 4.99/10 here, not the 36.6% quoted further
+  down.</b> These 2,000 queries are drawn from the corpus as it is, which is 66% straight, so a
+  random neighbour matches direction &Sigma;p(c)&sup2; = 49.9% of the time. The
+  thirty display queries are stratified to equal left / straight / right, where chance is 33.3%.
+  Both are correct for their own query set.</p>
+</section>
+
 <nav class="jump">
   <span class="note">Jump to:</span>
+  <a href="#bench">Scores over 2,000 queries</a>
   <a href="#sae-sec">The two SAE gates</a>
   <a href="#dino">Stock vs fine-tuned DINOv2</a>
 </nav>

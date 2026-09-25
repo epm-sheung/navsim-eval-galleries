@@ -75,6 +75,9 @@ button.seg{font:inherit;font-size:13px;padding:6px 14px;border-radius:5px;cursor
  border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);}
 button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);
  color:var(--accent);font-weight:600;}
+tr.grp td{background:var(--panel-2);font-weight:600;font-size:12px;
+ text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);}
+tr.chance td{color:var(--ink-3);font-style:italic;}
 .jump{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;
  background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;font-size:14px;}
 .jump a{color:var(--accent);font-weight:600;text-decoration:none;padding:4px 10px;
@@ -117,6 +120,8 @@ def esc(s):
 
 def main():
     data = json.load(open(SRC / "retrieval.json"))
+    BENCH_SRC = Path("/scratch/eddie96/eddie/sae_retrieval/out/bench_tools.json")
+    bench = json.load(open(BENCH_SRC)) if BENCH_SRC.is_file() else None
     SAE_SRC = Path("/scratch/eddie96/eddie/sae_retrieval/out/sae_retrieval.json")
     sae = json.load(open(SAE_SRC)) if SAE_SRC.is_file() else None
     DST.mkdir(parents=True, exist_ok=True)
@@ -188,6 +193,57 @@ def main():
         rows.append("<tr><td>%s</td>%s%s<td class='mono'>%s</td></tr>" % (
             label, cell(av, bv, hb, fmt), cell(bv, av, hb, fmt), chs))
 
+    bench_html = ""
+    if bench:
+        bch = bench["chance"]
+        best = {k: (min if k in ("speed", "ade") else max)(r[k] for r in bench["rows"])
+                for k in ("green", "speed", "ade")}
+        fam_of = lambda n: ("DINOv2" if n.startswith("DINOv2") else
+                            "DrivoR" if n.startswith("DrivoR") else "Drive-JEPA")
+        body, seen = [], None
+        for r in bench["rows"]:
+            f = fam_of(r["name"])
+            if f != seen:
+                body.append(f'<tr class="grp"><td colspan="5">{f}</td></tr>')
+                seen = f
+            cells = "".join(
+                '<td class="%s">%s</td>' % (
+                    "win" if k in best and abs(r[k] - best[k]) < 1e-9 else "", fmt % r[k])
+                for k, fmt in (("green", "%.2f"), ("speed", "%.2f"), ("ade", "%.2f"), ("cos", "%.3f")))
+            # strip only the family word; "stock" vs "fine-tuned (ours)" IS the comparison
+            lab = r["name"][len(f):].lstrip(", ").strip()
+            body.append(f'<tr><td>{esc(lab)}</td>{cells}</tr>')
+        bench_html = f"""
+<section>
+  <h2 id="bench">How good is each descriptor, over 2,000 queries</h2>
+  <p class="note measure">The thirty queries below are for looking at. These are for counting:
+  <b>{bench['n_queries']:,} queries</b> spread evenly across the corpus, each retrieving
+  top-{bench['topk']} from all {bench['n_corpus']:,} scenes, neighbours restricted to other logs.
+  <b>green</b> is how many of the ten share the query&rsquo;s direction; <b>ADE</b> is the mean
+  error between the query&rsquo;s 4&nbsp;s future and each neighbour&rsquo;s, both in their own t0
+  ego frame. Best in each column is highlighted.</p>
+  <table>
+    <thead><tr><th>descriptor</th><th>green / 10</th><th>speed error</th>
+      <th>trajectory ADE</th><th>mean cosine</th></tr></thead>
+    <tbody>
+      <tr class="chance"><td>chance &mdash; ten random scenes from other logs</td>
+        <td>{bch['green']:.2f}</td><td>{bch['speed']:.2f} m/s</td>
+        <td>{bch['ade']:.2f} m</td><td>&mdash;</td></tr>
+      {''.join(body)}
+    </tbody>
+  </table>
+  <p class="note measure"><b>ADE is what separates them.</b> Green saturates near 8&ndash;9 for
+  everything, but trajectory error ranks cleanly: the more driving-trained the encoder, the more
+  its neighbours actually drive the same way. <b>Compression is close to free</b> &mdash; the
+  compressed and uncompressed rows differ by at most 0.02&nbsp;m of ADE, and for Drive-JEPA that
+  holds while discarding 41.9% of the code magnitude.</p>
+  <p class="note measure"><b>Chance is {bch['green']:.2f}/10 here, not the 36.6% quoted further
+  down.</b> These 2,000 queries are drawn from the corpus as it is, which is 66% straight, so a
+  random neighbour matches direction &Sigma;p(c)&sup2; = {bch['green']*10:.1f}% of the time. The
+  thirty display queries are stratified to equal left / straight / right, where chance is 33.3%.
+  Both are correct for their own query set.</p>
+</section>"""
+
     ov = s["overlap_at_10"]
     tabbar = ('<nav id="navsim-tabbar" aria-label="Galleries">'
               '<span class="nt-home">NAVSIM eval</span>' +
@@ -256,8 +312,11 @@ def main():
   depended on.</p>
 </section>
 
+{bench_html}
+
 <nav class="jump">
   <span class="note">Jump to:</span>
+  <a href="#bench">Scores over 2,000 queries</a>
   <a href="#sae-sec">The two SAE gates</a>
   <a href="#dino">Stock vs fine-tuned DINOv2</a>
 </nav>
