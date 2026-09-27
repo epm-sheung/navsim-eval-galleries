@@ -1,485 +1,179 @@
 # -*- coding: utf-8 -*-
-"""Build navsim_pages/retrieval/index.html from the retrieval run output.
+"""Build navsim_pages/retrieval/index.html -- ONE page, ONE ranked scoreboard, ONE gallery.
 
-Reads /scratch/eddie96/eddie/navsim_retrieval/out/retrieval.json, copies only the
-thumbnails the page actually draws, and inlines a trimmed payload so the page is
-self-contained (no fetch, works from file:// as well as GitHub Pages).
+v2 (2026-09-27) replaces the earlier layout, which showed the same 30 queries twice
+(once for the DINOv2 rows, once for the SAE rows) plus three overlapping stats
+tables. Everything now comes from a single payload, sae_retrieval/out/unified.json:
+
+  * scoreboard  every descriptor over 2,000 queries, identical results merged into
+                one row, ranked by trajectory ADE (the metric that separates them)
+  * gallery     the 30 display queries, each with a top-10 per descriptor; a picker
+                chooses which descriptors are drawn, rows follow the scoreboard rank,
+                and every tile carries its 4 s future so trajectories can be compared
+
+The template is a plain string with __TOKEN__ placeholders, NOT an f-string, so the
+page's CSS/JS braces never need escaping.
 """
-import json, os, shutil, sys, time
+import html, json, shutil
 from pathlib import Path
 
-SRC = Path("/scratch/eddie96/eddie/navsim_retrieval/out")
+S = Path("/scratch/eddie96/eddie/sae_retrieval/out")
+THUMB_SRC = Path("/scratch/eddie96/eddie/navsim_retrieval/out/thumbs")
 DST = Path("/scratch/eddie96/eddie/navsim_pages/retrieval")
+
 TABS = [("Findings", "../index.html"), ("Why peaks", "../why_peaks.html"),
-        ("Scoreboard", "../session_scoreboard/index.html"),
-        ("Scenes", "../scenes/index.html"),
-        ("Distributions", "../distributions/index.html"),
-        ("Figures", "../figures/index.html"),
+        ("Scoreboard", "../session_scoreboard/index.html"), ("Scenes", "../scenes/index.html"),
+        ("Distributions", "../distributions/index.html"), ("Figures", "../figures/index.html"),
         ("Retrieval", "index.html")]
+DEFAULT_ON = ["stock_cls", "ours_visual", "ours_repr", "drivor_codes_kept", "jepa_gated"]
 
-TABCSS = """
-#navsim-tabbar{position:sticky;top:0;z-index:99999;display:flex;gap:2px;flex-wrap:wrap;
-  align-items:center;padding:8px 14px;margin:0;background:#fbfbfa;
-  border-bottom:1px solid #dcdedb;font-family:"IBM Plex Sans",system-ui,sans-serif;}
-#navsim-tabbar .nt-home{font-size:12px;font-weight:600;letter-spacing:.1em;
-  text-transform:uppercase;color:#78828e;margin-right:12px;}
-#navsim-tabbar a.nt{font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;
-  padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;}
-#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
-#navsim-tabbar a.nt[aria-current="page"]{background:#e2eeec;border-color:#1f6f6b;
-  color:#1f6f6b;font-weight:600;}
-@media (prefers-color-scheme:dark){
-  #navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}
-  #navsim-tabbar a.nt{color:#a8b2b8;}
-  #navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}
-  #navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}
-  #navsim-tabbar .nt-home{color:#78838b;}
-}
-"""
-
-CSS = """
-:root{--ground:#f4f5f3;--panel:#fbfbfa;--panel-2:#eceeea;--ink:#1b2027;--ink-2:#4a535e;
- --ink-3:#78828e;--rule:#dcdedb;--accent:#1f6f6b;--accent-soft:#e2eeec;
- --good:#2f7d4f;--warn:#b06a12;--crit:#a8322d;--good-bg:#e7f1ea;--crit-bg:#f6e6e5;}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
- --ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;
- --ink-3:#78838b;--rule:#2c3238;--accent:#5fbdb5;--accent-soft:#1d3230;
- --good:#69c48d;--warn:#d69b44;--crit:#e08079;--good-bg:#17281e;--crit-bg:#2c1c1b;}}
-*{box-sizing:border-box;}
-body{margin:0;background:var(--ground);color:var(--ink);
- font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:15.5px;line-height:1.65;}
-.wrap{max-width:1420px;margin:0 auto;padding:36px 24px 90px;display:flex;
- flex-direction:column;gap:34px;}
-.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;
- letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);}
-h1{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:33px;margin:0;
- letter-spacing:-.015em;}
-h2{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:21px;margin:0 0 4px;}
-header{display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--rule);
- padding-bottom:22px;}
-.standfirst{font-size:17px;color:var(--ink-2);margin:0;max-width:78ch;}
-p{margin:0;} .measure{max-width:80ch;}
-.note{font-size:13.5px;color:var(--ink-2);}
-.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
-table{border-collapse:collapse;font-size:13.5px;background:var(--panel);
- border:1px solid var(--rule);border-radius:5px;}
-th,td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--rule);}
-th:first-child,td:first-child{text-align:left;}
-thead th{background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--ink-2);}
-tbody tr:last-child td{border-bottom:none;}
-td.win{color:var(--good);font-weight:600;}
-.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
- position:sticky;top:45px;z-index:90;background:var(--ground);padding:10px 0;
- border-bottom:1px solid var(--rule);}
-button.seg{font:inherit;font-size:13px;padding:6px 14px;border-radius:5px;cursor:pointer;
- border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);}
-button.seg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);
- color:var(--accent);font-weight:600;}
-tr.grp td{background:var(--panel-2);font-weight:600;font-size:12px;
- text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);}
-tr.chance td{color:var(--ink-3);font-style:italic;}
-.jump{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;
- background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;font-size:14px;}
-.jump a{color:var(--accent);font-weight:600;text-decoration:none;padding:4px 10px;
- border-radius:4px;border:1px solid var(--accent);background:var(--panel);}
-.jump a:hover{background:var(--accent);color:var(--panel);}
-.q{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;
- display:flex;flex-direction:column;gap:12px;}
-.qhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:13px;
- color:var(--ink-2);}
-.qhead .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3);}
-.qhead .tok{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink);}
-.chip{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--rule);
- background:var(--panel-2);color:var(--ink-2);font-family:"IBM Plex Mono",monospace;}
-.chip.cmd{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
-.body{display:flex;gap:16px;align-items:flex-start;}
-.qimg{flex:0 0 300px;display:flex;flex-direction:column;gap:5px;}
-.qimg img{width:300px;border-radius:4px;display:block;border:2px solid var(--accent);}
-.rows{flex:1 1 auto;display:flex;flex-direction:column;gap:12px;min-width:0;}
-.row{display:flex;flex-direction:column;gap:5px;}
-.rowlab{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;gap:8px;
- align-items:baseline;}
-.rowlab .sub{font-weight:400;font-size:11.5px;color:var(--ink-3);
- font-family:"IBM Plex Mono",monospace;}
-.strip{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
-.nb{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.nb img{width:100%;border-radius:3px;display:block;border:1px solid var(--rule);}
-.nb.match img{border-color:var(--good);border-width:2px;}
-.nb .cap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
- line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.nb .cap b{color:var(--ink-2);font-weight:500;}
-
-@media (max-width:1100px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}
- .strip{grid-template-columns:repeat(5,1fr);}}
-"""
+# what is worth comparing, and what is not -- rendered as its own section
+INVENTORY = [
+    ("On this page", [
+        ("Encoder family", "stock DINOv2, fine-tuned trunk, our model, DrivoR, Drive-JEPA",
+         "yes", "the main axis; ADE separates them cleanly"),
+        ("Model representation vs trunk", "our model's readout vs the frozen trunk it sits on",
+         "yes", "this is what explains why the trunk alone looked no better than stock"),
+        ("Image vs non-image inputs", "readout with / without motion + command, and no-image controls",
+         "yes", "the controls show how much of a score is handed in rather than seen"),
+        ("Before vs after an SAE gate", "DrivoR and Drive-JEPA, same image",
+         "yes", "the direct measure of what a gate removes"),
+        ("Compressed vs uncompressed codes", "kept codes vs all codes",
+         "yes", "tests whether compression costs retrieval"),
+        ("CLS vs patch mean", "same trunk, two poolings",
+         "marginal", "within 0.1 on direction and 0.4 m on ADE for every trunk"),
+    ]),
+    ("Metrics", [
+        ("Trajectory ADE", "query's 4 s future vs each neighbour's, own ego frames",
+         "yes, headline", "the only metric that separates all encoders"),
+        ("Speed error", "|speed difference| at t0", "yes", "tracks ADE, coarser"),
+        ("Same direction", "driving command matches", "weak",
+         "saturates near 8-9 of 10, and is trivially 10/10 for anything fed the command"),
+        ("Score gap", "|PDMS difference| to neighbours", "weak",
+         "every encoder sits at 0.19-0.21 against 0.24 by chance: none groups scenes by difficulty"),
+        ("Mean cosine", "similarity of the retrieved ten", "no",
+         "each descriptor lives in its own space; values cannot be compared across rows"),
+    ]),
+    ("Available, not yet run", [
+        ("navhard frames", "the split where both SAE papers report their gains", "yes, next",
+         "the gate diagnostics here are navtest-only; the dropped codes may activate there"),
+        ("Neighbour gate failures", "does a neighbour fail the same PDMS gate", "yes",
+         "per-scene sub-scores exist for 8 methods"),
+        ("Map / agent context", "drivable-area margin, agent count", "maybe",
+         "needs the metric cache; would test scene-structure similarity directly"),
+        ("Same-log neighbours", "raw top-10 without the log filter", "no",
+         "they are the same drive seconds apart, median 1.5 s from the query"),
+    ]),
+]
 
 
 def esc(s):
-    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+    return html.escape(str(s), quote=True)
 
 
 def main():
-    data = json.load(open(SRC / "retrieval.json"))
-    BENCH_SRC = Path("/scratch/eddie96/eddie/sae_retrieval/out/bench_tools.json")
-    bench = json.load(open(BENCH_SRC)) if BENCH_SRC.is_file() else None
-    SAE_SRC = Path("/scratch/eddie96/eddie/sae_retrieval/out/sae_retrieval.json")
-    sae = json.load(open(SAE_SRC)) if SAE_SRC.is_file() else None
-    DST.mkdir(parents=True, exist_ok=True)
-    tdir = DST / "thumbs"
-    tdir.mkdir(exist_ok=True)
-
-    # ---- trim: the page draws CLS rows only; patch-token lists stay as stats ----
-    meta = json.load(open(SRC / "scene_meta.json"))["scenes"]
-    drawn = set()
-    for q in data["queries"]:
-        drawn.add(q["token"])
-        q["models"] = {k: v for k, v in q["models"].items() if k.endswith("_cls")}
-        for v in q["models"].values():
-            for mode in v.values():
-                for n in mode:                      # captions need these client-side
-                    n["cmd"] = meta[n["token"]]["cmd"]
-                    n["speed"] = meta[n["token"]]["speed_mps"]
-                drawn.update(n["token"] for n in mode)
-
-    if sae:
-        drawn.update(sae["need_tokens"])          # keep the SAE rows' thumbnails too
-    n_copy = 0
-    for tok in sorted(drawn):
-        src = SRC / "thumbs" / f"{tok}.jpg"
+    U = json.load(open(S / "unified.json"))
+    need = {q["token"] for q in U["queries"]}
+    for q in U["queries"]:
+        for lst in q["nb"].values():
+            need.update(n["t"] for n in lst)
+    thumbs = DST / "thumbs"; thumbs.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    for t in sorted(need):
+        src = THUMB_SRC / f"{t}.jpg"
         if not src.is_file():
-            raise SystemExit(f"missing thumbnail for {tok}")
-        dst = tdir / f"{tok}.jpg"
+            raise SystemExit(f"missing thumbnail {t}")
+        dst = thumbs / f"{t}.jpg"
         if not dst.exists() or dst.stat().st_size != src.stat().st_size:
-            shutil.copy2(src, dst)
-            n_copy += 1
-    for f in tdir.glob("*.jpg"):                    # drop thumbs no longer referenced
-        if f.stem not in drawn:
-            f.unlink()
-    print(f"[thumbs] {len(drawn)} referenced, {n_copy} copied -> {tdir}")
+            shutil.copy2(src, dst); copied += 1
+    removed = 0
+    for f in thumbs.glob("*.jpg"):
+        if f.stem not in need:
+            f.unlink(); removed += 1
+    print(f"[thumbs] {len(need)} referenced, {copied} copied, {removed} removed")
 
-    data.pop("thumbs", None)
-    if sae:
-        for q in sae.get("queries", {}).values():
-            for fam in q.values():
-                for lst in fam.values():
-                    for nb in lst:
-                        nb["cmd"] = meta[nb["token"]]["cmd"]
-                        nb["speed"] = meta[nb["token"]]["speed_mps"]
-        sae.pop("need_tokens", None)
-        data["sae"] = sae
-    payload = json.dumps(data, separators=(",", ":"))
+    rows, ch = U["rows"], U["chance"]
+    best_ade = min(r["ade"] for r in rows)
+    worst = ch["ade"]
+    grp_cls = {"image only": "g-img", "image + motion + command": "g-full",
+               "no image (control)": "g-ctrl"}
+    body = []
+    for r in rows:
+        w = max(2, min(100, (worst - r["ade"]) / (worst - best_ade) * 100))
+        merged = (f'<div class="merged">identical to: {esc(", ".join(r["merged"]))}</div>'
+                  if r["merged"] else "")
+        body.append(
+            f'<tr class="{grp_cls.get(r["group"], "")}">'
+            f'<td class="rk">{r["rank"]}</td>'
+            f'<td><div class="dn">{esc(r["label"])}</div>{merged}</td>'
+            f'<td><span class="gchip">{esc(r["group"])}</span></td>'
+            f'<td class="num ade"><div class="bar"><i style="width:{w:.0f}%"></i></div>'
+            f'<b>{r["ade"]:.2f}</b> m</td>'
+            f'<td class="num">{r["speed"]:.2f}</td>'
+            f'<td class="num">{r["green"]:.2f}</td>'
+            f'<td class="num">{r["pdms_gap"]:.3f}</td></tr>')
+    body.append(
+        f'<tr class="chance"><td class="rk">&mdash;</td><td><div class="dn">ten random scenes'
+        f' from other logs</div></td><td><span class="gchip">chance</span></td>'
+        f'<td class="num ade"><b>{ch["ade"]:.2f}</b> m</td><td class="num">{ch["speed"]:.2f}</td>'
+        f'<td class="num">{ch["green"]:.2f}</td><td class="num">{ch["pdms_gap"]:.3f}</td></tr>')
+    scoreboard = "\n".join(body)
 
-    s, ch = data["summary"], data["summary"]["chance"]
-    em = data["embed_meta"]
+    inv = []
+    for title, items in INVENTORY:
+        trs = "".join(
+            f'<tr><td><b>{esc(a)}</b><div class="sub">{esc(b)}</div></td>'
+            f'<td><span class="w w-{esc(c.split(",")[0].split(" ")[0])}">{esc(c)}</span></td>'
+            f'<td class="why">{esc(d)}</td></tr>' for a, b, c, d in items)
+        inv.append(f'<h3>{esc(title)}</h3><table class="inv"><tbody>{trs}</tbody></table>')
+    inventory = "\n".join(inv)
 
-    def row(label, key, mode):
-        a, b = s["stock_cls"][mode], s["ft_cls"][mode]
-        return (a[key], b[key])
+    d = U.get("diag", {})
+    diag_rows = ""
+    for fam, lab in (("drivor", "DrivoR"), ("jepa", "Drive-JEPA")):
+        if fam in d:
+            x = d[fam]
+            diag_rows += (f'<tr><td>{lab}</td><td class="num">{x["m"]}</td>'
+                          f'<td class="num">{x["dropped"]}</td>'
+                          f'<td class="num"><b>{x["dropped_share"]*100:.1f}%</b></td>'
+                          f'<td class="num">{x["near_dead"]}</td>'
+                          f'<td class="num">{x["cos_median"]:.4f}</td></tr>')
 
-    def cell(v, other, higher_better, fmt="%.3f"):
-        win = (v > other) if higher_better else (v < other)
-        return '<td class="%s">%s</td>' % ("win" if win else "", fmt % v)
+    tabbar = ('<nav id="navsim-tabbar" aria-label="Galleries"><span class="nt-home">NAVSIM eval</span>'
+              + "".join(f'<a class="nt" href="{h}"{" aria-current=&quot;page&quot;" if h == "index.html" else ""}>{l}</a>'
+                        for l, h in TABS) + "</nav>").replace("&quot;", '"')
 
-    rows = []
-    for label, key, hb, fmt in (
-            ("Same direction as query", "cmd_match", True, "%.1f%%"),
-            ("Speed error vs query", "speed_mae", False, "%.2f m/s"),
-            ("Mean cosine similarity", "sim", True, "%.3f"),
-    ):
-        a, b = row(label, key, "xlog")
-        av, bv = (a * 100, b * 100) if key == "cmd_match" else (a, b)
-        chv = ch[key] * 100 if key == "cmd_match" else ch.get(key)
-        chs = ("&mdash;" if chv is None else (fmt % chv))
-        rows.append("<tr><td>%s</td>%s%s<td class='mono'>%s</td></tr>" % (
-            label, cell(av, bv, hb, fmt), cell(bv, av, hb, fmt), chs))
+    ours_full = next(r for r in rows if r["key"] == "ours_repr")
+    ours_img = next(r for r in rows if r["key"] == "ours_visual")
+    stock = next(r for r in rows if r["key"] == "stock_cls")
+    ft = next(r for r in rows if r["key"] == "ft_cls")
+    ctrl = next(r for r in rows if r["key"] == "ctrl_motion_cmd")
 
-    bench_html = ""
-    if bench:
-        bch = bench["chance"]
-        best = {k: (min if k in ("speed", "ade") else max)(r[k] for r in bench["rows"])
-                for k in ("green", "speed", "ade")}
-        fam_of = lambda n: ("DINOv2" if n.startswith("DINOv2") else
-                            "DrivoR" if n.startswith("DrivoR") else "Drive-JEPA")
-        body, seen = [], None
-        for r in bench["rows"]:
-            f = fam_of(r["name"])
-            if f != seen:
-                body.append(f'<tr class="grp"><td colspan="5">{f}</td></tr>')
-                seen = f
-            cells = "".join(
-                '<td class="%s">%s</td>' % (
-                    "win" if k in best and abs(r[k] - best[k]) < 1e-9 else "", fmt % r[k])
-                for k, fmt in (("green", "%.2f"), ("speed", "%.2f"), ("ade", "%.2f"), ("cos", "%.3f")))
-            # strip only the family word; "stock" vs "fine-tuned (ours)" IS the comparison
-            lab = r["name"][len(f):].lstrip(", ").strip()
-            body.append(f'<tr><td>{esc(lab)}</td>{cells}</tr>')
-        bench_html = f"""
-<section>
-  <h2 id="bench">How good is each descriptor, over 2,000 queries</h2>
-  <p class="note measure">The thirty queries below are for looking at. These are for counting:
-  <b>{bench['n_queries']:,} queries</b> spread evenly across the corpus, each retrieving
-  top-{bench['topk']} from all {bench['n_corpus']:,} scenes, neighbours restricted to other logs.
-  <b>green</b> is how many of the ten share the query&rsquo;s direction; <b>ADE</b> is the mean
-  error between the query&rsquo;s 4&nbsp;s future and each neighbour&rsquo;s, both in their own t0
-  ego frame. Best in each column is highlighted.</p>
-  <table>
-    <thead><tr><th>descriptor</th><th>green / 10</th><th>speed error</th>
-      <th>trajectory ADE</th><th>mean cosine</th></tr></thead>
-    <tbody>
-      {''.join(body)}
-    </tbody>
-  </table>
-  <p class="note measure"><b>ADE is what separates them.</b> Green saturates near 8&ndash;9 for
-  everything, but trajectory error ranks cleanly: the more driving-trained the encoder, the more
-  its neighbours actually drive the same way. <b>Compression is close to free</b> &mdash; the
-  compressed and uncompressed rows differ by at most 0.02&nbsp;m of ADE, and for Drive-JEPA that
-  holds while discarding 41.9% of the code magnitude.</p>
-</section>"""
+    payload = json.dumps({"rows": rows, "queries": U["queries"], "scenes": U["scenes"],
+                          "default_on": DEFAULT_ON}, separators=(",", ":"))
+    page = (TEMPLATE
+            .replace("__TABBAR__", tabbar)
+            .replace("__NQ__", f'{U["n_queries_bench"]:,}')
+            .replace("__NC__", f'{U["n_corpus"]:,}')
+            .replace("__SCOREBOARD__", scoreboard)
+            .replace("__INVENTORY__", inventory)
+            .replace("__DIAG__", diag_rows)
+            .replace("__STOCK_ADE__", f'{stock["ade"]:.2f}')
+            .replace("__FT_ADE__", f'{ft["ade"]:.2f}')
+            .replace("__IMG_ADE__", f'{ours_img["ade"]:.2f}')
+            .replace("__FULL_ADE__", f'{ours_full["ade"]:.2f}')
+            .replace("__CTRL_ADE__", f'{ctrl["ade"]:.2f}')
+            .replace("__FULL_GAIN__", f'{(1 - ours_full["ade"] / stock["ade"]) * 100:.0f}')
+            .replace("__GEN__", esc(U["generated_utc"]))
+            .replace("__PAYLOAD__", payload.replace("</", "<\\/")))
+    (DST / "index.html").write_text(page, encoding="utf-8")
+    print(f"[page] wrote {DST/'index.html'} ({len(page)/1024:.0f} KB), {len(rows)} ranked rows")
 
-    ov = s["overlap_at_10"]
-    tabbar = ('<nav id="navsim-tabbar" aria-label="Galleries">'
-              '<span class="nt-home">NAVSIM eval</span>' +
-              "".join('<a class="nt" href="%s"%s>%s</a>' %
-                      (h, ' aria-current="page"' if h == "index.html" else "", l)
-                      for l, h in TABS) + "</nav>")
 
-    html = f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Scene retrieval</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style id="navsim-tabbar-css">{TABCSS}</style>
-<style>{CSS}</style>
-</head><body>
-{tabbar}
-<div class="wrap">
-<header>
-  <div class="eyebrow">navtest &middot; {data['n_corpus']:,} scenes &middot; {data['n_logs']} logs</div>
-  <h1>What each DINO thinks &ldquo;a similar scene&rdquo; means</h1>
-  <p class="standfirst">Thirty query scenes, each one&rsquo;s <b>t0 camera frame &mdash; the last
-  frame of the past</b> &mdash; matched against the t0 frame of all {data['n_corpus']:,} navtest
-  scenes. Once with stock DINOv2 ViT-S/14, once with the trunk our driving model fine-tuned.
-  Same image, same preprocessing, same CLS descriptor: only the weights differ.</p>
-</header>
-
-<section class="measure">
-  <h2>How it was built</h2>
-  <p class="note">Descriptor is the <span class="mono">x_norm_clstoken</span> of
-  <span class="mono">forward_features</span>, L2-normalised, compared by cosine. Images come
-  from the converted navtest cache at their stored
-  {em['stored_image_hw'][1]}&times;{em['stored_image_hw'][0]}, so the transform is
-  {esc(em['transform'])} &mdash; identical to what the waypoint models saw at eval time.
-  The fine-tuned trunk is the one carried inside
-  <span class="mono">waypoint_navsim_ft/epoch013-best.ckpt</span>; it differs from stock in
-  {em['ft_tensors_differing_from_stock']} of 175 tensors (blocks&nbsp;10&ndash;11 and the final
-  norm). Queries were chosen from <b>metadata only</b> &mdash; three per driving-command &times;
-  speed-tercile cell, plus the three lowest-PDMS scenes &mdash; so neither embedding had a hand
-  in picking them.</p>
-  <p class="note"><b>Why &ldquo;other logs only&rdquo; is the default view.</b> navtest scenes
-  from one log are seconds apart, so the plain top&nbsp;1 is nearly always the same car a moment
-  later: a correct answer and a useless picture. Stock fills
-  {s['stock_cls']['raw']['same_log']*100:.0f}% of its raw top-10 that way, the fine-tuned trunk
-  {s['ft_cls']['raw']['same_log']*100:.0f}%. Switch to <i>Raw top-10</i> to see it.</p>
-</section>
-
-<section>
-  <h2>The two trunks do not agree</h2>
-  <p class="note measure">&ldquo;Direction&rdquo; here is the NAVSIM driving command at t0
-  &mdash; left, straight or right &mdash; the same field the chips on each query carry.</p>
-  <table>
-    <thead><tr><th>Across other logs, mean over 30 queries &times; 10 neighbours</th>
-      <th>Stock DINOv2</th><th>Fine-tuned</th><th>Chance</th></tr></thead>
-    <tbody>{''.join(rows)}</tbody>
-  </table>
-  <p class="note measure">Neighbours shared by both models, out of 10:
-  <b>{ov['xlog']:.1f}</b> across other logs, <b>{ov['raw']:.1f}</b> on the raw list &mdash;
-  against {ch['overlap_at_10']:.4f} expected by chance. On the <i>same</i> image the two CLS
-  vectors have cosine <b>{data['cosine_stock_vs_ft_same_image']:.3f}</b>: touching 30 tensors
-  moved the representation to a largely unrelated direction, not a nudge.</p>
-  <p class="note measure">The fine-tuned trunk retrieves scenes that match the query&rsquo;s
-  driving command more often and are closer in speed, which is what a trunk trained through a
-  waypoint head should do. It is a descriptive result on 30 queries, not a benchmark: no
-  retrieval ground truth exists here, so command and speed agreement are stand-ins for
-  &ldquo;driving-relevant&rdquo;, and they are exactly the quantities the training signal
-  depended on.</p>
-</section>
-
-{bench_html}
-
-<nav class="jump">
-  <span class="note">Jump to:</span>
-  <a href="#bench">Scores over 2,000 queries</a>
-  <a href="#sae-sec">The two SAE gates</a>
-  <a href="#dino">Stock vs fine-tuned DINOv2</a>
-</nav>
-
-<section id="sae-sec" hidden>
-  <h2>What the two trained gates actually remove</h2>
-  <p class="note measure">Two collaborators&rsquo; checkpoints add a sparse dictionary and a
-  <b>learned gate</b> on top of a driving model, trained with a teacher to keep what the policy
-  needs. Running the same retrieval through each one &mdash; before the gate and after it &mdash;
-  shows what each gate took out. The two behave nothing alike.</p>
-  <div id="sae-tables"></div>
-  <p class="note">green border = same direction as the query &middot; neighbours are always from
-  other driving logs here</p>
-  <p class="note measure">Thumbnails are the same cached 504&times;280 frame used above, as a
-  scene identifier. The models themselves see the full frame: DrivoR at 1148&times;672,
-  Drive-JEPA as a two-frame 512&times;256 clip.</p>
-</section>
-
-<section id="sae-queries"></section>
-
-<section>
-  <h2 id="dino">Stock vs fine-tuned DINOv2</h2>
-  <p class="note measure">The comparison the page opened with, scene by scene: the same query
-  against stock <span class="mono">dinov2_vits14</span> and against our fine-tuned trunk.</p>
-</section>
-
-<div class="controls">
-  <span class="note">Neighbours:</span>
-  <button class="seg" id="b-xlog" aria-pressed="true">Other logs only</button>
-  <button class="seg" id="b-raw" aria-pressed="false">Raw top-10</button>
-  <span class="note" style="margin-left:auto">green border = same direction as the query</span>
-</div>
-
-<section id="queries"></section>
-
-<p class="note">Generated {esc(data['generated_utc'])} &middot; embeddings
-{esc(em['generated_utc'])} &middot; {data['topk']} neighbours per model per query.</p>
-</div>
-
-<script id="data" type="application/json">{payload}</script>
-<script>
-const D = JSON.parse(document.getElementById('data').textContent);
-const CMD = {{left:'&#8592; left', straight:'&#8593; straight', right:'right &#8594;'}};
-let MODE = 'xlog';
-
-function strip(list, qcmd) {{
-  return list.map(n => {{
-    const cls = 'nb' + (n.cmd === qcmd ? ' match' : '');
-    return `<div class="${{cls}}">
-      <img loading="lazy" src="thumbs/${{n.token}}.jpg" alt="${{n.token}}">
-      <div class="cap"><b>${{n.sim.toFixed(3)}}</b> ${{n.cmd[0]}} ${{n.speed.toFixed(1)}}m/s</div>
-    </div>`;
-  }}).join('');
-}}
-
-function render() {{
-  const out = D.queries.map((q, i) => {{
-    const m = q.meta;
-    const pd = m.scores[D.headline_method];
-    const rows = [['stock_cls', 'Stock DINOv2'], ['ft_cls', 'Fine-tuned DINOv2']].map(([k, lab]) => {{
-      const list = q.models[k][MODE];
-      const mean = list.reduce((a, b) => a + b.sim, 0) / list.length;
-      const match = list.filter(n => n.cmd === m.cmd).length;
-      return `<div class="row">
-        <div class="rowlab">${{lab}}<span class="sub">mean cos ${{mean.toFixed(3)}}
-          &middot; ${{match}}/10 same direction</span></div>
-        <div class="strip">${{strip(list, m.cmd)}}</div></div>`;
-    }}).join('');
-    return `<div class="q">
-      <div class="qhead"><span class="n">Q${{String(i + 1).padStart(2, '0')}}</span>
-        <span class="tok">${{q.token}}</span>
-        <span class="chip cmd">${{CMD[m.cmd] || m.cmd}}</span>
-        <span class="chip">${{m.speed_mps.toFixed(1)}} m/s</span>
-        <span class="chip">PDMS ${{pd === undefined ? '&mdash;' : pd.toFixed(3)}}</span>
-        <span class="chip">${{m.log}}</span></div>
-      <div class="body">
-        <div class="qimg"><img src="thumbs/${{q.token}}.jpg" alt="query ${{q.token}}">
-          <div class="note" style="font-size:12px">query &middot; t0 frame</div></div>
-        <div class="rows">${{rows}}</div>
-      </div></div>`;
-  }}).join('');
-  document.getElementById('queries').innerHTML = out;
-}}
-
-function saeTables() {{
-  const S = D.sae, F = S.families;
-  const fams = Object.keys(F);
-  if (!fams.length) return;
-  const diag = `<table style="margin-bottom:14px"><thead><tr>
-      <th>Gate</th><th>dictionary</th><th>codes kept</th><th>codes dropped</th>
-      <th>magnitude in dropped codes</th><th>cos(before, after)</th>
-      <th>top-10 unchanged</th><th>&hellip; in code space</th></tr></thead><tbody>` +
-    fams.map(f => {{
-      const m = F[f].meta, d = S.diag && S.diag[f] ? S.diag[f] : null;
-      return `<tr><td>${{F[f].label}}</td><td>${{m.m}}</td>
-        <td>${{m.codes_kept}}</td><td>${{m.m - m.codes_kept}}</td>
-        <td${{d && d.dropped_share > 0.05 ? ' class="win"' : ''}}>${{
-          d ? (d.dropped_share * 100).toFixed(1) + '%' : '&mdash;'}}</td>
-        <td>${{F[f].cos_pre_gated.toFixed(4)}}</td>
-        <td>${{F[f].overlap_pre_gated.toFixed(1)}}/10</td>
-        <td>${{S.code_overlap_mean && S.code_overlap_mean[f] != null
-              ? S.code_overlap_mean[f].toFixed(1) + '/10' : '&mdash;'}}</td></tr>`;
-    }}).join('') + `</tbody></table>`;
-
-  const rows = fams.map(f => {{
-    const st = F[f].stats;
-    const NAME = {{pre: 'before the SAE', recon: 'dictionary only', gated: 'after the gate',
-                  codes: 'code space, all codes', codes_gated: 'code space, kept codes'}};
-    return ['pre', 'recon', 'gated', 'codes', 'codes_gated'].map(v => `<tr>
-      <td>${{F[f].label.split(' (')[0]}} &mdash; ${{NAME[v]}}</td>
-      <td>${{(st[v].cmd_match * 100).toFixed(1)}}%</td>
-      <td>${{st[v].speed_mae.toFixed(2)}} m/s</td>
-      <td>${{st[v].sim.toFixed(3)}}</td></tr>`).join('');
-  }}).join('');
-  const perf = `<table><thead><tr><th>Retrieval, other logs, 30 queries &times; 10</th>
-      <th>same direction</th><th>speed error</th><th>mean cosine</th></tr></thead>
-    <tbody>${{rows}}
-    <tr><td class="mono">chance</td><td class="mono">${{(S.chance.cmd_match*100).toFixed(1)}}%</td>
-      <td class="mono">${{S.chance.speed_mae.toFixed(2)}} m/s</td><td class="mono">&mdash;</td></tr>
-    </tbody></table>`;
-  document.getElementById('sae-tables').innerHTML = diag + perf;
-  document.getElementById('sae-sec').hidden = false;
-}}
-
-function saeQueries() {{
-  const S = D.sae, F = S.families, fams = Object.keys(F);
-  if (!fams.length) return;
-  const out = D.queries.map((q, i) => {{
-    const m = q.meta, per = S.queries[q.token];
-    if (!per) return '';
-    const rows = fams.flatMap(f => (
-      [['pre', 'before the gate'], ['gated', 'after the gate'],
-       ['codes_gated', 'SAE code space, kept codes']].map(([v, lab]) => {{
-        const list = per[f] && per[f][v]; if (!list) return '';
-        const match = list.filter(n => n.cmd === m.cmd).length;
-        return `<div class="row">
-          <div class="rowlab">${{F[f].label.split(' (')[0]}} &middot; ${{lab}}
-            <span class="sub">${{match}}/10 same direction</span></div>
-          <div class="strip">${{strip(list, m.cmd)}}</div></div>`;
-      }}))).join('');
-    if (!rows) return '';
-    return `<div class="q">
-      <div class="qhead"><span class="n">Q${{String(i + 1).padStart(2, '0')}}</span>
-        <span class="tok">${{q.token}}</span>
-        <span class="chip cmd">${{CMD[m.cmd] || m.cmd}}</span>
-        <span class="chip">${{m.speed_mps.toFixed(1)}} m/s</span></div>
-      <div class="body">
-        <div class="qimg"><img loading="lazy" src="thumbs/${{q.token}}.jpg" alt="query">
-          <div class="note" style="font-size:12px">query &middot; t0 frame</div></div>
-        <div class="rows">${{rows}}</div></div></div>`;
-  }}).join('');
-  document.getElementById('sae-queries').innerHTML = out;
-}}
-
-if (D.sae) {{ saeTables(); saeQueries(); }}
-
-for (const [id, mode] of [['b-xlog', 'xlog'], ['b-raw', 'raw']]) {{
-  document.getElementById(id).addEventListener('click', () => {{
-    MODE = mode;
-    document.getElementById('b-xlog').setAttribute('aria-pressed', String(mode === 'xlog'));
-    document.getElementById('b-raw').setAttribute('aria-pressed', String(mode === 'raw'));
-    render();
-  }});
-}}
-render();
-</script>
-</body></html>
-"""
-    (DST / "index.html").write_text(html, encoding="utf-8")
-    print(f"[page] wrote {DST / 'index.html'}  ({len(html) / 1024:.0f} KB)")
-
+TEMPLATE = open(Path(__file__).with_name("page_template.html"), encoding="utf-8").read() \
+    if Path(__file__).with_name("page_template.html").is_file() else ""
 
 if __name__ == "__main__":
+    if not TEMPLATE:
+        raise SystemExit("page_template.html missing")
     main()

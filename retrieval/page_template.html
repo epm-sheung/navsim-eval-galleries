@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scene retrieval</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style id="navsim-tabbar-css">
+#navsim-tabbar{position:sticky;top:0;z-index:99999;display:flex;gap:2px;flex-wrap:wrap;align-items:center;padding:8px 14px;margin:0;background:#fbfbfa;border-bottom:1px solid #dcdedb;font-family:"IBM Plex Sans",system-ui,sans-serif;}
+#navsim-tabbar .nt-home{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#78828e;margin-right:12px;}
+#navsim-tabbar a.nt{font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt[aria-current="page"]{background:#e2eeec;border-color:#1f6f6b;color:#1f6f6b;font-weight:600;}
+@media (prefers-color-scheme:dark){#navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}#navsim-tabbar a.nt{color:#a8b2b8;}#navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}#navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}#navsim-tabbar .nt-home{color:#78838b;}}
+</style>
+<style>
+:root{--ground:#f4f5f3;--panel:#fbfbfa;--panel-2:#eceeea;--ink:#1b2027;--ink-2:#4a535e;--ink-3:#78828e;--rule:#dcdedb;
+ --accent:#1f6f6b;--accent-soft:#e2eeec;--good:#2f7d4f;--good-bg:#e7f1ea;--warn:#b06a12;--warn-bg:#f6eddf;--crit:#a8322d;
+ --full:#6a4fb3;--full-bg:#eeeaf7;--ctrl:#8a6d3b;--ctrl-bg:#f3eee4;--traj-q:#9aa2ab;--traj-n:#1f6f6b;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;
+ --accent:#5fbdb5;--accent-soft:#1d3230;--good:#69c48d;--good-bg:#17281e;--warn:#d69b44;--warn-bg:#2b2415;--crit:#e08079;
+ --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}}
+:root[data-theme="dark"]{--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;
+ --accent:#5fbdb5;--accent-soft:#1d3230;--good:#69c48d;--good-bg:#17281e;--warn:#d69b44;--warn-bg:#2b2415;--crit:#e08079;
+ --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.6;}
+.wrap{max-width:1440px;margin:0 auto;padding:34px 24px 90px;display:flex;flex-direction:column;gap:38px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);}
+h1{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:33px;margin:0;letter-spacing:-.015em;line-height:1.2;}
+h2{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:22px;margin:0 0 6px;}
+h3{font-size:14px;font-weight:600;margin:18px 0 6px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;}
+p{margin:0;} .measure{max-width:82ch;} .note{font-size:13.5px;color:var(--ink-2);}
+.mono{font-family:"IBM Plex Mono",monospace;}
+header{display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--rule);padding-bottom:22px;}
+.standfirst{font-size:17px;color:var(--ink-2);max-width:80ch;}
+section{display:flex;flex-direction:column;gap:12px;}
+.answer{background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--full);border-radius:6px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;}
+.answer h2{font-size:19px;}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px;}
+.step{background:var(--panel-2);border-radius:5px;padding:10px 12px;}
+.step .v{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:500;}
+.step .l{font-size:12.5px;color:var(--ink-2);line-height:1.35;}
+.step.hi{background:var(--full-bg);} .step.hi .v{color:var(--full);}
+table{border-collapse:collapse;font-size:13.5px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;width:100%;}
+th,td{padding:8px 11px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:middle;}
+thead th{background:var(--panel-2);font-weight:600;font-size:12px;color:var(--ink-2);}
+tbody tr:last-child td{border-bottom:none;}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:13px;white-space:nowrap;}
+td.rk{font-family:"IBM Plex Mono",monospace;color:var(--ink-3);width:34px;}
+.dn{font-weight:500;} .merged{font-size:11.5px;color:var(--ink-3);}
+.gchip{font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap;background:var(--panel-2);color:var(--ink-2);border:1px solid var(--rule);}
+tr.g-full .gchip{background:var(--full-bg);color:var(--full);border-color:var(--full);}
+tr.g-ctrl .gchip{background:var(--ctrl-bg);color:var(--ctrl);border-color:var(--ctrl);}
+tr.g-full .dn{color:var(--full);font-weight:600;}
+tr.chance td{color:var(--ink-3);font-style:italic;}
+td.ade{min-width:190px;} .bar{display:inline-block;width:90px;height:7px;background:var(--panel-2);border-radius:4px;margin-right:8px;vertical-align:middle;overflow:hidden;}
+.bar i{display:block;height:100%;background:var(--accent);} tr.g-full .bar i{background:var(--full);} tr.g-ctrl .bar i{background:var(--ctrl);}
+.picker{position:sticky;top:45px;z-index:90;background:var(--ground);padding:10px 0;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.picker .lab{font-size:12.5px;color:var(--ink-2);margin-right:4px;}
+.pk{font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;cursor:pointer;border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);}
+.pk[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.pk.g-full[aria-pressed="true"]{background:var(--full-bg);border-color:var(--full);color:var(--full);}
+.pk.g-ctrl[aria-pressed="true"]{background:var(--ctrl-bg);border-color:var(--ctrl);color:var(--ctrl);}
+.legend{font-size:12px;color:var(--ink-3);margin-left:auto;display:flex;gap:12px;align-items:center;}
+.sw{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px;border-radius:2px;}
+.q{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.qhead{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--ink-2);}
+.qhead .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3);}
+.qhead .tok{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink);}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--rule);background:var(--panel-2);color:var(--ink-2);font-family:"IBM Plex Mono",monospace;}
+.chip.cmd{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+.body{display:flex;gap:16px;align-items:flex-start;}
+.qimg{flex:0 0 260px;display:flex;flex-direction:column;gap:6px;}
+.qimg img{width:260px;border-radius:4px;display:block;border:2px solid var(--accent);}
+.rows{flex:1 1 auto;display:flex;flex-direction:column;gap:10px;min-width:0;}
+.rowlab{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.rowlab .rk2{font-family:"IBM Plex Mono",monospace;color:var(--ink-3);font-weight:400;}
+.rowlab .sub{font-weight:400;font-size:11.5px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;}
+.row.g-full .rowlab{color:var(--full);}
+.strip{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
+.nb{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.nb img{width:100%;border-radius:3px;display:block;border:2px solid var(--rule);}
+.nb.match img{border-color:var(--good);}
+.nb svg{width:100%;height:auto;display:block;background:var(--panel-2);border-radius:3px;}
+.nb .cap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nb .cap b{color:var(--ink-2);font-weight:500;}
+.qimg svg{width:260px;height:auto;background:var(--panel-2);border-radius:4px;}
+table.inv td{vertical-align:top;} table.inv .sub{font-size:12px;color:var(--ink-3);} td.why{color:var(--ink-2);font-size:13px;}
+.w{font-size:11.5px;padding:2px 8px;border-radius:99px;white-space:nowrap;font-weight:600;}
+.w-yes{background:var(--good-bg);color:var(--good);} .w-marginal,.w-weak,.w-maybe{background:var(--warn-bg);color:var(--warn);}
+.w-no{background:var(--panel-2);color:var(--ink-3);}
+details{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;}
+summary{cursor:pointer;font-weight:600;}
+details[open] summary{margin-bottom:10px;}
+@media (max-width:1000px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}.strip{grid-template-columns:repeat(5,1fr);}.steps{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:600px){.wrap{padding:24px 16px 70px;}td.ade{min-width:0;}.bar{display:none;}}
+</style>
+</head><body>
+__TABBAR__
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">navtest &middot; __NC__ scenes &middot; retrieval by t0 camera frame</div>
+  <h1>Which representation finds scenes that drive the same way?</h1>
+  <p class="standfirst">Each query is a scene&rsquo;s t0 camera frame &mdash; the last frame of the
+  past. Every representation retrieves its ten nearest scenes from other driving logs, and we
+  score them on how closely those scenes&rsquo; next 4&nbsp;seconds match the query&rsquo;s.</p>
+</header>
+
+<section class="answer">
+  <h2>Why our model looked barely better than stock DINOv2</h2>
+  <p class="measure">We were measuring the wrong thing. Our model keeps DINOv2 <b>frozen</b>; what it
+  learns lives in the patch-token aggregator on top, whose readout is the scene vector the waypoint
+  head uses. Comparing CLS tokens compared two trunks, and the &ldquo;fine-tuned&rdquo; trunk was
+  tuned on a different dataset (PAV, triplet loss, blocks&nbsp;10&ndash;11 only), not by our driving
+  objective. Measured where the learning actually is, the gap opens up:</p>
+  <div class="steps">
+    <div class="step"><div class="v">__STOCK_ADE__ m</div><div class="l">stock DINOv2 CLS</div></div>
+    <div class="step"><div class="v">__FT_ADE__ m</div><div class="l">&ldquo;fine-tuned&rdquo; trunk CLS &mdash; what we had been comparing</div></div>
+    <div class="step"><div class="v">__IMG_ADE__ m</div><div class="l">our model&rsquo;s readout, image only</div></div>
+    <div class="step hi"><div class="v">__FULL_ADE__ m</div><div class="l">our model&rsquo;s readout as it actually runs &mdash; <b>__FULL_GAIN__% lower</b> than stock, best of every row</div></div>
+  </div>
+  <p class="note measure">The full readout is handed past motion and the driving command, so we
+  checked how much of that is bookkeeping: those inputs alone, with no image, reach
+  __CTRL_ADE__&nbsp;m. The readout beats that, so the image adds real information on top.</p>
+</section>
+
+<section>
+  <h2 id="board">Scoreboard &mdash; __NQ__ queries, ranked by trajectory ADE</h2>
+  <p class="note measure">Top-10 per query from all __NC__ scenes, neighbours restricted to other logs.
+  Rows that produced the same result are merged into one. <b>ADE</b> is the mean error between the
+  query&rsquo;s 4&nbsp;s future and each neighbour&rsquo;s, both in their own t0 ego frame.
+  <b>Direction</b> is how many of ten share the driving command; <b>score gap</b> is the mean PDMS
+  difference to the neighbours.</p>
+  <table>
+    <thead><tr><th>#</th><th>representation</th><th>inputs</th><th class="num">trajectory ADE</th>
+      <th class="num">speed err (m/s)</th><th class="num">direction /10</th><th class="num">score gap</th></tr></thead>
+    <tbody>
+__SCOREBOARD__
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2 id="gallery">Thirty scenes, side by side</h2>
+  <p class="note measure">Choose which representations to draw. Rows follow the scoreboard order.
+  Under each neighbour, its 4&nbsp;s future (teal) is drawn over the query&rsquo;s (grey), in the same
+  frame and scale, with the ADE between them. The lateral axis is stretched about 3&times;
+  relative to forward so turns stay visible; the ADE numbers are unaffected.</p>
+</section>
+
+<div class="picker" id="picker"><span class="lab">Show:</span>
+  <span class="legend"><span><span class="sw" style="background:var(--good)"></span>same direction</span>
+  <span><span class="sw" style="background:var(--traj-q)"></span>query future</span>
+  <span><span class="sw" style="background:var(--traj-n)"></span>neighbour future</span></span>
+</div>
+<section id="queries"></section>
+
+<section>
+  <h2 id="inventory">What can be compared, and what is worth comparing</h2>
+__INVENTORY__
+</section>
+
+<details>
+  <summary>What the two SAE gates remove</summary>
+  <table>
+    <thead><tr><th>gate</th><th class="num">dictionary</th><th class="num">codes dropped</th>
+      <th class="num">magnitude in dropped codes</th><th class="num">near-dead codes</th>
+      <th class="num">cos(before, after)</th></tr></thead>
+    <tbody>__DIAG__</tbody>
+  </table>
+  <p class="note measure" style="margin-top:10px">DrivoR&rsquo;s gate removes dictionary entries that
+  never activate on navtest, so its compressed rows equal its uncompressed ones and are merged in
+  the scoreboard. Drive-JEPA&rsquo;s gate removes live signal and still costs no retrieval quality.
+  Both measured on navtest only.</p>
+</details>
+
+<details>
+  <summary>How it was built</summary>
+  <div class="note measure" style="display:flex;flex-direction:column;gap:8px">
+  <p><b>Stock / fine-tuned trunk:</b> DINOv2 ViT-S/14 on the cached 504&times;280 frame, CLS or
+  mean of patch tokens. The fine-tuned trunk is the one inside
+  <span class="mono">waypoint_navsim_ft/epoch013-best.ckpt</span>: 30 of 175 tensors changed, all in
+  blocks 10&ndash;11 (21&ndash;33% relative change on those weights).</p>
+  <p><b>Our model:</b> <span class="mono">patch_tokens_film_navsim</span> (navtest v1 PDMS 0.8302),
+  frozen stock trunk + trained aggregator; the descriptor is the aggregator readout token.
+  &ldquo;Image only&rdquo; zeroes past motion and fixes the command; the full row feeds the real
+  inputs exactly as the eval agent does.</p>
+  <p><b>DrivoR / Drive-JEPA:</b> rebuilt from the shared checkpoints and fed their own input &mdash;
+  DrivoR at 1148&times;672, Drive-JEPA as a two-frame 512&times;256 clip.</p>
+  <p><b>Controls:</b> past motion (4 poses + velocity/acceleration), with and without the command,
+  z-scored, no image.</p>
+  <p>Chance: ten random scenes from other logs. Generated __GEN__.</p>
+  </div>
+</details>
+
+</div>
+<script id="data" type="application/json">__PAYLOAD__</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var CMD = {left: '← left', straight: '↑ straight', right: 'right →', unknown: 'unknown'};
+  var GC = {'image only': '', 'image + motion + command': 'g-full', 'no image (control)': 'g-ctrl'};
+  var on = {};
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem('retr_on') || 'null'); } catch (e) {}
+  (saved || D.default_on).forEach(function (k) { on[k] = true; });
+
+  function glyph(q, n, big) {
+    var W = 100, H = big ? 62 : 58, X = 42, Y = 14;
+    function pts(tr) {
+      var s = [[W / 2, H - 3]];
+      tr.forEach(function (p) {
+        var px = W / 2 - p[1] * (W / 2 - 3) / Y;
+        var py = H - 3 - p[0] * (H - 6) / X;
+        s.push([Math.max(1, Math.min(W - 1, px)), Math.max(1, Math.min(H - 1, py))]);
+      });
+      return s.map(function (a) { return a[0].toFixed(1) + ',' + a[1].toFixed(1); }).join(' ');
+    }
+    var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+    o += '<polyline points="' + pts(q) + '" fill="none" stroke="var(--traj-q)" stroke-width="' + (big ? 3 : 3.4) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+    if (n) o += '<polyline points="' + pts(n) + '" fill="none" stroke="var(--traj-n)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+    o += '<circle cx="' + W / 2 + '" cy="' + (H - 3) + '" r="2.2" fill="var(--ink-3)"/></svg>';
+    return o;
+  }
+
+  function picker() {
+    var p = document.getElementById('picker'), leg = p.querySelector('.legend');
+    D.rows.forEach(function (r) {
+      var b = document.createElement('button');
+      b.className = 'pk ' + (GC[r.group] || '');
+      b.textContent = r.rank + '. ' + r.label + (r.group === 'image + motion + command' ? ' (full)' : '');
+      b.setAttribute('aria-pressed', on[r.key] ? 'true' : 'false');
+      b.onclick = function () {
+        on[r.key] = !on[r.key];
+        b.setAttribute('aria-pressed', on[r.key] ? 'true' : 'false');
+        try { localStorage.setItem('retr_on', JSON.stringify(Object.keys(on).filter(function (k) { return on[k]; }))); } catch (e) {}
+        render();
+      };
+      p.insertBefore(b, leg);
+    });
+  }
+
+  function render() {
+    var sel = D.rows.filter(function (r) { return on[r.key]; });
+    var html = D.queries.map(function (q, i) {
+      var m = D.scenes[q.token];
+      var rows = sel.map(function (r) {
+        var list = q.nb[r.key] || [];
+        var match = 0, ade = 0;
+        var tiles = list.map(function (n) {
+          var s = D.scenes[n.t], same = s.cmd === m.cmd;
+          if (same) match++; ade += n.a;
+          return '<div class="nb' + (same ? ' match' : '') + '"><img loading="lazy" src="thumbs/' + n.t + '.jpg" alt="">' +
+            glyph(m.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + s.cmd[0] + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
+        }).join('');
+        return '<div class="row ' + (GC[r.group] || '') + '"><div class="rowlab"><span class="rk2">#' + r.rank + '</span>' + r.label +
+          (r.group !== 'image only' ? ' <span class="sub">[' + r.group + ']</span>' : '') +
+          '<span class="sub">ADE ' + (list.length ? (ade / list.length).toFixed(2) : '-') + ' m &middot; ' + match + '/10 same direction</span></div>' +
+          '<div class="strip">' + tiles + '</div></div>';
+      }).join('');
+      return '<div class="q"><div class="qhead"><span class="n">Q' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<span class="tok">' + q.token + '</span><span class="chip cmd">' + (CMD[m.cmd] || m.cmd) + '</span>' +
+        '<span class="chip">' + m.v.toFixed(1) + ' m/s</span>' +
+        (m.pdms != null ? '<span class="chip">PDMS ' + m.pdms.toFixed(3) + '</span>' : '') +
+        '<span class="chip">' + m.log + '</span></div>' +
+        '<div class="body"><div class="qimg"><img src="thumbs/' + q.token + '.jpg" alt="query">' + glyph(m.tr, null, true) +
+        '<div class="note" style="font-size:12px">query &middot; t0 frame &middot; its 4 s future</div></div>' +
+        '<div class="rows">' + (rows || '<p class="note">Pick at least one representation above.</p>') + '</div></div></div>';
+    }).join('');
+    document.getElementById('queries').innerHTML = html;
+  }
+
+  picker();
+  render();
+})();
+</script>
+</body></html>
