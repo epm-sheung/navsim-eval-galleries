@@ -124,13 +124,15 @@ __TABBAR__
   <h1>Three backbones per method</h1>
   <p class="standfirst">For every method, in the same order: <b>&#9312;</b> its original pretrained
   backbone, <b>&#9313;</b> our fine-tuned DINO dropped into that method&rsquo;s pipeline, and
-  <b>&#9314;</b> the method&rsquo;s SAE version. Frames, resolution, layer and pooling stay fixed
+  <b>&#9314;</b> the method&rsquo;s SAE version, and <b>&#9315;</b> our fine-tuned DINO with the SAE,
+  trained. Frames, resolution, layer and pooling stay fixed
   within a table. Each scene retrieves its ten nearest scenes from other driving logs, and we
   score how closely their next 4&nbsp;s match the query&rsquo;s.</p>
   <p class="note measure" style="background:var(--warn-bg);border-radius:6px;padding:10px 14px">
-  <b>In progress.</b> Our method&rsquo;s &#9314; and every method&rsquo;s &#9315; (our fine-tuned DINO
-  + Mehdi&rsquo;s updated learned-gate SAE) need training and are running now; this page updates when
-  they finish. Rows marked <i>OLD SAE</i> are the earlier hard-deletion SAE, kept only as a reference.</p>
+  <b>In progress.</b> Our method now has all four (&#9312;&ndash;&#9315;, from four matched training
+  runs). DrivoR&rsquo;s and Drive-JEPA&rsquo;s &#9315; (our fine-tuned DINO + SAE, trained inside
+  their method) are still being set up and trained; this page updates when they finish. Rows marked
+  <i>OLD SAE</i> are the earlier hard-deletion SAE, kept only as a reference.</p>
 </header>
 
 <section>

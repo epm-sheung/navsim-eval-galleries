@@ -18,9 +18,7 @@ TABS = [("Findings", "../index.html"), ("Why peaks", "../why_peaks.html"),
         ("Retrieval", "index.html")]
 DEFAULT_ON = ["ours_cls", "drivor_cls", "jepa_bb"]
 METHOD_NOTE = {
-    "Our method": "Our trunk is DINOv2 ViT-S/14. &#9312; is stock, &#9313; is our PAV fine-tune "
-                  "(30 of 175 tensors, blocks 10&ndash;11), &#9314; is the stock trunk with our SAE "
-                  "suppression (arm B&prime;) running inside the forward pass.",
+    "Our method": "__OURS_NOTE__",
     "DrivoR": "DrivoR trains LoRA r32 on DINOv2-S/14-reg4; its base weights are bit-identical to "
               "timm&rsquo;s release, so &#9312; is exactly the pretrained backbone. &#9313; runs our "
               "fine-tuned DINO through DrivoR&rsquo;s own preprocessing. Our DINO has no register "
@@ -122,6 +120,22 @@ def main():
             f.unlink(); rm += 1
     print(f"[thumbs] {len(need)} referenced, {cp} copied, {rm} removed")
 
+    ov = json.load(open(S / "arm4_planner_val.json")); ge = json.load(open(S / "arm4_gate_energy.json"))
+    METHOD_NOTE["Our method"] = (
+        "Four matched training runs in Mehdi&rsquo;s trainer and architecture (CLS + 4&times;6 pooled "
+        "patch tokens), identical except trunk and SAE: &#9312; stock, &#9313; our fine-tuned DINO, "
+        "&#9314; stock + his updated learned-gate SAE on block 11, &#9315; fine-tuned + the same SAE "
+        "(trajectory teacher, keep budget 0.5, hard gate at half the run, 8 epochs). The trunk stays "
+        "frozen; the gate is what trains. Planner validation ADE: "
+        f"&#9312; {ov['stock']:.3f} &middot; &#9313; {ov['ft']:.3f} &middot; &#9314; {ov['stock_sae']:.3f} "
+        f"&middot; &#9315; {ov['ft_sae']:.3f} m &mdash; the SAE costs the stock trunk "
+        f"{ov['stock_sae']-ov['stock']:+.3f} but the fine-tuned trunk only {ov['ft_sae']-ov['ft']:+.3f}. "
+        f"Unlike DrivoR&rsquo;s gate, these gates close live codes: {ge['stock_sae']['dropped']} and "
+        f"{ge['ft_sae']['dropped']} of 3,072, carrying {ge['stock_sae']['dropped_mass_share']*100:.0f}% and "
+        f"{ge['ft_sae']['dropped_mass_share']*100:.0f}% of code magnitude, with only "
+        f"{ge['stock_sae']['top100_by_mass_kept']} and {ge['ft_sae']['top100_by_mass_kept']} of the 100 "
+        "strongest codes kept &mdash; in 8 epochs the budget forced the cut before the teacher could "
+        "choose it. The fine-tuned dictionary also reconstructs worse (FVU 0.150 vs 0.098).")
     methods, readouts = [], []
     for m in ("Our method", "DrivoR", "Drive-JEPA"):
         ps = [P for P in U["pipelines"] if P["method"] == m and P.get("main", True)]
