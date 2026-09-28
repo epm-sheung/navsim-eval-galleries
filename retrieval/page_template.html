@@ -105,6 +105,10 @@ tr.best td{background:var(--good-bg);} tr.best td.vn{color:var(--good);font-weig
 .ci{font-size:11px;color:var(--ink-3);} td.ref{color:var(--ink-3);font-style:italic;}
 td.sig-better b{color:var(--good);} td.sig-worse b{color:var(--crit);} td.ns b{color:var(--ink-2);}
 .w-reference{background:var(--panel-2);color:var(--ink-2);}
+tr.divider td{background:var(--panel-2);color:var(--ink-3);font-size:11px;text-transform:uppercase;
+ letter-spacing:.06em;padding:4px 11px;}
+tr.refrow td{color:var(--ink-3);} tr.refrow td.vn{font-weight:400;font-style:italic;}
+.row.refr{opacity:.62;} .row.refr .rowlab{font-weight:400;font-style:italic;}
 .pgroup{border:1px solid var(--rule);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
 .pgroup .gt{font-size:12.5px;font-weight:600;color:var(--ink-2);}
 .pgroup .gt span{font-weight:400;color:var(--ink-3);font-size:11.5px;}
@@ -117,22 +121,37 @@ __TABBAR__
 
 <header>
   <div class="eyebrow">navtest &middot; __NC__ scenes &middot; retrieval by t0 camera frame</div>
-  <h1>Same method, different backbone</h1>
-  <p class="standfirst">For each method we swap only the backbone weights &mdash; its original
-  pretrained backbone, the one the method trained, and the one trained with the SAE gate &mdash;
-  and keep the frames, resolution, preprocessing, layer and pooling identical. Each scene retrieves
-  its ten nearest scenes from other driving logs; we score how closely their next 4&nbsp;s match.</p>
+  <h1>Three backbones per method</h1>
+  <p class="standfirst">For every method, in the same order: <b>&#9312;</b> its original pretrained
+  backbone, <b>&#9313;</b> our fine-tuned DINO dropped into that method&rsquo;s pipeline, and
+  <b>&#9314;</b> the method&rsquo;s SAE version. Frames, resolution, layer and pooling stay fixed
+  within a table. Each scene retrieves its ten nearest scenes from other driving logs, and we
+  score how closely their next 4&nbsp;s match the query&rsquo;s.</p>
+  <p class="note measure" style="background:var(--warn-bg);border-radius:6px;padding:10px 14px">
+  <b>In progress.</b> Our method&rsquo;s &#9314; and every method&rsquo;s &#9315; (our fine-tuned DINO
+  + Mehdi&rsquo;s updated learned-gate SAE) need training and are running now; this page updates when
+  they finish. Rows marked <i>OLD SAE</i> are the earlier hard-deletion SAE, kept only as a reference.</p>
 </header>
 
 <section>
-  <h2 id="pairs">Pairs &mdash; __NQ__ queries</h2>
+  <h2 id="pairs">&#9312; original &middot; &#9313; our fine-tuned DINO &middot; &#9314; SAE &mdash; __NQ__ queries</h2>
   <p class="note measure">Rows inside one table are directly comparable; rows in different tables
   are not. <b>ADE</b> is the mean error between the query&rsquo;s 4&nbsp;s future and each
   neighbour&rsquo;s, in their own t0 ego frames. <b>&Delta; ADE</b> is paired: the same queries,
-  scored with each backbone, differenced per query, with a bootstrap 95% interval &mdash; green
-  when the whole interval is below zero, red when above. <b>Wins</b> is the share of queries where
-  that backbone&rsquo;s neighbours drive closer to the query than the first row&rsquo;s.</p>
+  scored with each backbone, differenced per query against &#9312;, with a bootstrap 95% interval
+  &mdash; green when the whole interval is below zero, red when above. <b>Wins</b> is the share of
+  queries where that backbone&rsquo;s neighbours drive closer to the query than &#9312;&rsquo;s.
+  The best of &#9312;&ndash;&#9314; is highlighted; reference rows below the divider are there to
+  interpret them, not to rank.</p>
 __METHODS__
+</section>
+
+<section>
+  <h2 id="readout">What each planner actually reads</h2>
+  <p class="note measure">The layer a planner reads is created by training it, so a pretrained
+  backbone or our DINO has nothing to put here without training a new planner. These tables compare
+  only the trained models.</p>
+__READOUTS__
 </section>
 
 <section>
@@ -144,9 +163,9 @@ __METHODS__
 </section>
 
 <section>
-  <h2 id="gallery">Thirty scenes, pair by pair</h2>
-  <p class="note measure">Choose pipelines to draw. Inside each, the backbone variants are stacked so
-  a pair is read top to bottom. Under every neighbour, its 4&nbsp;s future (teal) is drawn over the
+  <h2 id="gallery">Thirty scenes, backbone by backbone</h2>
+  <p class="note measure">Choose pipelines to draw. Inside each, &#9312;&#9313;&#9314; are stacked in
+  order, with reference rows dimmed beneath them. Under every neighbour, its 4&nbsp;s future (teal) is drawn over the
   query&rsquo;s (grey) as 8 waypoints at 0.5&nbsp;s spacing, with the ADE between them. The lateral
   axis is stretched about 3&times; so turns stay visible; ADE is unaffected.</p>
 </section>
@@ -231,11 +250,12 @@ __INVENTORY__
     document.getElementById('queries').innerHTML = D.queries.map(function (q, i) {
       var m = D.scenes[q.token];
       var groups = sel.map(function (P) {
+        var mainIdx = P.rows.map(function (r, k) { return r.role === 'ref' ? -1 : k; }).filter(function (k) { return k >= 0; });
         var stats = P.rows.map(function (r) {
           var l = q.nb[P.id + '/' + r.key] || [];
           return l.length ? l.reduce(function (s, n) { return s + n.a; }, 0) / l.length : Infinity;
         });
-        var bestI = stats.indexOf(Math.min.apply(null, stats));
+        var bestI = mainIdx.reduce(function (b, k) { return stats[k] < stats[b] ? k : b; }, mainIdx[0]);
         var rows = P.rows.map(function (r, ri) {
           var list = q.nb[P.id + '/' + r.key] || [], match = 0;
           var tiles = list.map(function (n) {
@@ -243,9 +263,9 @@ __INVENTORY__
             return '<div class="nb' + (same ? ' match' : '') + '"><img loading="lazy" src="thumbs/' + n.t + '.jpg" alt="">' +
               glyph(m.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + s.cmd[0] + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
           }).join('');
-          return '<div class="row' + (ri === bestI && P.rows.length > 1 ? ' win' : '') + '"><div class="rowlab">' + r.label +
+          return '<div class="row' + (ri === bestI && P.rows.length > 1 ? ' win' : '') + (r.role === 'ref' ? ' refr' : '') + '"><div class="rowlab">' + r.label +
             '<span class="vd">this query: ADE ' + (isFinite(stats[ri]) ? stats[ri].toFixed(2) : '-') + ' m &middot; ' +
-            match + '/10 same direction' + (ri === bestI && P.rows.length > 1 ? ' &middot; best of the pair' : '') + '</span></div>' +
+            match + '/10 same direction' + (ri === bestI && P.rows.length > 1 ? ' &middot; best of \u2460\u2013\u2462 here' : '') + '</span></div>' +
             '<div class="strip">' + tiles + '</div></div>';
         }).join('');
         return '<div class="pgroup"><div class="gt">' + P.method + ' &middot; ' + P.what + ' <span>&mdash; ' + P.fixed + '</span></div>' + rows + '</div>';

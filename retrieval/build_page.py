@@ -16,17 +16,20 @@ TABS = [("Findings", "../index.html"), ("Why peaks", "../why_peaks.html"),
         ("Scoreboard", "../session_scoreboard/index.html"), ("Scenes", "../scenes/index.html"),
         ("Distributions", "../distributions/index.html"), ("Figures", "../figures/index.html"),
         ("Retrieval", "index.html")]
-DEFAULT_ON = ["ours_readout", "drivor_cls", "jepa_bb"]
+DEFAULT_ON = ["ours_cls", "drivor_cls", "jepa_bb"]
 METHOD_NOTE = {
-    "Our method": "Frozen DINOv2 trunk + trained aggregator. The trunk pair is the stock trunk vs "
-                  "the PAV-fine-tuned one; the readout pair is the controlled trunk 2&times;2 "
-                  "(cells C and D), where only the trunk differs.",
-    "DrivoR": "LoRA r32 on DINOv2-S/14-reg4. DrivoR trains LoRA only: the base weights are "
-              "bit-identical to timm&rsquo;s release (pos_embed is timm&rsquo;s own resample to "
-              "1148&times;672), so &ldquo;original&rdquo; is exactly the pretrained backbone.",
-    "Drive-JEPA": "V-JEPA ViT-L pretrained on driving video, then trained with the planner. "
-                  "&ldquo;Original&rdquo; is the released pretraining checkpoint "
-                  "(vitl_merge_3dataset_e50.pt).",
+    "Our method": "Our trunk is DINOv2 ViT-S/14. &#9312; is stock, &#9313; is our PAV fine-tune "
+                  "(30 of 175 tensors, blocks 10&ndash;11), &#9314; is the stock trunk with our SAE "
+                  "suppression (arm B&prime;) running inside the forward pass.",
+    "DrivoR": "DrivoR trains LoRA r32 on DINOv2-S/14-reg4; its base weights are bit-identical to "
+              "timm&rsquo;s release, so &#9312; is exactly the pretrained backbone. &#9313; runs our "
+              "fine-tuned DINO through DrivoR&rsquo;s own preprocessing. Our DINO has no register "
+              "tokens, so the stock-DINOv2 reference row separates that architecture difference "
+              "from the effect of our fine-tune.",
+    "Drive-JEPA": "&#9312; is Drive-JEPA&rsquo;s released V-JEPA pretraining (vitl_merge_3dataset_e50.pt). "
+                  "&#9313; is our fine-tuned DINO on the same two frames with the same crop, at "
+                  "504&times;252 (DINOv2 needs multiples of 14) and with ImageNet normalisation, which "
+                  "DINOv2 was trained with and V-JEPA was not.",
 }
 INVENTORY = [
     ("Worth comparing", [
@@ -71,17 +74,22 @@ def pipeline_table(P):
     rows = P["rows"]
     if not rows:
         return ""
-    best = min(r["ade"] for r in rows)
-    trs = []
+    mains = [r for r in rows if r.get("role", "main") == "main"]
+    best = min(r["ade"] for r in mains)
+    trs, divided = [], False
     for i, r in enumerate(rows):
+        ref = r.get("role", "main") == "ref"
+        if ref and not divided:
+            trs.append('<tr class="divider"><td colspan="7">reference rows &mdash; to read the three above</td></tr>')
+            divided = True
         if i == 0:
-            d = '<td class="num ref">reference</td><td class="num ref">&mdash;</td>'
+            d = '<td class="num ref">baseline</td><td class="num ref">&mdash;</td>'
         else:
             dv, ci = r["d_ade"], r["d_ade_ci"]
             sig = "sig-better" if ci[1] < 0 else ("sig-worse" if ci[0] > 0 else "ns")
             d = (f'<td class="num {sig}"><b>{dv:+.2f}</b> m {fmt_ci(ci)}</td>'
                  f'<td class="num">{r["win_rate"]*100:.0f}%</td>')
-        cls = "best" if abs(r["ade"] - best) < 1e-9 else ""
+        cls = "refrow" if ref else ("best" if abs(r["ade"] - best) < 1e-9 else "")
         trs.append(f'<tr class="{cls}"><td class="vn">{esc(r["label"])}</td>'
                    f'<td class="num"><b>{r["ade"]:.2f}</b> m {fmt_ci(r["ade_ci"])}</td>{d}'
                    f'<td class="num">{r["speed"]:.2f}</td><td class="num">{r["green"]:.2f}</td>'
@@ -89,7 +97,7 @@ def pipeline_table(P):
     return (f'<div class="pipe" id="p-{P["id"]}"><div class="ptitle">{esc(P["what"])}</div>'
             f'<div class="pfixed">held fixed: {esc(P["fixed"])}</div>'
             '<table><thead><tr><th>backbone</th><th class="num">trajectory ADE [95% CI]</th>'
-            '<th class="num">&Delta; ADE vs first row [95% CI]</th><th class="num">wins vs first row</th>'
+            '<th class="num">&Delta; ADE vs &#9312; [95% CI]</th><th class="num">wins vs &#9312;</th>'
             '<th class="num">speed err</th><th class="num">direction /10</th><th class="num">score gap</th>'
             f'</tr></thead><tbody>{"".join(trs)}</tbody></table></div>')
 
@@ -114,11 +122,14 @@ def main():
             f.unlink(); rm += 1
     print(f"[thumbs] {len(need)} referenced, {cp} copied, {rm} removed")
 
-    methods = []
+    methods, readouts = [], []
     for m in ("Our method", "DrivoR", "Drive-JEPA"):
-        ps = [P for P in U["pipelines"] if P["method"] == m]
+        ps = [P for P in U["pipelines"] if P["method"] == m and P.get("main", True)]
         methods.append(f'<div class="method"><h3>{esc(m)}</h3><p class="note measure">{METHOD_NOTE[m]}</p>'
                        + "".join(pipeline_table(P) for P in ps) + "</div>")
+        for P in U["pipelines"]:
+            if P["method"] == m and not P.get("main", True):
+                readouts.append(f'<div class="method"><h3>{esc(m)}</h3>{pipeline_table(P)}</div>')
     ref = "".join(f'<tr><td class="vn">{esc(r["label"])}</td><td class="num"><b>{r["ade"]:.2f}</b> m</td>'
                   f'<td class="num">{r["speed"]:.2f}</td><td class="num">{r["green"]:.2f}</td>'
                   f'<td class="num">{(r.get("pdms_gap") or 0):.3f}</td></tr>' for r in U["reference"])
@@ -132,13 +143,13 @@ def main():
               + "".join(f'<a class="nt" href="{h}"' + (' aria-current="page"' if h == "index.html" else "")
                         + f'>{l}</a>' for l, h in TABS) + "</nav>")
     payload = json.dumps({"pipelines": [{k: P[k] for k in ("id", "method", "what", "fixed")}
-                                        | {"rows": [{k: r[k] for k in ("key", "label", "ade")} for r in P["rows"]]}
+                                        | {"rows": [{k: r.get(k, "main") if k == "role" else r[k] for k in ("key", "label", "ade", "role")} for r in P["rows"]]}
                                         for P in U["pipelines"] if P["rows"]],
                           "queries": U["queries"], "scenes": U["scenes"], "default_on": DEFAULT_ON},
                          separators=(",", ":")).replace("</", "<\\/")
     page = (open(Path(__file__).with_name("page_template.html"), encoding="utf-8").read()
             .replace("__TABBAR__", tabbar).replace("__NQ__", f'{U["n_queries_bench"]:,}')
-            .replace("__NC__", f'{U["n_corpus"]:,}').replace("__METHODS__", "\n".join(methods))
+            .replace("__NC__", f'{U["n_corpus"]:,}').replace("__METHODS__", "\n".join(methods)).replace("__READOUTS__", "\n".join(readouts))
             .replace("__REF__", ref).replace("__INVENTORY__", inv)
             .replace("__GEN__", esc(U["generated_utc"])).replace("__PAYLOAD__", payload))
     left = sorted(set(__import__("re").findall(r"__[A-Z]+__", page)))
