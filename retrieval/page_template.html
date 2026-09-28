@@ -93,6 +93,23 @@ summary{cursor:pointer;font-weight:600;}
 details[open] summary{margin-bottom:10px;}
 @media (max-width:1000px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}.strip{grid-template-columns:repeat(5,1fr);}.steps{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:600px){.wrap{padding:24px 16px 70px;}td.ade{min-width:0;}.bar{display:none;}}
+
+.method{display:flex;flex-direction:column;gap:12px;background:var(--panel);border:1px solid var(--rule);
+ border-radius:8px;padding:16px 18px;}
+.method h3{margin:0;font-size:17px;text-transform:none;letter-spacing:0;color:var(--ink);
+ font-family:"IBM Plex Serif",Georgia,serif;}
+.pipe{display:flex;flex-direction:column;gap:4px;}
+.ptitle{font-weight:600;font-size:14px;} .pfixed{font-size:12px;color:var(--ink-3);}
+.pipe table{margin-top:4px;} td.vn{font-weight:500;}
+tr.best td{background:var(--good-bg);} tr.best td.vn{color:var(--good);font-weight:600;}
+.ci{font-size:11px;color:var(--ink-3);} td.ref{color:var(--ink-3);font-style:italic;}
+td.sig-better b{color:var(--good);} td.sig-worse b{color:var(--crit);} td.ns b{color:var(--ink-2);}
+.w-reference{background:var(--panel-2);color:var(--ink-2);}
+.pgroup{border:1px solid var(--rule);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.pgroup .gt{font-size:12.5px;font-weight:600;color:var(--ink-2);}
+.pgroup .gt span{font-weight:400;color:var(--ink-3);font-size:11.5px;}
+.row .rowlab .vd{font-family:"IBM Plex Mono",monospace;font-weight:400;font-size:11.5px;color:var(--ink-3);}
+.row.win .rowlab{color:var(--good);}
 </style>
 </head><body>
 __TABBAR__
@@ -100,54 +117,39 @@ __TABBAR__
 
 <header>
   <div class="eyebrow">navtest &middot; __NC__ scenes &middot; retrieval by t0 camera frame</div>
-  <h1>Which representation finds scenes that drive the same way?</h1>
-  <p class="standfirst">Each query is a scene&rsquo;s t0 camera frame &mdash; the last frame of the
-  past. Every representation retrieves its ten nearest scenes from other driving logs, and we
-  score them on how closely those scenes&rsquo; next 4&nbsp;seconds match the query&rsquo;s.</p>
+  <h1>Same method, different backbone</h1>
+  <p class="standfirst">For each method we swap only the backbone weights &mdash; its original
+  pretrained backbone, the one the method trained, and the one trained with the SAE gate &mdash;
+  and keep the frames, resolution, preprocessing, layer and pooling identical. Each scene retrieves
+  its ten nearest scenes from other driving logs; we score how closely their next 4&nbsp;s match.</p>
 </header>
 
-<section class="answer">
-  <h2>Why our model looked barely better than stock DINOv2</h2>
-  <p class="measure">We were measuring the wrong thing. Our model keeps DINOv2 <b>frozen</b>; what it
-  learns lives in the patch-token aggregator on top, whose readout is the scene vector the waypoint
-  head uses. Comparing CLS tokens compared two trunks, and the &ldquo;fine-tuned&rdquo; trunk was
-  tuned on a different dataset (PAV, triplet loss, blocks&nbsp;10&ndash;11 only), not by our driving
-  objective. Measured where the learning actually is, the gap opens up:</p>
-  <div class="steps">
-    <div class="step"><div class="v">__STOCK_ADE__ m</div><div class="l">stock DINOv2 CLS</div></div>
-    <div class="step"><div class="v">__FT_ADE__ m</div><div class="l">&ldquo;fine-tuned&rdquo; trunk CLS &mdash; what we had been comparing</div></div>
-    <div class="step"><div class="v">__IMG_ADE__ m</div><div class="l">our model&rsquo;s readout, image only</div></div>
-    <div class="step hi"><div class="v">__FULL_ADE__ m</div><div class="l">our model&rsquo;s readout as it actually runs &mdash; <b>__FULL_GAIN__% lower</b> than stock, best of every row</div></div>
-  </div>
-  <p class="note measure">The full readout is handed past motion and the driving command, so we
-  checked how much of that is bookkeeping: those inputs alone, with no image, reach
-  __CTRL_ADE__&nbsp;m. The readout beats that, so the image adds real information on top.</p>
+<section>
+  <h2 id="pairs">Pairs &mdash; __NQ__ queries</h2>
+  <p class="note measure">Rows inside one table are directly comparable; rows in different tables
+  are not. <b>ADE</b> is the mean error between the query&rsquo;s 4&nbsp;s future and each
+  neighbour&rsquo;s, in their own t0 ego frames. <b>&Delta; ADE</b> is paired: the same queries,
+  scored with each backbone, differenced per query, with a bootstrap 95% interval &mdash; green
+  when the whole interval is below zero, red when above. <b>Wins</b> is the share of queries where
+  that backbone&rsquo;s neighbours drive closer to the query than the first row&rsquo;s.</p>
+__METHODS__
 </section>
 
 <section>
-  <h2 id="board">Scoreboard &mdash; __NQ__ queries, ranked by trajectory ADE</h2>
-  <p class="note measure">Top-10 per query from all __NC__ scenes, neighbours restricted to other logs.
-  Rows that produced the same result are merged into one. <b>ADE</b> is the mean error between the
-  query&rsquo;s 4&nbsp;s future and each neighbour&rsquo;s, both in their own t0 ego frame.
-  <b>Direction</b> is how many of ten share the driving command; <b>score gap</b> is the mean PDMS
-  difference to the neighbours.</p>
-  <table>
-    <thead><tr><th>#</th><th>representation</th><th>inputs</th><th class="num">trajectory ADE</th>
-      <th class="num">speed err (m/s)</th><th class="num">direction /10</th><th class="num">score gap</th></tr></thead>
-    <tbody>
-__SCOREBOARD__
-    </tbody>
-  </table>
+  <h2 id="ref">Reference rows &mdash; no backbone pair</h2>
+  <p class="note measure">Same queries and scoring, but no matched backbone to pair with, so they are
+  not comparable to the tables above. The controls use no image at all.</p>
+  <table><thead><tr><th>representation</th><th class="num">trajectory ADE</th><th class="num">speed err</th>
+    <th class="num">direction /10</th><th class="num">score gap</th></tr></thead><tbody>__REF__</tbody></table>
 </section>
 
 <section>
-  <h2 id="gallery">Thirty scenes, side by side</h2>
-  <p class="note measure">Choose which representations to draw. Rows follow the scoreboard order.
-  Under each neighbour, its 4&nbsp;s future (teal) is drawn over the query&rsquo;s (grey), in the same
-  frame and scale, with the ADE between them. The lateral axis is stretched about 3&times;
-  relative to forward so turns stay visible; the ADE numbers are unaffected.</p>
+  <h2 id="gallery">Thirty scenes, pair by pair</h2>
+  <p class="note measure">Choose pipelines to draw. Inside each, the backbone variants are stacked so
+  a pair is read top to bottom. Under every neighbour, its 4&nbsp;s future (teal) is drawn over the
+  query&rsquo;s (grey) as 8 waypoints at 0.5&nbsp;s spacing, with the ADE between them. The lateral
+  axis is stretched about 3&times; so turns stay visible; ADE is unaffected.</p>
 </section>
-
 <div class="picker" id="picker"><span class="lab">Show:</span>
   <span class="legend"><span><span class="sw" style="background:var(--good)"></span>same direction</span>
   <span><span class="sw" style="background:var(--traj-q)"></span>query future</span>
@@ -161,35 +163,21 @@ __INVENTORY__
 </section>
 
 <details>
-  <summary>What the two SAE gates remove</summary>
-  <table>
-    <thead><tr><th>gate</th><th class="num">dictionary</th><th class="num">codes dropped</th>
-      <th class="num">magnitude in dropped codes</th><th class="num">near-dead codes</th>
-      <th class="num">cos(before, after)</th></tr></thead>
-    <tbody>__DIAG__</tbody>
-  </table>
-  <p class="note measure" style="margin-top:10px">DrivoR&rsquo;s gate removes dictionary entries that
-  never activate on navtest, so its compressed rows equal its uncompressed ones and are merged in
-  the scoreboard. Drive-JEPA&rsquo;s gate removes live signal and still costs no retrieval quality.
-  Both measured on navtest only.</p>
-</details>
-
-<details>
   <summary>How it was built</summary>
   <div class="note measure" style="display:flex;flex-direction:column;gap:8px">
-  <p><b>Stock / fine-tuned trunk:</b> DINOv2 ViT-S/14 on the cached 504&times;280 frame, CLS or
-  mean of patch tokens. The fine-tuned trunk is the one inside
-  <span class="mono">waypoint_navsim_ft/epoch013-best.ckpt</span>: 30 of 175 tensors changed, all in
-  blocks 10&ndash;11 (21&ndash;33% relative change on those weights).</p>
-  <p><b>Our model:</b> <span class="mono">patch_tokens_film_navsim</span> (navtest v1 PDMS 0.8302),
-  frozen stock trunk + trained aggregator; the descriptor is the aggregator readout token.
-  &ldquo;Image only&rdquo; zeroes past motion and fixes the command; the full row feeds the real
-  inputs exactly as the eval agent does.</p>
-  <p><b>DrivoR / Drive-JEPA:</b> rebuilt from the shared checkpoints and fed their own input &mdash;
-  DrivoR at 1148&times;672, Drive-JEPA as a two-frame 512&times;256 clip.</p>
-  <p><b>Controls:</b> past motion (4 poses + velocity/acceleration), with and without the command,
-  z-scored, no image.</p>
-  <p>Chance: ten random scenes from other logs. Generated __GEN__.</p>
+  <p><b>Our method.</b> Trunk rows: DINOv2 ViT-S/14 on the cached 504&times;280 t0 frame. Readout rows:
+  the scene aggregator of the trunk 2&times;2 models (DINOWaypointCLS, navtrain, 4,000 steps, seed 42),
+  cell C with the stock trunk and cell D with the fine-tuned one &mdash; cell D&rsquo;s trunk is
+  bit-identical to the fine-tuned trunk in the rows above. Past motion joins only after the readout,
+  so the readout is image-only.</p>
+  <p><b>DrivoR.</b> Rebuilt from the shared checkpoints; the original backbone is the same LoRA model
+  with the LoRA branch set to zero, verified against timm&rsquo;s release (174/175 tensors identical,
+  the last being timm&rsquo;s own pos_embed resample, equal bit-for-bit). The +SAE model applies its gate
+  inside the forward pass at blocks[10], as it runs. Readout = mean of the 16 scene tokens the planner reads.</p>
+  <p><b>Drive-JEPA.</b> Original = vitl_merge_3dataset_e50.pt from the Drive-JEPA release; released and
+  +SAE models from the shared checkpoints; the +SAE gate is applied on the projector as it runs.</p>
+  <p>Queries: 2,000 evenly spaced over the corpus; 30 display queries stratified by direction and
+  speed. Neighbours always from other driving logs. Generated __GEN__.</p>
   </div>
 </details>
 
@@ -199,41 +187,39 @@ __INVENTORY__
 (function () {
   var D = JSON.parse(document.getElementById('data').textContent);
   var CMD = {left: '← left', straight: '↑ straight', right: 'right →', unknown: 'unknown'};
-  var GC = {'image only': '', 'image + motion + command': 'g-full', 'no image (control)': 'g-ctrl'};
-  var on = {};
-  var saved = null;
-  try { saved = JSON.parse(localStorage.getItem('retr_on') || 'null'); } catch (e) {}
+  var on = {}, saved = null;
+  try { saved = JSON.parse(localStorage.getItem('retr_pairs_on') || 'null'); } catch (e) {}
   (saved || D.default_on).forEach(function (k) { on[k] = true; });
 
   function glyph(q, n, big) {
     var W = 100, H = big ? 62 : 58, X = 42, Y = 14;
-    function pts(tr) {
-      var s = [[W / 2, H - 3]];
-      tr.forEach(function (p) {
-        var px = W / 2 - p[1] * (W / 2 - 3) / Y;
-        var py = H - 3 - p[0] * (H - 6) / X;
-        s.push([Math.max(1, Math.min(W - 1, px)), Math.max(1, Math.min(H - 1, py))]);
-      });
-      return s.map(function (a) { return a[0].toFixed(1) + ',' + a[1].toFixed(1); }).join(' ');
+    function xy(p) {
+      var px = W / 2 - p[1] * (W / 2 - 3) / Y, py = H - 3 - p[0] * (H - 6) / X;
+      return [Math.max(1, Math.min(W - 1, px)), Math.max(1, Math.min(H - 1, py))];
+    }
+    function path(tr, col, sw, r) {
+      var pts = [[W / 2, H - 3]].concat(tr.map(xy));
+      var s = '<polyline points="' + pts.map(function (a) { return a[0].toFixed(1) + ',' + a[1].toFixed(1); }).join(' ') +
+        '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>';
+      tr.forEach(function (p) { var a = xy(p); s += '<circle cx="' + a[0].toFixed(1) + '" cy="' + a[1].toFixed(1) + '" r="' + r + '" fill="' + col + '"/>'; });
+      return s;
     }
     var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
-    o += '<polyline points="' + pts(q) + '" fill="none" stroke="var(--traj-q)" stroke-width="' + (big ? 3 : 3.4) + '" stroke-linecap="round" stroke-linejoin="round"/>';
-    if (n) o += '<polyline points="' + pts(n) + '" fill="none" stroke="var(--traj-n)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
-    o += '<circle cx="' + W / 2 + '" cy="' + (H - 3) + '" r="2.2" fill="var(--ink-3)"/></svg>';
+    o += path(q, 'var(--traj-q)', big ? 1.6 : 1.8, big ? 2.1 : 2.3);
+    if (n) o += path(n, 'var(--traj-n)', 1.2, 1.7);
+    o += '<circle cx="' + W / 2 + '" cy="' + (H - 3) + '" r="2.4" fill="var(--ink)"/></svg>';
     return o;
   }
 
   function picker() {
     var p = document.getElementById('picker'), leg = p.querySelector('.legend');
-    D.rows.forEach(function (r) {
+    D.pipelines.forEach(function (P) {
       var b = document.createElement('button');
-      b.className = 'pk ' + (GC[r.group] || '');
-      b.textContent = r.rank + '. ' + r.label + (r.group === 'image + motion + command' ? ' (full)' : '');
-      b.setAttribute('aria-pressed', on[r.key] ? 'true' : 'false');
+      b.className = 'pk'; b.textContent = P.method + ' · ' + P.what;
+      b.setAttribute('aria-pressed', on[P.id] ? 'true' : 'false');
       b.onclick = function () {
-        on[r.key] = !on[r.key];
-        b.setAttribute('aria-pressed', on[r.key] ? 'true' : 'false');
-        try { localStorage.setItem('retr_on', JSON.stringify(Object.keys(on).filter(function (k) { return on[k]; }))); } catch (e) {}
+        on[P.id] = !on[P.id]; b.setAttribute('aria-pressed', on[P.id] ? 'true' : 'false');
+        try { localStorage.setItem('retr_pairs_on', JSON.stringify(Object.keys(on).filter(function (k) { return on[k]; }))); } catch (e) {}
         render();
       };
       p.insertBefore(b, leg);
@@ -241,37 +227,39 @@ __INVENTORY__
   }
 
   function render() {
-    var sel = D.rows.filter(function (r) { return on[r.key]; });
-    var html = D.queries.map(function (q, i) {
+    var sel = D.pipelines.filter(function (P) { return on[P.id]; });
+    document.getElementById('queries').innerHTML = D.queries.map(function (q, i) {
       var m = D.scenes[q.token];
-      var rows = sel.map(function (r) {
-        var list = q.nb[r.key] || [];
-        var match = 0, ade = 0;
-        var tiles = list.map(function (n) {
-          var s = D.scenes[n.t], same = s.cmd === m.cmd;
-          if (same) match++; ade += n.a;
-          return '<div class="nb' + (same ? ' match' : '') + '"><img loading="lazy" src="thumbs/' + n.t + '.jpg" alt="">' +
-            glyph(m.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + s.cmd[0] + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
+      var groups = sel.map(function (P) {
+        var stats = P.rows.map(function (r) {
+          var l = q.nb[P.id + '/' + r.key] || [];
+          return l.length ? l.reduce(function (s, n) { return s + n.a; }, 0) / l.length : Infinity;
+        });
+        var bestI = stats.indexOf(Math.min.apply(null, stats));
+        var rows = P.rows.map(function (r, ri) {
+          var list = q.nb[P.id + '/' + r.key] || [], match = 0;
+          var tiles = list.map(function (n) {
+            var s = D.scenes[n.t], same = s.cmd === m.cmd; if (same) match++;
+            return '<div class="nb' + (same ? ' match' : '') + '"><img loading="lazy" src="thumbs/' + n.t + '.jpg" alt="">' +
+              glyph(m.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + s.cmd[0] + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
+          }).join('');
+          return '<div class="row' + (ri === bestI && P.rows.length > 1 ? ' win' : '') + '"><div class="rowlab">' + r.label +
+            '<span class="vd">this query: ADE ' + (isFinite(stats[ri]) ? stats[ri].toFixed(2) : '-') + ' m &middot; ' +
+            match + '/10 same direction' + (ri === bestI && P.rows.length > 1 ? ' &middot; best of the pair' : '') + '</span></div>' +
+            '<div class="strip">' + tiles + '</div></div>';
         }).join('');
-        return '<div class="row ' + (GC[r.group] || '') + '"><div class="rowlab"><span class="rk2">#' + r.rank + '</span>' + r.label +
-          (r.group !== 'image only' ? ' <span class="sub">[' + r.group + ']</span>' : '') +
-          '<span class="sub">ADE ' + (list.length ? (ade / list.length).toFixed(2) : '-') + ' m &middot; ' + match + '/10 same direction</span></div>' +
-          '<div class="strip">' + tiles + '</div></div>';
+        return '<div class="pgroup"><div class="gt">' + P.method + ' &middot; ' + P.what + ' <span>&mdash; ' + P.fixed + '</span></div>' + rows + '</div>';
       }).join('');
       return '<div class="q"><div class="qhead"><span class="n">Q' + String(i + 1).padStart(2, '0') + '</span>' +
         '<span class="tok">' + q.token + '</span><span class="chip cmd">' + (CMD[m.cmd] || m.cmd) + '</span>' +
         '<span class="chip">' + m.v.toFixed(1) + ' m/s</span>' +
         (m.pdms != null ? '<span class="chip">PDMS ' + m.pdms.toFixed(3) + '</span>' : '') +
-        '<span class="chip">' + m.log + '</span></div>' +
-        '<div class="body"><div class="qimg"><img src="thumbs/' + q.token + '.jpg" alt="query">' + glyph(m.tr, null, true) +
-        '<div class="note" style="font-size:12px">query &middot; t0 frame &middot; its 4 s future</div></div>' +
-        '<div class="rows">' + (rows || '<p class="note">Pick at least one representation above.</p>') + '</div></div></div>';
+        '<span class="chip">' + m.log + '</span></div><div class="body"><div class="qimg"><img src="thumbs/' + q.token +
+        '.jpg" alt="query">' + glyph(m.tr, null, true) + '<div class="note" style="font-size:12px">query &middot; t0 frame &middot; its 4 s future</div></div>' +
+        '<div class="rows">' + (groups || '<p class="note">Pick at least one pipeline above.</p>') + '</div></div></div>';
     }).join('');
-    document.getElementById('queries').innerHTML = html;
   }
-
-  picker();
-  render();
+  picker(); render();
 })();
 </script>
 </body></html>
