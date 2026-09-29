@@ -129,10 +129,12 @@ __TABBAR__
   within a table. Each scene retrieves its ten nearest scenes from other driving logs, and we
   score how closely their next 4&nbsp;s match the query&rsquo;s.</p>
   <p class="note measure" style="background:var(--warn-bg);border-radius:6px;padding:10px 14px">
-  <b>In progress.</b> Our method now has all four (&#9312;&ndash;&#9315;, from four matched training
-  runs). DrivoR&rsquo;s and Drive-JEPA&rsquo;s &#9315; (our fine-tuned DINO + SAE, trained inside
-  their method) are still being set up and trained; this page updates when they finish. Rows marked
-  <i>OLD SAE</i> are the earlier hard-deletion SAE, kept only as a reference.</p>
+  <b>Not done &mdash; interim version.</b> Our method has all four rows (&#9312;&ndash;&#9315;, from four
+  matched training runs, final). <b>DrivoR:</b> the matched &ldquo;stock DINOv2 + SAE&rdquo; run is shown
+  from its <b>epoch 14 of 25</b> checkpoint and will change; DrivoR&rsquo;s &#9315; is not shown yet &mdash;
+  its first run was invalid (it auto-resumed a 30-step smoke test&rsquo;s checkpoint and inherited a
+  one-epoch learning-rate schedule) and was restarted cleanly on 2026-09-29. <b>Drive-JEPA</b> &#9315; is
+  not started. Rows marked <i>OLD SAE</i> are the earlier hard-deletion SAE, kept only as a reference.</p>
 </header>
 
 <section>
