@@ -101,7 +101,9 @@ details[open] summary{margin-bottom:10px;}
 .pipe{display:flex;flex-direction:column;gap:4px;}
 .ptitle{font-weight:600;font-size:14px;} .pfixed{font-size:12px;color:var(--ink-3);}
 .pipe table{margin-top:4px;} td.vn{font-weight:500;}
-tr.best td{background:var(--good-bg);} tr.best td.vn{color:var(--good);font-weight:600;}
+tr.best td{background:var(--good-bg);}
+tr.grp td{background:var(--panel-2);font-weight:600;font-size:12px;color:var(--ink-2);}
+tr.chance td{color:var(--ink-3);font-style:italic;} tr.best td.vn{color:var(--good);font-weight:600;}
 .ci{font-size:11px;color:var(--ink-3);} td.ref{color:var(--ink-3);font-style:italic;}
 td.sig-better b{color:var(--good);} td.sig-worse b{color:var(--crit);} td.ns b{color:var(--ink-2);}
 .w-reference{background:var(--panel-2);color:var(--ink-2);}
@@ -148,6 +150,16 @@ __TABBAR__
   The best of &#9312;&ndash;&#9314; is highlighted; reference rows below the divider are there to
   interpret them, not to rank.</p>
 __METHODS__
+</section>
+
+<section>
+  <h2 id="green">Green tiles: how many of the top 10 drive like the query</h2>
+  <p class="note measure">For each of the __NQ__ queries, count how many of its ten retrieved scenes have a
+  4&nbsp;s future within <b>2&nbsp;m ADE</b> of the query&rsquo;s &mdash; the gallery&rsquo;s green border
+  &mdash; then average. <b>At least one</b> is the share of queries where any of the ten qualifies.
+  Neighbours are chosen by scene features alone; the trajectory is only used afterwards to grade them.</p>
+  <table><thead><tr><th>backbone</th><th class="num">green tiles per query [95% CI]</th>
+    <th class="num">queries with at least one</th></tr></thead><tbody>__GREEN__</tbody></table>
 </section>
 
 <section>

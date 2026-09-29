@@ -144,6 +144,31 @@ def main():
         for P in U["pipelines"]:
             if P["method"] == m and not P.get("main", True):
                 readouts.append(f'<div class="method"><h3>{esc(m)}</h3>{pipeline_table(P)}</div>')
+    # ---- green tiles: how many of the top 10 drive within 2 m of the query ----------
+    gtr = []
+    for P in U["pipelines"]:
+        if not P["rows"] or "green2" not in P["rows"][0]:
+            continue
+        gtr.append(f'<tr class="grp"><td colspan="3">{esc(P["method"])} &middot; {esc(P["what"])}</td></tr>')
+        best = max(r["green2"] for r in P["rows"] if r.get("role", "main") == "main")
+        for r in P["rows"]:
+            cls = "refrow" if r.get("role") == "ref" else ("best" if abs(r["green2"] - best) < 1e-9 else "")
+            ci = r.get("green2_ci", [float("nan")] * 2)
+            gtr.append(f'<tr class="{cls}"><td class="vn">{esc(r["label"])}</td>'
+                       f'<td class="num"><b>{r["green2"]:.2f}</b> / 10 {fmt_ci(ci)}</td>'
+                       f'<td class="num">{r["any2"]*100:.0f}%</td></tr>')
+    gtr.append('<tr class="grp"><td colspan="3">Reference &mdash; no backbone pair</td></tr>')
+    for r in U["reference"]:
+        if "green2" in r:
+            gtr.append(f'<tr class="refrow"><td class="vn">{esc(r["label"])}</td>'
+                       f'<td class="num"><b>{r["green2"]:.2f}</b> / 10 {fmt_ci(r["green2_ci"])}</td>'
+                       f'<td class="num">{r["any2"]*100:.0f}%</td></tr>')
+    if U.get("chance_green2") is not None:
+        gtr.append(f'<tr class="chance"><td class="vn">chance &mdash; ten random scenes from other logs</td>'
+                   f'<td class="num"><b>{U["chance_green2"]:.2f}</b> / 10</td>'
+                   f'<td class="num">{U["chance_any2"]*100:.0f}%</td></tr>')
+    green_html = "".join(gtr)
+
     ref = "".join(f'<tr><td class="vn">{esc(r["label"])}</td><td class="num"><b>{r["ade"]:.2f}</b> m</td>'
                   f'<td class="num">{r["speed"]:.2f}</td><td class="num">{r["green"]:.2f}</td>'
                   f'<td class="num">{(r.get("pdms_gap") or 0):.3f}</td></tr>' for r in U["reference"])
@@ -164,7 +189,7 @@ def main():
     page = (open(Path(__file__).with_name("page_template.html"), encoding="utf-8").read()
             .replace("__TABBAR__", tabbar).replace("__NQ__", f'{U["n_queries_bench"]:,}')
             .replace("__NC__", f'{U["n_corpus"]:,}').replace("__METHODS__", "\n".join(methods)).replace("__READOUTS__", "\n".join(readouts))
-            .replace("__REF__", ref).replace("__INVENTORY__", inv)
+            .replace("__REF__", ref).replace("__GREEN__", green_html).replace("__INVENTORY__", inv)
             .replace("__GEN__", esc(U["generated_utc"])).replace("__PAYLOAD__", payload))
     left = sorted(set(__import__("re").findall(r"__[A-Z]+__", page)))
     if left:
