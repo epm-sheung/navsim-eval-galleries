@@ -169,14 +169,16 @@ __READOUTS__
 <section>
   <h2 id="gallery">Thirty scenes, backbone by backbone</h2>
   <p class="note measure">Choose pipelines to draw. Inside each, &#9312;&#9313;&#9314; are stacked in
-  order, with reference rows dimmed beneath them. Under every neighbour, its 4&nbsp;s future (teal) is drawn over the
-  query&rsquo;s (grey) as 8 waypoints at 0.5&nbsp;s spacing, with the ADE between them. The lateral
+  order, with reference rows dimmed beneath them. Under every neighbour, its 4&nbsp;s future is drawn bold in teal, with the
+  query&rsquo;s as a faint dashed grey reference, each as 8 waypoints at 0.5&nbsp;s spacing, with the ADE
+  between them. A <b>green border</b> marks a neighbour whose future is within 2&nbsp;m ADE of the
+  query&rsquo;s &mdash; one that actually drives the same way. The lateral
   axis is stretched about 3&times; so turns stay visible; ADE is unaffected.</p>
 </section>
 <div class="picker" id="picker"><span class="lab">Show:</span>
-  <span class="legend"><span><span class="sw" style="background:var(--good)"></span>same direction</span>
-  <span><span class="sw" style="background:var(--traj-q)"></span>query future</span>
-  <span><span class="sw" style="background:var(--traj-n)"></span>neighbour future</span></span>
+  <span class="legend"><span><span class="sw" style="background:var(--good)"></span>ADE &le; 2 m (drives like the query)</span>
+  <span><span class="sw" style="background:var(--traj-q);opacity:.6"></span>query future (dashed)</span>
+  <span><span class="sw" style="background:var(--traj-n);height:4px"></span>neighbour future</span></span>
 </div>
 <section id="queries"></section>
 
@@ -209,6 +211,7 @@ __INVENTORY__
 <script>
 (function () {
   var D = JSON.parse(document.getElementById('data').textContent);
+  var ADE_OK = 2;   // green border: the neighbour's 4 s future is within 2 m ADE of the query's
   var CMD = {left: '← left', straight: '↑ straight', right: 'right →', unknown: 'unknown'};
   var on = {}, saved = null;
   try { saved = JSON.parse(localStorage.getItem('retr_pairs_on') || 'null'); } catch (e) {}
@@ -220,16 +223,21 @@ __INVENTORY__
       var px = W / 2 - p[1] * (W / 2 - 3) / Y, py = H - 3 - p[0] * (H - 6) / X;
       return [Math.max(1, Math.min(W - 1, px)), Math.max(1, Math.min(H - 1, py))];
     }
-    function path(tr, col, sw, r) {
+    function path(tr, col, sw, r, dash, op) {
       var pts = [[W / 2, H - 3]].concat(tr.map(xy));
       var s = '<polyline points="' + pts.map(function (a) { return a[0].toFixed(1) + ',' + a[1].toFixed(1); }).join(' ') +
-        '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>';
-      tr.forEach(function (p) { var a = xy(p); s += '<circle cx="' + a[0].toFixed(1) + '" cy="' + a[1].toFixed(1) + '" r="' + r + '" fill="' + col + '"/>'; });
+        '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" opacity="' + op + '"' +
+        (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+      tr.forEach(function (p) { var a = xy(p); s += '<circle cx="' + a[0].toFixed(1) + '" cy="' + a[1].toFixed(1) + '" r="' + r + '" fill="' + col + '" opacity="' + op + '"/>'; });
       return s;
     }
     var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
-    o += path(q, 'var(--traj-q)', big ? 1.6 : 1.8, big ? 2.1 : 2.3);
-    if (n) o += path(n, 'var(--traj-n)', 1.2, 1.7);
+    if (n) {
+      o += path(q, 'var(--traj-q)', 1.0, 1.1, '2.5 2', 0.6);     // query: faint dashed reference
+      o += path(n, 'var(--traj-n)', 2.4, 2.2, null, 1.0);         // neighbour: the line to read
+    } else {
+      o += path(q, 'var(--traj-n)', 2.4, 2.4, null, 1.0);         // query panel: its own future, bold
+    }
     o += '<circle cx="' + W / 2 + '" cy="' + (H - 3) + '" r="2.4" fill="var(--ink)"/></svg>';
     return o;
   }
@@ -263,13 +271,13 @@ __INVENTORY__
         var rows = P.rows.map(function (r, ri) {
           var list = q.nb[P.id + '/' + r.key] || [], match = 0;
           var tiles = list.map(function (n) {
-            var s = D.scenes[n.t], same = s.cmd === m.cmd; if (same) match++;
+            var s = D.scenes[n.t], same = n.a <= ADE_OK; if (same) match++;
             return '<div class="nb' + (same ? ' match' : '') + '"><img loading="lazy" src="thumbs/' + n.t + '.jpg" alt="">' +
               glyph(m.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + s.cmd[0] + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
           }).join('');
           return '<div class="row' + (ri === bestI && P.rows.length > 1 ? ' win' : '') + (r.role === 'ref' ? ' refr' : '') + '"><div class="rowlab">' + r.label +
             '<span class="vd">this query: ADE ' + (isFinite(stats[ri]) ? stats[ri].toFixed(2) : '-') + ' m &middot; ' +
-            match + '/10 same direction' + (ri === bestI && P.rows.length > 1 ? ' &middot; best of \u2460\u2013\u2462 here' : '') + '</span></div>' +
+            match + '/10 within ' + ADE_OK + ' m' + (ri === bestI && P.rows.length > 1 ? ' &middot; best of \u2460\u2013\u2462 here' : '') + '</span></div>' +
             '<div class="strip">' + tiles + '</div></div>';
         }).join('');
         return '<div class="pgroup"><div class="gt">' + P.method + ' &middot; ' + P.what + ' <span>&mdash; ' + P.fixed + '</span></div>' + rows + '</div>';
