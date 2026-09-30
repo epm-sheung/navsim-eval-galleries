@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rank disagreement</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style id="navsim-tabbar-css">
+#navsim-tabbar{position:sticky;top:0;z-index:99999;display:flex;gap:2px;flex-wrap:wrap;align-items:center;padding:8px 14px;margin:0;background:#fbfbfa;border-bottom:1px solid #dcdedb;font-family:"IBM Plex Sans",system-ui,sans-serif;}
+#navsim-tabbar .nt-home{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#78828e;margin-right:12px;}
+#navsim-tabbar a.nt{font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt[aria-current="page"]{background:#e2eeec;border-color:#1f6f6b;color:#1f6f6b;font-weight:600;}
+@media (prefers-color-scheme:dark){#navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}#navsim-tabbar a.nt{color:#a8b2b8;}#navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}#navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}#navsim-tabbar .nt-home{color:#78838b;}}
+</style>
+<style>
+:root{--ground:#f4f5f3;--panel:#fbfbfa;--panel-2:#eceeea;--ink:#1b2027;--ink-2:#4a535e;--ink-3:#78828e;--rule:#dcdedb;
+ --accent:#1f6f6b;--accent-soft:#e2eeec;--good:#2f7d4f;--good-bg:#e7f1ea;--warn:#b06a12;--warn-bg:#f6eddf;--crit:#a8322d;
+ --full:#6a4fb3;--full-bg:#eeeaf7;--ctrl:#8a6d3b;--ctrl-bg:#f3eee4;--traj-q:#9aa2ab;--traj-n:#1f6f6b;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;
+ --accent:#5fbdb5;--accent-soft:#1d3230;--good:#69c48d;--good-bg:#17281e;--warn:#d69b44;--warn-bg:#2b2415;--crit:#e08079;
+ --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}}
+:root[data-theme="dark"]{--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;
+ --accent:#5fbdb5;--accent-soft:#1d3230;--good:#69c48d;--good-bg:#17281e;--warn:#d69b44;--warn-bg:#2b2415;--crit:#e08079;
+ --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.6;}
+.wrap{max-width:1440px;margin:0 auto;padding:34px 118px 90px 24px;display:flex;flex-direction:column;gap:30px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);}
+h1{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:33px;margin:0;letter-spacing:-.015em;line-height:1.2;}
+h2{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:20px;margin:0 0 6px;}
+p{margin:0;} .measure{max-width:82ch;} .note{font-size:13.5px;color:var(--ink-2);}
+.mono{font-family:"IBM Plex Mono",monospace;}
+header{display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--rule);padding-bottom:22px;}
+.standfirst{font-size:17px;color:var(--ink-2);max-width:80ch;}
+section{display:flex;flex-direction:column;gap:12px;}
+
+/* ---- method selector ---- */
+.methodsel{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.methodsel .lab{font-size:12.5px;color:var(--ink-2);margin-right:4px;}
+.mbtn{font:inherit;font-size:13px;padding:6px 14px;border-radius:99px;cursor:pointer;border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);font-weight:500;}
+.mbtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600;}
+
+/* ---- histogram ---- */
+.hist{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;}
+.hist .bars{display:flex;align-items:flex-end;gap:4px;height:70px;}
+.hist .bar{flex:1 1 0;background:var(--panel-2);border-radius:2px 2px 0 0;position:relative;min-height:2px;}
+.hist .bar.cur{background:var(--full);}
+.hist .bl{display:flex;gap:4px;} .hist .bl span{flex:1 1 0;text-align:center;font-size:10px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;}
+
+/* ---- 50-sample strip ---- */
+.stripmini{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;}
+.stripmini .c{height:20px;border-radius:2px;cursor:pointer;background:var(--panel-2);border:1px solid transparent;}
+.stripmini .c.cur{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);}
+.stripmini .c:hover{filter:brightness(1.15);}
+
+/* ---- tiles (reused look from the main retrieval page) ---- */
+.q{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.qhead{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--ink-2);}
+.qhead .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3);}
+.qhead .tok{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink);}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--rule);background:var(--panel-2);color:var(--ink-2);font-family:"IBM Plex Mono",monospace;}
+.chip.cmd{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+.body{display:flex;gap:16px;align-items:flex-start;}
+.qimg{flex:0 0 260px;display:flex;flex-direction:column;gap:6px;}
+.qimg img{width:260px;border-radius:4px;display:block;border:2px solid var(--accent);}
+.qimg svg{width:260px;height:auto;background:var(--panel-2);border-radius:4px;}
+.rows{flex:1 1 auto;display:flex;flex-direction:column;gap:12px;min-width:0;}
+.rowlab{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.rowlab .vd{font-family:"IBM Plex Mono",monospace;font-weight:400;font-size:11.5px;color:var(--ink-3);}
+.strip{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
+.nb{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.nb img{width:100%;border-radius:3px;display:block;border:2px solid var(--rule);}
+.nb.match img{border-color:var(--good);}
+.nb svg{width:100%;height:auto;display:block;background:var(--panel-2);border-radius:3px;}
+.nb .cap{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nb .cap b{color:var(--ink-2);font-weight:500;}
+.legend{font-size:12px;color:var(--ink-3);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.sw{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px;border-radius:2px;}
+
+/* ---- vertical rank slider, fixed to the right edge ---- */
+.ranker{position:fixed;right:10px;top:50%;transform:translateY(-50%);z-index:500;display:flex;flex-direction:column;
+ align-items:center;gap:10px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 8px;
+ box-shadow:0 2px 10px rgba(0,0,0,.12);}
+.ranker .tick{font-size:9.5px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;}
+.strack{height:280px;width:32px;display:flex;align-items:center;justify-content:center;}
+.strack input[type=range]{width:280px;height:22px;margin:0;transform:rotate(90deg);cursor:pointer;accent-color:var(--accent);}
+.ranker .rlabel{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);text-align:center;
+ writing-mode:horizontal-tb;max-width:108px;line-height:1.4;}
+.ranker .rlabel b{color:var(--ink);}
+
+@media (max-width:1000px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}.strip{grid-template-columns:repeat(5,1fr);}
+ .stripmini{grid-template-columns:repeat(25,1fr);}}
+@media (max-width:760px){
+ .wrap{padding:24px 16px 150px;}
+ .ranker{position:fixed;left:0;right:0;bottom:0;top:auto;transform:none;width:100%;border-radius:0;
+  flex-direction:row;justify-content:center;gap:14px;padding:10px 14px;border-width:1px 0 0;}
+ .strack{height:auto;width:200px;}
+ .strack input[type=range]{width:200px;transform:none;}
+ .ranker .rlabel{max-width:none;text-align:left;}
+}
+</style>
+</head><body>
+__TABBAR__
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">navtest &middot; __NC__ scenes &middot; every scene as a query</div>
+  <h1>Where the SAE changes what gets retrieved</h1>
+  <p class="standfirst">For each method, every one of the __NC__ navtest scenes is used as a retrieval
+  query with both its original backbone and its SAE version. <b>score = |green<sub>orig</sub> &minus;
+  green<sub>sae</sub>|</b>, where green is how many of the top __TOPK__ neighbours (cosine similarity,
+  other driving logs only) have a 4&nbsp;s future within __GREEN_M__&nbsp;m ADE of the query&rsquo;s.
+  Queries are ranked by that score, ties broken by |&Delta;mean ADE| then by token; __NSAMPLE__ queries
+  are sampled at evenly spaced ranks (0% = biggest disagreement, 100% = smallest) for inspection below.</p>
+</header>
+
+<section>
+  <div class="methodsel"><span class="lab">Method:</span>
+    <button class="mbtn" data-m="ours" aria-pressed="true">Ours</button>
+    <button class="mbtn" data-m="drivor" aria-pressed="false">DrivoR</button>
+    <button class="mbtn" data-m="jepa" aria-pressed="false">Drive-JEPA</button>
+    <span class="note" id="meanscore" style="margin-left:10px"></span>
+  </div>
+
+  <div class="hist">
+    <div class="note">Score distribution over all __NC__ queries (|&Delta;green|, 0&ndash;__TOPK__), current sample marked</div>
+    <div class="bars" id="histbars"></div>
+    <div class="bl" id="histlabels"></div>
+  </div>
+
+  <div class="stripmini" id="stripmini" role="listbox" aria-label="50 sampled ranks"></div>
+</section>
+
+<section id="mainview"></section>
+
+<section>
+  <h2>Reading the tiles</h2>
+  <p class="note measure">Under every neighbour, its 4&nbsp;s future is drawn bold in teal, with the
+  query&rsquo;s as a faint dashed grey reference, each as 8 waypoints at 0.5&nbsp;s spacing, with the
+  ADE between them. A <b>green border</b> marks a neighbour whose future is within __GREEN_M__&nbsp;m
+  ADE of the query&rsquo;s. The lateral axis is stretched about 3&times; so turns stay visible; ADE is
+  unaffected.</p>
+  <span class="legend"><span><span class="sw" style="background:var(--good)"></span>ADE &le; __GREEN_M__ m (drives like the query)</span>
+  <span><span class="sw" style="background:var(--traj-q);opacity:.6"></span>query future (dashed)</span>
+  <span><span class="sw" style="background:var(--traj-n);height:4px"></span>neighbour future</span></span>
+</section>
+
+<p class="note">Generated __GEN__. Back to the <a href="index.html">backbone/SAE retrieval tables</a>.</p>
+
+</div>
+
+<div class="ranker" id="ranker">
+  <span class="tick">0%</span>
+  <div class="strack"><input type="range" id="slider" min="0" max="49" step="1" value="0" aria-label="Rank percentile"></div>
+  <span class="tick">100%</span>
+  <div class="rlabel" id="rlabel"></div>
+</div>
+
+<script id="data" type="application/json">__PAYLOAD__</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var ADE_OK = __GREEN_M__;
+  var CMD = {left: '← left', straight: '↑ straight', right: 'right →', unknown: 'unknown'};
+  var methods = {}; D.methods.forEach(function (m) { methods[m.id] = m; });
+  var curMethod = 'ours', curIdx = 0;
+
+  function glyph(q, n, big) {
+    var W = 100, H = big ? 62 : 58, X = 42, Y = 14;
+    function xy(p) {
+      var px = W / 2 - p[1] * (W / 2 - 3) / Y, py = H - 3 - p[0] * (H - 6) / X;
+      return [Math.max(1, Math.min(W - 1, px)), Math.max(1, Math.min(H - 1, py))];
+    }
+    function path(tr, col, sw, r, dash, op) {
+      var pts = [[W / 2, H - 3]].concat(tr.map(xy));
+      var s = '<polyline points="' + pts.map(function (a) { return a[0].toFixed(1) + ',' + a[1].toFixed(1); }).join(' ') +
+        '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" opacity="' + op + '"' +
+        (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+      tr.forEach(function (p) { var a = xy(p); s += '<circle cx="' + a[0].toFixed(1) + '" cy="' + a[1].toFixed(1) + '" r="' + r + '" fill="' + col + '" opacity="' + op + '"/>'; });
+      return s;
+    }
+    var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+    if (n) {
+      o += path(q, 'var(--traj-q)', 1.0, 1.1, '2.5 2', 0.6);
+      o += path(n, 'var(--traj-n)', 2.4, 2.2, null, 1.0);
+    } else {
+      o += path(q, 'var(--traj-n)', 2.4, 2.4, null, 1.0);
+    }
+    o += '<circle cx="' + W / 2 + '" cy="' + (H - 3) + '" r="2.4" fill="var(--ink)"/></svg>';
+    return o;
+  }
+
+  // score-to-colour ramp (0 = calm, __TOPK__ = loud); concrete hex since CSS custom
+  // properties can't be blended in JS, with a separate ramp per theme.
+  var RAMP_L = ['#eceeea', '#e7ddc9', '#e0c99f', '#d9b374', '#d19b49', '#b06a12'];
+  var RAMP_D = ['#242a2f', '#3a3120', '#4f3a1b', '#6a4c1c', '#8a5f1d', '#d69b44'];
+  function rampColor(s) {
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var ramp = dark ? RAMP_D : RAMP_L;
+    var i = Math.round((s / __TOPK__) * (ramp.length - 1));
+    return ramp[Math.max(0, Math.min(ramp.length - 1, i))];
+  }
+
+  function renderHist() {
+    var m = methods[curMethod];
+    var max = Math.max.apply(null, m.histogram);
+    var curScore = m.samples[curIdx].score;
+    document.getElementById('histbars').innerHTML = m.histogram.map(function (c, s) {
+      var h = max ? Math.round(2 + (c / max) * 66) : 2;
+      return '<div class="bar' + (s === curScore ? ' cur' : '') + '" style="height:' + h + 'px" title="score ' + s + ': ' + c.toLocaleString() + ' queries"></div>';
+    }).join('');
+    document.getElementById('histlabels').innerHTML = m.histogram.map(function (c, s) { return '<span>' + s + '</span>'; }).join('');
+    document.getElementById('meanscore').textContent = 'mean |Δgreen| over ' + m.n_queries.toLocaleString() + ' queries: ' + m.mean_score.toFixed(3);
+  }
+
+  function renderStrip() {
+    var m = methods[curMethod];
+    document.getElementById('stripmini').innerHTML = m.samples.map(function (s, i) {
+      return '<div class="c' + (i === curIdx ? ' cur' : '') + '" data-i="' + i + '" role="option" aria-selected="' +
+        (i === curIdx) + '" title="rank ' + s.rank.toLocaleString() + ' · top ' + s.percentile.toFixed(1) + '% · |Δgreen|=' + s.score +
+        '" style="background:' + rampColor(s.score) + '"></div>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('#stripmini .c'), function (el) {
+      el.onclick = function () { curIdx = parseInt(el.getAttribute('data-i'), 10); sync(); };
+    });
+  }
+
+  function renderMain() {
+    var m = methods[curMethod], sm = m.samples[curIdx];
+    var q = D.scenes[sm.token];
+    var rowOrig = sm.nb_orig.map(function (n) {
+      var s = D.scenes[n.t];
+      return '<div class="nb' + (n.a <= ADE_OK ? ' match' : '') + '"><img loading="lazy" src="rank_thumbs/' + n.t + '.jpg" alt="">' +
+        glyph(q.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + (CMD[s.cmd] || s.cmd) + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
+    }).join('');
+    var rowSae = sm.nb_sae.map(function (n) {
+      var s = D.scenes[n.t];
+      return '<div class="nb' + (n.a <= ADE_OK ? ' match' : '') + '"><img loading="lazy" src="rank_thumbs/' + n.t + '.jpg" alt="">' +
+        glyph(q.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + (CMD[s.cmd] || s.cmd) + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
+    }).join('');
+    document.getElementById('mainview').innerHTML =
+      '<h2>Sample at rank ' + sm.rank.toLocaleString() + ' &middot; top ' + sm.percentile.toFixed(1) + '%</h2>' +
+      '<div class="q"><div class="qhead"><span class="tok">' + sm.token + '</span>' +
+      '<span class="chip cmd">' + (CMD[q.cmd] || q.cmd) + '</span><span class="chip">' + q.v.toFixed(1) + ' m/s</span>' +
+      (q.pdms != null ? '<span class="chip">PDMS ' + q.pdms.toFixed(3) + '</span>' : '') +
+      '<span class="chip">' + q.log + '</span><span class="chip">|Δgreen| = ' + sm.score + '</span></div>' +
+      '<div class="body"><div class="qimg"><img src="rank_thumbs/' + sm.token + '.jpg" alt="query">' + glyph(q.tr, null, true) +
+      '<div class="note" style="font-size:12px">query &middot; t0 frame &middot; its 4 s future</div></div>' +
+      '<div class="rows">' +
+      '<div class="row"><div class="rowlab">' + m.orig_label +
+      '<span class="vd">' + sm.g_orig + '/10 within ' + ADE_OK + ' m &middot; mean ADE ' + sm.ade_orig.toFixed(2) + ' m</span></div>' +
+      '<div class="strip">' + rowOrig + '</div></div>' +
+      '<div class="row"><div class="rowlab">' + m.sae_label +
+      '<span class="vd">' + sm.g_sae + '/10 within ' + ADE_OK + ' m &middot; mean ADE ' + sm.ade_sae.toFixed(2) + ' m</span></div>' +
+      '<div class="strip">' + rowSae + '</div></div>' +
+      '</div></div></div>';
+  }
+
+  function renderLabel() {
+    var m = methods[curMethod], sm = m.samples[curIdx];
+    document.getElementById('rlabel').innerHTML = 'rank ' + sm.rank.toLocaleString() + ' / ' + m.n_queries.toLocaleString() +
+      '<br>top <b>' + sm.percentile.toFixed(1) + '%</b><br>|Δgreen| = <b>' + sm.score + '</b>';
+    document.getElementById('slider').value = curIdx;
+    document.getElementById('slider').setAttribute('aria-valuetext', 'top ' + sm.percentile.toFixed(1) + '%, delta green ' + sm.score);
+  }
+
+  function sync() {
+    renderLabel(); renderHist(); renderStrip(); renderMain();
+  }
+
+  document.getElementById('slider').addEventListener('input', function (e) {
+    curIdx = parseInt(e.target.value, 10); sync();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.mbtn'), function (b) {
+    b.onclick = function () {
+      curMethod = b.getAttribute('data-m');
+      Array.prototype.forEach.call(document.querySelectorAll('.mbtn'), function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      sync();
+    };
+  });
+
+  sync();
+})();
+</script>
+</body></html>

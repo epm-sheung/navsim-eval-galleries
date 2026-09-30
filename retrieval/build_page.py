@@ -15,7 +15,7 @@ DST = Path("/scratch/eddie96/eddie/navsim_pages/retrieval")
 TABS = [("Findings", "../index.html"), ("Why peaks", "../why_peaks.html"),
         ("Scoreboard", "../session_scoreboard/index.html"), ("Scenes", "../scenes/index.html"),
         ("Distributions", "../distributions/index.html"), ("Figures", "../figures/index.html"),
-        ("Retrieval", "index.html")]
+        ("Retrieval", "index.html"), ("Rank disagreement", "rank.html")]
 DEFAULT_ON = ["ours_cls", "drivor_cls", "jepa_bb"]
 METHOD_NOTE = {
     "Our method": "__OURS_NOTE__",
