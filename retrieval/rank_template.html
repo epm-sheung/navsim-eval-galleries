@@ -216,7 +216,7 @@ __TABBAR__
     var m = methods[curMethod];
     document.getElementById('stripmini').innerHTML = m.samples.map(function (s, i) {
       return '<div class="c' + (i === curIdx ? ' cur' : '') + '" data-i="' + i + '" role="option" aria-selected="' +
-        (i === curIdx) + '" title="rank ' + s.rank.toLocaleString() + ' · top ' + s.percentile.toFixed(1) + '% · |Δgreen|=' + s.score +
+        (i === curIdx) + '" title="rank ' + (s.rank + 1).toLocaleString() + ' · top ' + s.percentile.toFixed(1) + '% · |Δgreen|=' + s.score +
         '" style="background:' + rampColor(s.score) + '"></div>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('#stripmini .c'), function (el) {
@@ -238,7 +238,7 @@ __TABBAR__
         glyph(q.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + (CMD[s.cmd] || s.cmd) + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
     }).join('');
     document.getElementById('mainview').innerHTML =
-      '<h2>Sample at rank ' + sm.rank.toLocaleString() + ' &middot; top ' + sm.percentile.toFixed(1) + '%</h2>' +
+      '<h2>Sample at rank ' + (sm.rank + 1).toLocaleString() + ' &middot; top ' + sm.percentile.toFixed(1) + '%</h2>' +
       '<div class="q"><div class="qhead"><span class="tok">' + sm.token + '</span>' +
       '<span class="chip cmd">' + (CMD[q.cmd] || q.cmd) + '</span><span class="chip">' + q.v.toFixed(1) + ' m/s</span>' +
       (q.pdms != null ? '<span class="chip">PDMS ' + q.pdms.toFixed(3) + '</span>' : '') +
@@ -257,7 +257,7 @@ __TABBAR__
 
   function renderLabel() {
     var m = methods[curMethod], sm = m.samples[curIdx];
-    document.getElementById('rlabel').innerHTML = 'rank ' + sm.rank.toLocaleString() + ' / ' + m.n_queries.toLocaleString() +
+    document.getElementById('rlabel').innerHTML = 'rank ' + (sm.rank + 1).toLocaleString() + ' / ' + m.n_queries.toLocaleString() +
       '<br>top <b>' + sm.percentile.toFixed(1) + '%</b><br>|Δgreen| = <b>' + sm.score + '</b>';
     document.getElementById('slider').value = curIdx;
     document.getElementById('slider').setAttribute('aria-valuetext', 'top ' + sm.percentile.toFixed(1) + '%, delta green ' + sm.score);
