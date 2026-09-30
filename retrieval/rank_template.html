@@ -23,7 +23,7 @@
  --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}
 *{box-sizing:border-box;}
 body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.6;}
-.wrap{max-width:1440px;margin:0 auto;padding:34px 118px 90px 24px;display:flex;flex-direction:column;gap:30px;}
+.wrap{max-width:1440px;margin:0 auto;padding:34px 24px 90px;display:flex;flex-direction:column;gap:30px;}
 .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);}
 h1{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:33px;margin:0;letter-spacing:-.015em;line-height:1.2;}
 h2{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:20px;margin:0 0 6px;}
@@ -39,18 +39,22 @@ section{display:flex;flex-direction:column;gap:12px;}
 .mbtn{font:inherit;font-size:13px;padding:6px 14px;border-radius:99px;cursor:pointer;border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);font-weight:500;}
 .mbtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600;}
 
-/* ---- histogram ---- */
+/* ---- histogram (diverging: red = SAE worse, neutral = tie, green = SAE better) ---- */
 .hist{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;}
-.hist .bars{display:flex;align-items:flex-end;gap:4px;height:70px;}
-.hist .bar{flex:1 1 0;background:var(--panel-2);border-radius:2px 2px 0 0;position:relative;min-height:2px;}
-.hist .bar.cur{background:var(--full);}
-.hist .bl{display:flex;gap:4px;} .hist .bl span{flex:1 1 0;text-align:center;font-size:10px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;}
+.hist .bars{display:flex;align-items:flex-end;gap:3px;height:70px;}
+.hist .bar{flex:1 1 0;border-radius:2px 2px 0 0;position:relative;min-height:2px;}
+.hist .bar.cur{outline:2px solid var(--ink);outline-offset:-2px;}
+.hist .bar.zero{border-left:1px solid var(--ink-3);border-right:1px solid var(--ink-3);}
+.hist .bl{display:flex;gap:3px;} .hist .bl span{flex:1 1 0;text-align:center;font-size:9.5px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;}
+.hist .bl span.zero{font-weight:700;color:var(--ink);}
 
-/* ---- 50-sample strip ---- */
+/* ---- 50-sample strip -- the only navigator on this page ---- */
 .stripmini{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;}
-.stripmini .c{height:20px;border-radius:2px;cursor:pointer;background:var(--panel-2);border:1px solid transparent;}
+.stripmini .c{height:22px;border-radius:2px;cursor:pointer;background:var(--panel-2);border:1px solid transparent;}
 .stripmini .c.cur{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);}
 .stripmini .c:hover{filter:brightness(1.15);}
+.stripnav{font-size:12px;color:var(--ink-3);}
+.stripnav kbd{font-family:"IBM Plex Mono",monospace;font-size:10.5px;background:var(--panel-2);border:1px solid var(--rule);border-radius:3px;padding:0 5px;}
 
 /* ---- tiles (reused look from the main retrieval page) ---- */
 .q{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
@@ -59,6 +63,8 @@ section{display:flex;flex-direction:column;gap:12px;}
 .qhead .tok{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink);}
 .chip{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--rule);background:var(--panel-2);color:var(--ink-2);font-family:"IBM Plex Mono",monospace;}
 .chip.cmd{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+.chip.better{background:var(--good-bg);border-color:var(--good);color:var(--good);}
+.chip.worse{background:var(--warn-bg);border-color:var(--crit);color:var(--crit);}
 .body{display:flex;gap:16px;align-items:flex-start;}
 .qimg{flex:0 0 260px;display:flex;flex-direction:column;gap:6px;}
 .qimg img{width:260px;border-radius:4px;display:block;border:2px solid var(--accent);}
@@ -76,27 +82,9 @@ section{display:flex;flex-direction:column;gap:12px;}
 .legend{font-size:12px;color:var(--ink-3);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 .sw{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px;border-radius:2px;}
 
-/* ---- vertical rank slider, fixed to the right edge ---- */
-.ranker{position:fixed;right:10px;top:50%;transform:translateY(-50%);z-index:500;display:flex;flex-direction:column;
- align-items:center;gap:10px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 8px;
- box-shadow:0 2px 10px rgba(0,0,0,.12);}
-.ranker .tick{font-size:9.5px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;}
-.strack{height:280px;width:32px;display:flex;align-items:center;justify-content:center;}
-.strack input[type=range]{width:280px;height:22px;margin:0;transform:rotate(90deg);cursor:pointer;accent-color:var(--accent);}
-.ranker .rlabel{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);text-align:center;
- writing-mode:horizontal-tb;max-width:108px;line-height:1.4;}
-.ranker .rlabel b{color:var(--ink);}
-
 @media (max-width:1000px){.body{flex-direction:column;}.qimg{flex:0 0 auto;}.strip{grid-template-columns:repeat(5,1fr);}
  .stripmini{grid-template-columns:repeat(25,1fr);}}
-@media (max-width:760px){
- .wrap{padding:24px 16px 150px;}
- .ranker{position:fixed;left:0;right:0;bottom:0;top:auto;transform:none;width:100%;border-radius:0;
-  flex-direction:row;justify-content:center;gap:14px;padding:10px 14px;border-width:1px 0 0;}
- .strack{height:auto;width:200px;}
- .strack input[type=range]{width:200px;transform:none;}
- .ranker .rlabel{max-width:none;text-align:left;}
-}
+@media (max-width:600px){.wrap{padding:24px 16px 70px;}}
 </style>
 </head><body>
 __TABBAR__
@@ -106,11 +94,15 @@ __TABBAR__
   <div class="eyebrow">navtest &middot; __NC__ scenes &middot; every scene as a query</div>
   <h1>Where the SAE changes what gets retrieved</h1>
   <p class="standfirst">For each method, every one of the __NC__ navtest scenes is used as a retrieval
-  query with both its original backbone and its SAE version. <b>score = |green<sub>orig</sub> &minus;
-  green<sub>sae</sub>|</b>, where green is how many of the top __TOPK__ neighbours (cosine similarity,
-  other driving logs only) have a 4&nbsp;s future within __GREEN_M__&nbsp;m ADE of the query&rsquo;s.
-  Queries are ranked by that score, ties broken by |&Delta;mean ADE| then by token; __NSAMPLE__ queries
-  are sampled at evenly spaced ranks (0% = biggest disagreement, 100% = smallest) for inspection below.</p>
+  query with both its original backbone and its SAE version. <b>&Delta;green = green<sub>sae</sub>
+  &minus; green<sub>orig</sub></b> (green = how many of the top __TOPK__ neighbours &mdash; cosine
+  similarity, other driving logs only &mdash; have a 4&nbsp;s future within __GREEN_M__&nbsp;m ADE of
+  the query&rsquo;s), signed from &minus;__TOPK__ to +__TOPK__: <b>positive means the SAE retrieves more
+  green neighbours (SAE better)</b>, negative means worse. Queries are ranked by &Delta;green
+  descending &mdash; rank 1 is where the SAE helps most, the last rank is where it hurts most &mdash;
+  ties broken by the signed (mean ADE<sub>orig</sub> &minus; mean ADE<sub>sae</sub>) descending
+  (positive = SAE better there too), then by token. __NSAMPLE__ queries are sampled at evenly spaced
+  ranks (0% = SAE helps most, 100% = SAE hurts most) for inspection below.</p>
 </header>
 
 <section>
@@ -122,12 +114,14 @@ __TABBAR__
   </div>
 
   <div class="hist">
-    <div class="note">Score distribution over all __NC__ queries (|&Delta;green|, 0&ndash;__TOPK__), current sample marked</div>
+    <div class="note">&Delta;green distribution over all __NC__ queries (&minus;__TOPK__..+__TOPK__, 0 = tie), current sample marked</div>
     <div class="bars" id="histbars"></div>
     <div class="bl" id="histlabels"></div>
   </div>
 
-  <div class="stripmini" id="stripmini" role="listbox" aria-label="50 sampled ranks"></div>
+  <div class="stripnav">The 50 sampled ranks below are the page&rsquo;s only navigator &mdash; click a cell,
+    or use <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> anywhere on the page (not while typing in a field).</div>
+  <div class="stripmini" id="stripmini" role="listbox" aria-label="50 sampled ranks, coloured by signed delta-green"></div>
 </section>
 
 <section id="mainview"></section>
@@ -148,21 +142,22 @@ __TABBAR__
 
 </div>
 
-<div class="ranker" id="ranker">
-  <span class="tick">0%</span>
-  <div class="strack"><input type="range" id="slider" min="0" max="49" step="1" value="0" aria-label="Rank percentile"></div>
-  <span class="tick">100%</span>
-  <div class="rlabel" id="rlabel"></div>
-</div>
-
 <script id="data" type="application/json">__PAYLOAD__</script>
 <script>
 (function () {
   var D = JSON.parse(document.getElementById('data').textContent);
+  var TOPK = __TOPK__;
   var ADE_OK = __GREEN_M__;
   var CMD = {left: '← left', straight: '↑ straight', right: 'right →', unknown: 'unknown'};
   var methods = {}; D.methods.forEach(function (m) { methods[m.id] = m; });
   var curMethod = 'ours', curIdx = 0;
+
+  function fmtSigned(x, d) {
+    var v = (typeof d === 'number') ? Math.abs(x).toFixed(d) : String(Math.abs(x));
+    if (x > 0) return '+' + v;
+    if (x < 0) return '-' + v;
+    return (typeof d === 'number') ? (0).toFixed(d) : '0';
+  }
 
   function glyph(q, n, big) {
     var W = 100, H = big ? 62 : 58, X = 42, Y = 14;
@@ -189,35 +184,51 @@ __TABBAR__
     return o;
   }
 
-  // score-to-colour ramp (0 = calm, __TOPK__ = loud); concrete hex since CSS custom
-  // properties can't be blended in JS, with a separate ramp per theme.
-  var RAMP_L = ['#eceeea', '#e7ddc9', '#e0c99f', '#d9b374', '#d19b49', '#b06a12'];
-  var RAMP_D = ['#242a2f', '#3a3120', '#4f3a1b', '#6a4c1c', '#8a5f1d', '#d69b44'];
-  function rampColor(s) {
+  // diverging colour ramp: red (SAE worse) .. neutral (tie) .. green (SAE better),
+  // concrete hex per theme since CSS custom properties can't be blended in JS.
+  var DIV_L = {neg: '#a8322d', mid: '#eceeea', pos: '#2f7d4f'};
+  var DIV_D = {neg: '#e08079', mid: '#242a2f', pos: '#69c48d'};
+  function hexToRgb(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+  function lerpHex(c1, c2, t) {
+    var a = hexToRgb(c1), b = hexToRgb(c2);
+    return '#' + a.map(function (v, i) {
+      return Math.max(0, Math.min(255, Math.round(v + (b[i] - v) * t))).toString(16).padStart(2, '0');
+    }).join('');
+  }
+  function divergingColor(score) {
     var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var ramp = dark ? RAMP_D : RAMP_L;
-    var i = Math.round((s / __TOPK__) * (ramp.length - 1));
-    return ramp[Math.max(0, Math.min(ramp.length - 1, i))];
+    var pal = dark ? DIV_D : DIV_L;
+    if (score === 0) return pal.mid;
+    return score > 0 ? lerpHex(pal.mid, pal.pos, score / TOPK) : lerpHex(pal.mid, pal.neg, -score / TOPK);
   }
 
   function renderHist() {
     var m = methods[curMethod];
     var max = Math.max.apply(null, m.histogram);
     var curScore = m.samples[curIdx].score;
-    document.getElementById('histbars').innerHTML = m.histogram.map(function (c, s) {
+    var bars = '', labels = '';
+    for (var s = -TOPK; s <= TOPK; s++) {
+      var c = m.histogram[s + TOPK];
       var h = max ? Math.round(2 + (c / max) * 66) : 2;
-      return '<div class="bar' + (s === curScore ? ' cur' : '') + '" style="height:' + h + 'px" title="score ' + s + ': ' + c.toLocaleString() + ' queries"></div>';
-    }).join('');
-    document.getElementById('histlabels').innerHTML = m.histogram.map(function (c, s) { return '<span>' + s + '</span>'; }).join('');
-    document.getElementById('meanscore').textContent = 'mean |Δgreen| over ' + m.n_queries.toLocaleString() + ' queries: ' + m.mean_score.toFixed(3);
+      bars += '<div class="bar' + (s === curScore ? ' cur' : '') + (s === 0 ? ' zero' : '') +
+        '" style="height:' + h + 'px;background:' + divergingColor(s) +
+        '" title="Δgreen ' + fmtSigned(s) + ': ' + c.toLocaleString() + ' queries"></div>';
+      labels += '<span' + (s === 0 ? ' class="zero"' : '') + '>' + fmtSigned(s) + '</span>';
+    }
+    document.getElementById('histbars').innerHTML = bars;
+    document.getElementById('histlabels').innerHTML = labels;
+    document.getElementById('meanscore').textContent = 'mean Δgreen (SAE − original) over ' +
+      m.n_queries.toLocaleString() + ' queries: ' + fmtSigned(m.mean_score, 3) + ' · better ' +
+      m.better.toLocaleString() + ' · tie ' + m.tie.toLocaleString() + ' · worse ' + m.worse.toLocaleString();
   }
 
   function renderStrip() {
     var m = methods[curMethod];
     document.getElementById('stripmini').innerHTML = m.samples.map(function (s, i) {
       return '<div class="c' + (i === curIdx ? ' cur' : '') + '" data-i="' + i + '" role="option" aria-selected="' +
-        (i === curIdx) + '" title="rank ' + (s.rank + 1).toLocaleString() + ' · top ' + s.percentile.toFixed(1) + '% · |Δgreen|=' + s.score +
-        '" style="background:' + rampColor(s.score) + '"></div>';
+        (i === curIdx) + '" title="rank ' + (s.rank + 1).toLocaleString() + ' · top ' + s.percentile.toFixed(1) +
+        '% · Δgreen = SAE − original = ' + fmtSigned(s.score) +
+        '" style="background:' + divergingColor(s.score) + '"></div>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('#stripmini .c'), function (el) {
       el.onclick = function () { curIdx = parseInt(el.getAttribute('data-i'), 10); sync(); };
@@ -237,12 +248,15 @@ __TABBAR__
       return '<div class="nb' + (n.a <= ADE_OK ? ' match' : '') + '"><img loading="lazy" src="rank_thumbs/' + n.t + '.jpg" alt="">' +
         glyph(q.tr, s.tr, false) + '<div class="cap"><b>' + n.a.toFixed(1) + ' m</b> ' + (CMD[s.cmd] || s.cmd) + ' ' + s.v.toFixed(1) + 'm/s</div></div>';
     }).join('');
+    var scoreChip = '<span class="chip' + (sm.score > 0 ? ' better' : (sm.score < 0 ? ' worse' : '')) +
+      '">Δgreen = ' + fmtSigned(sm.score) + '</span>';
     document.getElementById('mainview').innerHTML =
-      '<h2>Sample at rank ' + (sm.rank + 1).toLocaleString() + ' &middot; top ' + sm.percentile.toFixed(1) + '%</h2>' +
+      '<h2 id="sampleheader" aria-live="polite">rank ' + (sm.rank + 1).toLocaleString() + ' / ' + m.n_queries.toLocaleString() +
+      ' &middot; top ' + sm.percentile.toFixed(1) + '% &middot; Δgreen = SAE − original = ' + fmtSigned(sm.score) + '</h2>' +
       '<div class="q"><div class="qhead"><span class="tok">' + sm.token + '</span>' +
       '<span class="chip cmd">' + (CMD[q.cmd] || q.cmd) + '</span><span class="chip">' + q.v.toFixed(1) + ' m/s</span>' +
       (q.pdms != null ? '<span class="chip">PDMS ' + q.pdms.toFixed(3) + '</span>' : '') +
-      '<span class="chip">' + q.log + '</span><span class="chip">|Δgreen| = ' + sm.score + '</span></div>' +
+      '<span class="chip">' + q.log + '</span>' + scoreChip + '</div>' +
       '<div class="body"><div class="qimg"><img src="rank_thumbs/' + sm.token + '.jpg" alt="query">' + glyph(q.tr, null, true) +
       '<div class="note" style="font-size:12px">query &middot; t0 frame &middot; its 4 s future</div></div>' +
       '<div class="rows">' +
@@ -255,20 +269,16 @@ __TABBAR__
       '</div></div></div>';
   }
 
-  function renderLabel() {
-    var m = methods[curMethod], sm = m.samples[curIdx];
-    document.getElementById('rlabel').innerHTML = 'rank ' + (sm.rank + 1).toLocaleString() + ' / ' + m.n_queries.toLocaleString() +
-      '<br>top <b>' + sm.percentile.toFixed(1) + '%</b><br>|Δgreen| = <b>' + sm.score + '</b>';
-    document.getElementById('slider').value = curIdx;
-    document.getElementById('slider').setAttribute('aria-valuetext', 'top ' + sm.percentile.toFixed(1) + '%, delta green ' + sm.score);
-  }
-
   function sync() {
-    renderLabel(); renderHist(); renderStrip(); renderMain();
+    renderHist(); renderStrip(); renderMain();
   }
 
-  document.getElementById('slider').addEventListener('input', function (e) {
-    curIdx = parseInt(e.target.value, 10); sync();
+  document.addEventListener('keydown', function (e) {
+    var t = e.target, tag = (t && t.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+    var maxIdx = methods[curMethod].samples.length - 1;
+    if (e.key === 'ArrowRight') { curIdx = Math.min(maxIdx, curIdx + 1); sync(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { curIdx = Math.max(0, curIdx - 1); sync(); e.preventDefault(); }
   });
   Array.prototype.forEach.call(document.querySelectorAll('.mbtn'), function (b) {
     b.onclick = function () {
