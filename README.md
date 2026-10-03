@@ -1,15 +1,13 @@
 # NAVSIM evaluation galleries
 
-Interactive evaluation of camera-only DINOv2 waypoint models on the NAVSIM benchmark.
+- **Retrieval** — query a navtest CAM_F0 frame, retrieve the top-10 most similar scenes (own log excluded), and
+  grade neighbours by how close their ground-truth 4 s future is to the query's. Same-method, different-backbone
+  pairs (original backbone, our fine-tuned DINO, SAE, fine-tuned DINO + SAE).
+- **Rank disagreement** — all 12,146 navtest queries ranked by (SAE green count − original-backbone green count),
+  50 evenly spaced samples per method.
+- **Green criterion** — which distance (ADE, FDE, speed latent, full training loss) and which threshold should
+  define a correct neighbour.
+- **Figures** — scene clips with trajectories and per-gate scores, plus analysis figures.
 
-- **Scoreboard** — published vs. our numbers, v1 PDMS (navtest) and v2 EPDMS (navhard two-stage).
-- **Scenes** — 210 scenes (150 navtest ranked by v1 PDMS, 60 navhard by v2 EPDMS) with
-  per-method trajectory overlays drawn client-side.
-- **Distributions** — per-method score distributions; click a bin for an example scene.
-- **Figures** — scene clips rebuilt at 1920×1080/20 fps with the trajectory and per-gate scores
-  drawn in (scrub to a frame, download the camera half, the BEV half, or the scene metadata),
-  plus five analysis figures each paired with its published precedent. Built by
-  `figures/build_figures.py`; clips by `scenes_v2/render_clip_v3.py`.
-
-Metric convention: navtest is scored with **NAVSIM v1.1 PDMS** (2 gates, 5 subscores);
-navhard_two_stage with **v2 EPDMS** (4 gates, 9 subscores). The two are not interconvertible.
+The Findings, Why peaks, Scoreboard, Scenes and Distributions pages were removed on 2026-10-02 to stay within the
+GitHub Pages size limit; they remain in the git history.

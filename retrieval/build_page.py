@@ -12,10 +12,8 @@ from pathlib import Path
 S = Path("/scratch/eddie96/eddie/sae_retrieval/out")
 THUMB_SRC = Path("/scratch/eddie96/eddie/navsim_retrieval/out/thumbs")
 DST = Path("/scratch/eddie96/eddie/navsim_pages/retrieval")
-TABS = [("Findings", "../index.html"), ("Why peaks", "../why_peaks.html"),
-        ("Scoreboard", "../session_scoreboard/index.html"), ("Scenes", "../scenes/index.html"),
-        ("Distributions", "../distributions/index.html"), ("Figures", "../figures/index.html"),
-        ("Retrieval", "index.html"), ("Rank disagreement", "rank.html")]
+TABS = [("Retrieval", "index.html"), ("Rank disagreement", "rank.html"),
+        ("Green criterion", "criterion.html"), ("Figures", "../figures/index.html")]
 DEFAULT_ON = ["ours_cls", "drivor_cls", "jepa_bb"]
 METHOD_NOTE = {
     "Our method": "__OURS_NOTE__",

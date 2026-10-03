@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Green criterion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style id="navsim-tabbar-css">
+#navsim-tabbar{position:sticky;top:0;z-index:99999;display:flex;gap:2px;flex-wrap:wrap;align-items:center;padding:8px 14px;margin:0;background:#fbfbfa;border-bottom:1px solid #dcdedb;font-family:"IBM Plex Sans",system-ui,sans-serif;}
+#navsim-tabbar .nt-home{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#78828e;margin-right:12px;}
+#navsim-tabbar a.nt{font-size:13.5px;font-weight:500;color:#4a535e;text-decoration:none;padding:7px 13px;border-radius:5px;border:1px solid transparent;white-space:nowrap;}
+#navsim-tabbar a.nt:hover{background:#e9eae7;color:#1b2027;}
+#navsim-tabbar a.nt[aria-current="page"]{background:#e2eeec;border-color:#1f6f6b;color:#1f6f6b;font-weight:600;}
+@media (prefers-color-scheme:dark){#navsim-tabbar{background:#1b2025;border-bottom-color:#2c3238;}#navsim-tabbar a.nt{color:#a8b2b8;}#navsim-tabbar a.nt:hover{background:#242a2f;color:#e8ebe9;}#navsim-tabbar a.nt[aria-current="page"]{background:#1d3230;border-color:#5fbdb5;color:#5fbdb5;}#navsim-tabbar .nt-home{color:#78838b;}}
+</style>
+<style>
+:root{--ground:#f4f5f3;--panel:#fbfbfa;--panel-2:#eceeea;--ink:#1b2027;--ink-2:#4a535e;--ink-3:#78828e;--rule:#dcdedb;
+ --accent:#1f6f6b;--accent-soft:#e2eeec;--good:#2f7d4f;--good-bg:#e7f1ea;--warn:#b06a12;--warn-bg:#f6eddf;--crit:#a8322d;
+ --full:#6a4fb3;--full-bg:#eeeaf7;--ctrl:#8a6d3b;--ctrl-bg:#f3eee4;--traj-q:#9aa2ab;--traj-n:#1f6f6b;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;
+ --accent:#5fbdb5;--accent-soft:#1d3230;--good:#69c48d;--good-bg:#17281e;--warn:#d69b44;--warn-bg:#2b2415;--crit:#e08079;
+ --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}}
+:root[data-theme="dark"]{--ground:#14181c;--panel:#1b2025;--panel-2:#242a2f;--ink:#e8ebe9;--ink-2:#a8b2b8;--ink-3:#78838b;--rule:#2c3238;
+ --accent:#5fbdb5;--accent-soft:#1d3230;--good:#69c48d;--good-bg:#17281e;--warn:#d69b44;--warn-bg:#2b2415;--crit:#e08079;
+ --full:#a893ea;--full-bg:#251f38;--ctrl:#cdb07a;--ctrl-bg:#2a251b;--traj-q:#6b747c;--traj-n:#5fbdb5;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.6;}
+.wrap{max-width:1440px;margin:0 auto;padding:34px 24px 90px;display:flex;flex-direction:column;gap:30px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);}
+h1{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:33px;margin:0;letter-spacing:-.015em;line-height:1.2;}
+h2{font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;font-size:20px;margin:0 0 6px;}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;}
+.rec-box{border-left:4px solid var(--good);background:var(--good-bg);}
+.tw{overflow-x:auto;}
+table{border-collapse:collapse;font-size:13.5px;min-width:560px;}
+th,td{padding:6px 12px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap;}
+th{font-weight:600;color:var(--ink-2);font-size:12.5px;}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:12.5px;}
+tr.rec td{background:var(--good-bg);} tr.cur td{background:var(--warn-bg);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;} @media (max-width:900px){.grid2{grid-template-columns:1fr;}}
+img.curves{max-width:100%;height:auto;border-radius:6px;background:#fff;}
+ul{margin:0;padding-left:20px;} li{margin:3px 0;}
+@media (max-width:600px){.wrap{padding:22px 16px 60px;} h1{font-size:26px;}}
+</style></head><body>
+__TABBAR__
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:10px;">
+  <div class="eyebrow">NAVSIM retrieval &middot; what counts as a correct neighbour</div>
+  <h1>Green criterion: which distance, which threshold</h1>
+  <p class="measure note">A retrieved neighbour is &ldquo;green&rdquo; when its ground-truth 4&nbsp;s future is close to the
+  query&rsquo;s. This page tests four ways of measuring &ldquo;close&rdquo; over many thresholds, using every descriptor variant
+  in the benchmark (__NQ__ queries, top-10 out of __NC__ navtest scenes, own log excluded). Both futures are GT, 8 waypoints at
+  0.5&nbsp;s, each in its own t0 ego frame.</p>
+</header>
+
+<section class="card rec-box">
+  <h2>Result</h2>
+  <ul class="measure">
+    <li><b>Recommended: speed-latent distance &le; __REC_THR__</b> (10% of random scene pairs pass).
+      It separates models with median |z| = <b>__REC_Z__</b>, against <b>__ADE_Z__</b> for today&rsquo;s ADE &le; 2&nbsp;m (__ADE_CH__% chance).</li>
+    <li><b>Best ADE threshold:</b> flat between about 1.6 and 3.4&nbsp;m. Today&rsquo;s 2&nbsp;m is already at the optimum, and
+      above about 3.4&nbsp;m it saturates (the best model reaches 9.75 of 10).</li>
+    <li><b>The speed latent beats ADE at every chance rate from 2% to 50%</b>, by up to +3.75 in median |z|.
+      The full training loss ties the latent but needs a fitted scale factor between its two terms, so the latent alone is simpler.</li>
+    <li>The model ranking barely changes (Kendall &tau; &ge; 0.93 against the continuous distance), so earlier conclusions still hold.
+      Under the latent, every model gets about 1&ndash;2 more green neighbours.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>How the criteria are compared</h2>
+  <ul class="measure note">
+    <li><b>Matched chance rate.</b> The criteria have different units, so each threshold is set to the quantile of the
+      distance between random cross-log scene pairs that gives the same chance rate. Comparing at equal chance rate is the fair test.</li>
+    <li><b>Separating power</b> = median |z| of the paired per-query difference in green count, over all 80 within-pipeline
+      variant pairs. Higher means real differences between models show up more reliably.</li>
+    <li><b>Ranking fidelity</b> = Kendall &tau; between the variant ranking by green count and by the same distance left continuous.</li>
+    <li><b>Validity</b> = AUC for predicting a rule-based &ldquo;plausible&rdquo; label (same manoeuvre: stop / left / right / straight,
+      plus the same speed tertile). The label is derived from the same trajectories and includes speed, which favours the latent,
+      so treat it as a sanity check, not ground truth.</li>
+    <li><b>Speed latent</b> = L1 distance between the frozen velocity-autoencoder codes of the two whitened velocity sequences,
+      the term our training loss uses. <b>Full loss</b> = 0.7 &times; latent + 0.3 &times; __HSCALE__ &times; Huber on normalised
+      positions (one global scale factor). The autoencoder reconstructs navtest futures with an error of __SAN__ (navtest vs its own
+      training data), so it is valid on navtest.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>All four criteria at matched chance rates</h2>
+  <p class="note">Green row = recommended setting. Best / worst = mean green count out of 10 for the best and worst variant (saturation check).</p>
+  <div class="tw"><table>
+    <thead><tr><th>Criterion</th><th>Chance</th><th>Threshold</th><th class="num">Separating power</th><th class="num">Significant</th>
+      <th class="num">&tau;</th><th class="num">Validity AUC</th><th class="num">Best / worst</th></tr></thead>
+    <tbody>
+__MATCHED__
+    </tbody></table></div>
+</section>
+
+<section class="card">
+  <h2>Speed latent vs ADE, head to head</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Chance</th><th class="num">ADE power</th><th class="num">Latent power</th><th class="num">Latent &minus; ADE</th>
+      <th class="num">ADE precision</th><th class="num">Latent precision</th></tr></thead>
+    <tbody>
+__HEAD__
+    </tbody></table></div>
+</section>
+
+<div class="grid2">
+<section class="card">
+  <h2>ADE threshold in metres</h2>
+  <p class="note">Amber row = the current gallery setting.</p>
+  <div class="tw"><table>
+    <thead><tr><th>ADE &le;</th><th class="num">Chance</th><th class="num">Power</th><th class="num">Significant</th><th class="num">&tau;</th><th class="num">Best / worst</th></tr></thead>
+    <tbody>
+__RAW_ADE__
+    </tbody></table></div>
+</section>
+<section class="card">
+  <h2>Speed-latent threshold</h2>
+  <p class="note">Raw L1 distance in latent units.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Latent &le;</th><th class="num">Chance</th><th class="num">Power</th><th class="num">Significant</th><th class="num">&tau;</th><th class="num">Best / worst</th></tr></thead>
+    <tbody>
+__RAW_LAT__
+    </tbody></table></div>
+</section>
+</div>
+
+<section class="card">
+  <h2>Curves</h2>
+  <img class="curves" src="criterion_curves.png" alt="Separating power, ranking fidelity, validity and chance-rate calibration against matched chance rate for ADE, FDE, speed latent and full loss" loading="lazy">
+</section>
+</div>
+</body></html>
